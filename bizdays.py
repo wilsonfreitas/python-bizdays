@@ -126,7 +126,8 @@ class Calendar(object):
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__previous_bizday(dt).isoformat()
 	
-	def seq(self, _from, _to):
+	def seq(self, dates):
+		_from, _to = dates
 		d1 = timedelta(1)
 		_from = self.__next_bizday(datetime.strptime(_from, '%Y-%m-%d').date())
 		_to = datetime.strptime(_to, '%Y-%m-%d').date()
