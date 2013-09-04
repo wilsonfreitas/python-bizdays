@@ -19,8 +19,9 @@ import re
 
 class Calendar(object):
 	''' Calendar class to compute business days accordingly a given
-	calendar specification. The specification has the weekdays which aren't
-	business days and a list of holidays (or non-business days).
+	calendar's specification. The specification has the weekdays which aren't
+	business days (usually known as weekend) and a list of holidays
+	(or non-business days).
 	'''
 	_weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 		 'Saturday', 'Sunday')
@@ -85,6 +86,8 @@ class Calendar(object):
 		fcal.close()
 	
 	def bizdays(self, dates):
+		'''Returns the number of business days between 2 dates. 
+		dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).'''
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d1 = self.__next_bizday(d1)
@@ -93,12 +96,18 @@ class Calendar(object):
 		return self._index[d2][0] - self._index[d1][0]
 	
 	def currentdays(self, dates):
+		'''Returns the number of current days between 2 dates.
+		It simply subtracts dates and return the amount of days in timedelta.
+		dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).
+		'''
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
 		return (d2 - d1).days
 	
 	def isbizday(self, dt):
+		'''Returns True whether dt is a business day or False otherwise.
+		dt is a string ISO-formated date (%%Y-%%m-%%d).'''
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return not self._index[dt][2]
 	
@@ -110,7 +119,9 @@ class Calendar(object):
 		
 	def adjust_next(self, dt):
 		"""Returns the next business day whether the passed date isn't a
-		business day or returns the given date"""
+		business day or returns the given date.
+		dt is a string ISO-formated date (%%Y-%%m-%%d).
+		"""
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__next_bizday(dt).isoformat()
 	
@@ -122,11 +133,17 @@ class Calendar(object):
 	
 	def adjust_previous(self, dt):
 		"""Returns the first business day before the passed date whether
-		the given date isn't a business day or returns the given date"""
+		the given date isn't a business day or returns the given date.
+		dt is a string ISO-formated date (%%Y-%%m-%%d).
+		"""
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__previous_bizday(dt).isoformat()
 	
 	def seq(self, dates):
+		'''Returns a sequence generator which generates business days between
+		the 2 given dates.
+		dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).
+		'''
 		_from, _to = dates
 		d1 = timedelta(1)
 		_from = self.__next_bizday(datetime.strptime(_from, '%Y-%m-%d').date())
