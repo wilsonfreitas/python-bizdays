@@ -93,6 +93,8 @@ class Calendar(object):
 		d1 = self.__next_bizday(d1)
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
 		d2 = self.__previous_bizday(d2)
+		if d1 > d2:
+			raise ValueError("The first date must be before the second.")
 		return self._index[d2][0] - self._index[d1][0]
 	
 	def currentdays(self, dates):
@@ -103,6 +105,8 @@ class Calendar(object):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
+		if d1 > d2:
+			raise ValueError("The first date must be before the second.")
 		return (d2 - d1).days
 	
 	def isbizday(self, dt):
@@ -146,8 +150,11 @@ class Calendar(object):
 		'''
 		_from, _to = dates
 		d1 = timedelta(1)
-		_from = self.__next_bizday(datetime.strptime(_from, '%Y-%m-%d').date())
+		_from = datetime.strptime(_from, '%Y-%m-%d').date()
 		_to = datetime.strptime(_to, '%Y-%m-%d').date()
+		if _from > _to:
+			raise ValueError("The first date must be before the second.")
+		_from = self.__next_bizday(_from)
 		while _from <= _to:
 			yield _from.isoformat()
 			_from = self.__next_bizday(_from + d1)
