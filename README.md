@@ -13,7 +13,7 @@ It is necessary for pricing properly the financial instrument. -->
 Several financial libraries compute the holidays, giving no option to users set it by their own.
 Furtherly, the financial calendar is usually a small feature of a huge library, as [quantlib](quantlib.org), for example, and some users, including myself, don't want to put a hand in such a huge library only to use the financial calendar.
 
-**bizdays** is a pure Python relying on its simplicity and the
+**bizdays** is a pure Python module relying on its simplicity and the
 power of Python's batteries.
 bizdays computes business days between two dates and
 other collateral effects, like adjust a given date for the next or previous
