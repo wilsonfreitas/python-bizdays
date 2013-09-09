@@ -33,8 +33,7 @@ or
 
 ## Using
 
-Business days calculations are done for a given calendar specification. The
-calendar specification is a `.cal` file containing the weekdays to be
+Business days calculations are done for a given calendar specification. Calendar specification is a `.cal` file containing the weekdays to be
 considered as non-business days and a iso-formated list of dates representing
 holidays. Here follows an example:
 
@@ -44,12 +43,13 @@ holidays. Here follows an example:
 	2013-01-01
 
 Let's suppose that file is named `Test.cal`.
-So, that file specifies the `Test` calendar.
+So, that file specifies a calendar named `Test`.
 To create that calendar you need to instanciate the class `Calendar` providing the calendar's name.
 
 	cal = Calendar('Test')
 
-Important: the dates inside file must be ISO-formated (`YYYY-mm-dd` or `%Y-%m-%d`).
+Important 1: the dates inside file must be ISO-formated (`YYYY-mm-dd` or `%Y-%m-%d`). 
+Important 2: The calendar has `startdate` and `enddate`, which are the first day of the first date's year and the last day of the last date's year, respectively. So, for the example we would have, `startdate=2012-01-01` and `enddate=2013-12-31`.
 
 To compute the business days between two dates you call `bizdays` passing a tuple with the dates defining the period you are interested in (*from* and *to* dates).
 
