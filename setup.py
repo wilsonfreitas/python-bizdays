@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="bizdays",
-      version="0.1.1",
+      version="0.1.2",
       py_modules=['bizdays'],
       author='Wilson Freitas',
       author_email='wilson.freitas@gmail.com',
