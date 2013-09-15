@@ -102,9 +102,9 @@ class Calendar(object):
 		dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).'''
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
-		d1 = self.__next_bizday(d1)
+		d1 = self.__adjust_next(d1)
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
-		d2 = self.__previous_bizday(d2)
+		d2 = self.__adjust_previous(d2)
 		if d1 > d2:
 			raise ValueError("The first date must be before the second.")
 		return self._index[d2][0] - self._index[d1][0]
@@ -127,7 +127,7 @@ class Calendar(object):
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return not self._index[dt][2]
 	
-	def __next_bizday(self, dt):
+	def __adjust_next(self, dt):
 		d1 = timedelta(1)
 		while self._index[dt][2]:
 			dt += d1
@@ -139,9 +139,9 @@ class Calendar(object):
 		dt is a string ISO-formated date (%%Y-%%m-%%d).
 		"""
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
-		return self.__next_bizday(dt).isoformat()
+		return self.__adjust_next(dt).isoformat()
 	
-	def __previous_bizday(self, dt):
+	def __adjust_previous(self, dt):
 		d1 = timedelta(1)
 		while self._index[dt][2]:
 			dt -= d1
@@ -153,7 +153,7 @@ class Calendar(object):
 		dt is a string ISO-formated date (%%Y-%%m-%%d).
 		"""
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
-		return self.__previous_bizday(dt).isoformat()
+		return self.__adjust_previous(dt).isoformat()
 	
 	def seq(self, dates):
 		'''Returns a sequence generator which generates business days between
@@ -166,9 +166,28 @@ class Calendar(object):
 		_to = datetime.strptime(_to, '%Y-%m-%d').date()
 		if _from > _to:
 			raise ValueError("The first date must be before the second.")
-		_from = self.__next_bizday(_from)
+		_from = self.__adjust_next(_from)
 		while _from <= _to:
 			yield _from.isoformat()
-			_from = self.__next_bizday(_from + d1)
+			_from = self.__adjust_next(_from + d1)
 
+	def offset(self, dt, n):	
+		"""
+		Offsets the given date by n days
+		"""
+		if n >= 0:
+			d1 = timedelta(1)
+			adjust = lambda d: self.__adjust_next(d)
+			dt = adjust(datetime.strptime(dt, '%Y-%m-%d').date())
+		else:
+			d1 = timedelta(-1)
+			adjust = lambda d: self.__adjust_previous(d)
+			dt = adjust(datetime.strptime(dt, '%Y-%m-%d').date())
+			n = abs(n)
+		i = 0
+		while i < n:
+			dt += d1
+			dt = adjust(dt)
+			i += 1
+		return dt.isoformat()
 

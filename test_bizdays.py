@@ -60,6 +60,7 @@ class TestCalendar(unittest.TestCase):
 		"""next_bizday calculations"""
 		cal = Calendar('Test')
 		self.assertEqual(cal.adjust_next('2001-01-01'), '2001-01-02')
+		self.assertEqual(cal.adjust_next('2001-01-02'), '2001-01-02')
 		
 	def test_Calendar_previous_bizday(self):
 		"""previous_bizday calculations"""
@@ -79,7 +80,19 @@ class TestCalendar(unittest.TestCase):
 		seq = cal.seq(('2013-01-01', '2013-01-01'))
 		with self.assertRaises(StopIteration):
 			seq.next()
+			
+	def test_Calendar_offset(self):
+		"""it should offset the given date by n days (forward or backward)"""
+		cal = Calendar('Test')
+		self.assertEqual(cal.offset('2013-01-02', 1), '2013-01-03')
+		self.assertEqual(cal.offset('2013-01-02', 3), '2013-01-07')
+		self.assertEqual(cal.offset('2013-01-01', 1), '2013-01-03')
+		self.assertEqual(cal.offset('2013-01-01', 0), '2013-01-02')
+		self.assertEqual(cal.offset('2013-01-02', 0), '2013-01-02')
+		self.assertEqual(cal.offset('2013-01-02', -1), '2012-12-31')
+		self.assertEqual(cal.offset('2013-01-02', -3), '2012-12-27')
+		self.assertEqual(cal.offset('2013-01-01', -1), '2012-12-28')
 
 
 if __name__ == '__main__':
-	unittest.main(verbosity=2)
+	unittest.main(verbosity=1)
