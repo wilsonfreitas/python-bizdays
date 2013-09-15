@@ -5,6 +5,11 @@ from datetime import date
 from bizdays import *
 
 class TestCalendar(unittest.TestCase):
+	def testCalendar_name(self):
+		"it should check the calendar's name"
+		cal = Calendar('Test')
+		self.assertEqual(cal.name, 'Test')
+	
 	def testCalendar(self):
 		'calendar instanciation'
 		with self.assertRaises(Exception):

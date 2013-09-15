@@ -36,6 +36,7 @@ class Calendar(object):
 		else:
 			self._enddate = date(self._holidays[-1].year, 12, 31)
 		
+		self._name = cal
 		self._index = {}
 		d1 = timedelta(1)
 		dt = self._startdate
@@ -48,6 +49,11 @@ class Calendar(object):
 			if not is_hol:
 				w += 1
 			dt += d1
+
+	def __get_name(self):
+		"""returns the calendar's name"""
+		return self._name
+	name = property(__get_name)
 	
 	def __get_startdate(self):
 		return self._startdate
