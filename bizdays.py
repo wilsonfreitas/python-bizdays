@@ -25,10 +25,16 @@ class Calendar(object):
 	'''
 	_weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 		 'Saturday', 'Sunday')
-	def __init__(self, cal):
+	def __init__(self, cal, startdate=None, enddate=None):
 		self._read_cal(cal)
-		self._startdate = date(self._holidays[0].year, 1, 1)
-		self._enddate = date(self._holidays[-1].year, 12, 31)
+		if startdate:
+			self._startdate = datetime.strptime(startdate, '%Y-%m-%d').date()
+		else:
+			self._startdate = date(self._holidays[0].year, 1, 1)
+		if enddate:
+			self._enddate = datetime.strptime(enddate, '%Y-%m-%d').date()
+		else:
+			self._enddate = date(self._holidays[-1].year, 12, 31)
 		
 		self._index = {}
 		d1 = timedelta(1)

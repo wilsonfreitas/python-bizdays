@@ -19,6 +19,12 @@ class TestCalendar(unittest.TestCase):
 		self.assertEqual(date(2001, 1, 1) in cal.holidays, True)
 		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
 		self.assertEqual(cal.index[cal.enddate], (3388, 4748, False))
+		cal = Calendar('Test', enddate='2013-01-05')
+		self.assertEqual(cal.enddate.isoformat(), '2013-01-05')
+		self.assertEqual(cal.index[cal.enddate], (3132, 4388, True))
+		cal = Calendar('Test', startdate='2000-01-01')
+		self.assertEqual(cal.startdate.isoformat(), '2000-01-01')
+		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
 		
 	def test_Calendar_big_calendar_load_and_bizdays(self):
 		'loading a big calendar and computing bizdays between 2 dates'
