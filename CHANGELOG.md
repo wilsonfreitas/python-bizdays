@@ -1,8 +1,8 @@
 
 ### version 0.1.2 (2013-09-15)
 
-* Calendar's offset method implemented
-* Calendar's read-only attribute name implemented
+* Calendar's `offset` method implemented
+* Calendar's read-only attribute `name` implemented
 * Calendar's constructor receives startdate and enddate as optional parameters
 
 ### version 0.1.1 (2013-09-04)
