@@ -11,22 +11,44 @@ holidays. It follows an example::
 
 Classes:
 	Calendar
+	CalendarSpec
+Functions:
+	create_date_index
 '''
 
 import os
 from datetime import datetime, date, timedelta
 import re
 
+def create_date_index(holidays, startdate, enddate, weekdays):
+	""" This function returns the date index.
+	The date index accumulates the amount of business days.
+	This can be used to speed up the amount of business days between 2 dates.
+	Once each date is index the amount of business days between 2 dates is
+	fairly obtained by the subtraction of the respective index value for 
+	each date."""
+	_index = {}
+	d1 = timedelta(1)
+	dt = startdate
+	w = c = 1
+	while dt <= enddate:
+		is_hol = dt in holidays or dt.weekday() in weekdays
+		_index[dt] = (w, c, is_hol)
+		c += 1
+		if not is_hol:
+			w += 1
+		dt += d1
+	return _index
+
+
 class Calendar(object):
-	''' Calendar class to compute business days accordingly a given
-	calendar's specification. The specification has the weekdays which aren't
-	business days (usually known as weekend) and a list of holidays
-	(or non-business days).
+	''' Calendar class to compute business days accordingly a list of holidays.
 	'''
 	_weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 		 'Saturday', 'Sunday')
-	def __init__(self, cal, startdate=None, enddate=None):
-		self._read_cal(cal)
+	def __init__(self, holidays=None, startdate=None, enddate=None, weekdays=('Saturday', 'Sunday')):
+		self._holidays = holidays or []
+		self._nonwork_weekdays = [self._weekdays.index(wd) for wd in weekdays]
 		if startdate:
 			self._startdate = datetime.strptime(startdate, '%Y-%m-%d').date()
 		else:
@@ -36,24 +58,12 @@ class Calendar(object):
 		else:
 			self._enddate = date(self._holidays[-1].year, 12, 31)
 		
-		self._name = cal
-		self._index = {}
-		d1 = timedelta(1)
-		dt = self._startdate
-		w = c = 1
-		while dt <= self._enddate:
-			is_hol = dt in self._holidays or dt.weekday() in \
-				self._nonwork_weekdays
-			self._index[dt] = (w, c, is_hol)
-			c += 1
-			if not is_hol:
-				w += 1
-			dt += d1
-
-	def __get_name(self):
-		"""returns the calendar's name"""
-		return self._name
-	name = property(__get_name)
+		self._index = create_date_index(self._holidays, self._startdate, 
+			self._enddate, self._nonwork_weekdays)
+	
+	def __get_weekdays(self):
+		return self._nonwork_weekdays
+	weekdays = property(__get_weekdays)
 	
 	def __get_startdate(self):
 		return self._startdate
@@ -70,32 +80,6 @@ class Calendar(object):
 	def __get_index(self):
 		return self._index
 	index = property(__get_index)
-	
-	def __eq__(self, other):
-		return self.startdate == other.startdate and \
-			self.enddate == other.enddate and \
-			self._cal_spec == other._cal_spec
-	
-	def _read_cal(self, cal):
-		fname = cal + '.cal'
-		if not os.path.exists(fname):
-			raise Exception('Invalid calendar specification: \
-			file not found (%s)' % fname)
-		self._cal_spec = cal
-		fcal = open(fname)
-		w = '|'.join(self._weekdays)
-		self._holidays = []
-		self._nonwork_weekdays = []
-		for cal_reg in fcal:
-			cal_reg = cal_reg.strip()
-			if cal_reg is '': continue
-			m = re.match('^%s$' % w, cal_reg)
-			if m:
-				self._nonwork_weekdays.append(self._weekdays.index(cal_reg))
-			else:
-				dt = datetime.strptime(cal_reg, '%Y-%m-%d').date()
-				self._holidays.append(dt)
-		fcal.close()
 	
 	def bizdays(self, dates):
 		'''Returns the number of business days between 2 dates. 
@@ -190,4 +174,43 @@ class Calendar(object):
 			dt = adjust(dt)
 			i += 1
 		return dt.isoformat()
+
+class CalendarSpec(Calendar):
+	''' CalendarSpec class to compute business days accordingly a given
+	calendar's specification. The specification has the weekdays which aren't
+	business days (usually known as weekend) and a list of holidays
+	(or non-business days).
+	'''
+	def __init__(self, cal, startdate=None, enddate=None):
+		fname = cal + '.cal'
+		if not os.path.exists(fname):
+			raise Exception('Invalid calendar specification: \
+			file not found (%s)' % fname)
+		self._cal_spec = cal
+		fcal = open(fname)
+		w = '|'.join(self._weekdays)
+		_holidays = []
+		_nonwork_weekdays = []
+		for cal_reg in fcal:
+			cal_reg = cal_reg.strip()
+			if cal_reg is '': continue
+			m = re.match('^%s$' % w, cal_reg)
+			if m:
+				_nonwork_weekdays.append(cal_reg)
+				# _nonwork_weekdays.append(self._weekdays.index(cal_reg))
+			else:
+				dt = datetime.strptime(cal_reg, '%Y-%m-%d').date()
+				_holidays.append(dt)
+		fcal.close()
+		super(CalendarSpec, self).__init__(_holidays, startdate, enddate, _nonwork_weekdays)
+	
+	def __eq__(self, other):
+		return self.startdate == other.startdate and \
+			self.enddate == other.enddate and \
+			self._cal_spec == other._cal_spec
+	
+	def __get_name(self):
+		return self._cal_spec
+	name = property(__get_name)
+	
 

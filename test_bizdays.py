@@ -5,35 +5,50 @@ from datetime import date
 from bizdays import *
 
 class TestCalendar(unittest.TestCase):
-	def testCalendar_name(self):
+	def testCalendar_instanciate(self):
+		'it should instanciate the calendar'
+		cal = Calendar(startdate='2013-01-01', enddate='2013-12-31', weekdays=('Saturday', 'Sunday'))
+		self.assertEqual(cal.startdate.isoformat(), '2013-01-01')
+		self.assertEqual(cal.enddate.isoformat(), '2013-12-31')
+		self.assertEqual(cal.weekdays, ('Saturday', 'Sunday'))
+	
+	def testCalendar_instanciate(self):
+		'it should return the amount of business days'
+		cal = Calendar(startdate='2013-01-01', enddate='2013-12-31')
+		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-02')), 1)
+		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-05')), 3)
+		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-06')), 3)
+		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-07')), 4)
+	
+	def testCalendarSpec_name(self):
 		"it should check the calendar's name"
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		self.assertEqual(cal.name, 'Test')
 	
-	def testCalendar(self):
+	def testCalendarSpec(self):
 		'calendar instanciation'
 		with self.assertRaises(Exception):
-			Calendar('AAA')
+			CalendarSpec('AAA')
 		with self.assertRaises(Exception):
-			Calendar('calAAA')
-		cal = Calendar('Test')
-		self.assertEqual(cal, Calendar('Test'))
+			CalendarSpec('calAAA')
+		cal = CalendarSpec('Test')
+		self.assertEqual(cal, CalendarSpec('Test'))
 		self.assertEqual(cal.startdate.isoformat(), '2001-01-01')
 		self.assertEqual(cal.enddate.isoformat(), '2013-12-31')
 		self.assertEqual(len(cal.holidays), 4)
 		self.assertEqual(date(2001, 1, 1) in cal.holidays, True)
 		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
 		self.assertEqual(cal.index[cal.enddate], (3388, 4748, False))
-		cal = Calendar('Test', enddate='2013-01-05')
+		cal = CalendarSpec('Test', enddate='2013-01-05')
 		self.assertEqual(cal.enddate.isoformat(), '2013-01-05')
 		self.assertEqual(cal.index[cal.enddate], (3132, 4388, True))
-		cal = Calendar('Test', startdate='2000-01-01')
+		cal = CalendarSpec('Test', startdate='2000-01-01')
 		self.assertEqual(cal.startdate.isoformat(), '2000-01-01')
 		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
 		
-	def test_Calendar_big_calendar_load_and_bizdays(self):
+	def test_CalendarSpec_big_calendar_load_and_bizdays(self):
 		'loading a big calendar and computing bizdays between 2 dates'
-		cal = Calendar('ANBIMA')
+		cal = CalendarSpec('ANBIMA')
 		days = cal.bizdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(0, days, 'Wrong business days amount')
 		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-31')), 21)
@@ -43,33 +58,33 @@ class TestCalendar(unittest.TestCase):
 		self.assertEqual(cal.bizdays(('2002-07-12', '2002-07-22')), 6)
 		self.assertEqual(cal.bizdays(('2012-12-31', '2013-01-03')), 2)
 	
-	def test_Calendar_currentdays(self):
+	def test_CalendarSpec_currentdays(self):
 		'calendar count of currentdays'
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		days = cal.currentdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(1, days, 'Wrong current days amount')
 	
-	def test_Calendar_isbizday(self):
+	def test_CalendarSpec_isbizday(self):
 		'calendar count of currentdays'
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		self.assertEqual(cal.isbizday('2002-01-01'), False) # New year
 		self.assertEqual(cal.isbizday('2002-01-02'), True)  # First bizday
 		self.assertEqual(cal.isbizday('2002-01-05'), False) # Saturday
 	
-	def test_Calendar_next_bizday(self):
+	def test_CalendarSpec_next_bizday(self):
 		"""next_bizday calculations"""
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		self.assertEqual(cal.adjust_next('2001-01-01'), '2001-01-02')
 		self.assertEqual(cal.adjust_next('2001-01-02'), '2001-01-02')
 		
-	def test_Calendar_previous_bizday(self):
+	def test_CalendarSpec_previous_bizday(self):
 		"""previous_bizday calculations"""
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		self.assertEqual(cal.adjust_previous('2001-08-12'), '2001-08-10')
 	
-	def test_Calendar_seq(self):
+	def test_CalendarSpec_seq(self):
 		'''sequence generator of bizdays'''
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		seq = cal.seq(('2013-01-01', '2013-01-05'))
 		dts = ('2013-01-02', '2013-01-03', '2013-01-04')
 		for i, dt in enumerate(seq):
@@ -81,9 +96,9 @@ class TestCalendar(unittest.TestCase):
 		with self.assertRaises(StopIteration):
 			seq.next()
 			
-	def test_Calendar_offset(self):
+	def test_CalendarSpec_offset(self):
 		"""it should offset the given date by n days (forward or backward)"""
-		cal = Calendar('Test')
+		cal = CalendarSpec('Test')
 		self.assertEqual(cal.offset('2013-01-02', 1), '2013-01-03')
 		self.assertEqual(cal.offset('2013-01-02', 3), '2013-01-07')
 		self.assertEqual(cal.offset('2013-01-01', 1), '2013-01-03')
