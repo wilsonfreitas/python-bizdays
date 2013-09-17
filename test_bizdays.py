@@ -12,13 +12,18 @@ class TestCalendar(unittest.TestCase):
 		self.assertEqual(cal.enddate.isoformat(), '2013-12-31')
 		self.assertEqual(cal.weekdays, ('Saturday', 'Sunday'))
 	
-	def testCalendar_instanciate(self):
+	def testCalendar_bizdays(self):
 		'it should return the amount of business days'
 		cal = Calendar(startdate='2013-01-01', enddate='2013-12-31')
 		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-02')), 1)
 		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-05')), 3)
 		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-06')), 3)
 		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-07')), 4)
+	
+	def testCalendar_consistency_check(self):
+		'it should compare bizdays and currentdays'
+		cal = Calendar(startdate='2013-01-01', enddate='2013-12-31', weekdays=[])
+		self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-06')), cal.currentdays(('2013-01-01', '2013-01-06')))
 	
 	def testCalendarSpec_name(self):
 		"it should check the calendar's name"

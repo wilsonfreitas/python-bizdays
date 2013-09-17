@@ -62,7 +62,7 @@ class Calendar(object):
 			self._enddate, self._nonwork_weekdays)
 	
 	def __get_weekdays(self):
-		return self._nonwork_weekdays
+		return tuple( self._weekdays[nwd] for nwd in self._nonwork_weekdays )
 	weekdays = property(__get_weekdays)
 	
 	def __get_startdate(self):
