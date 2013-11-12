@@ -44,12 +44,19 @@ holidays. Here follows an example:
 
 Let's suppose that file is named `Test.cal`.
 So, that file specifies a calendar named `Test`.
-To create that calendar you need to instanciate the class `Calendar` providing the calendar's name.
+To create that calendar you need to instanciate the class `CalendarSpec` providing the calendar's name.
 
-	cal = Calendar('Test')
+	cal = CalendarSpec('Test')
 
 Important 1: the dates inside file must be ISO-formated (`YYYY-mm-dd` or `%Y-%m-%d`). 
-Important 2: The calendar has `startdate` and `enddate`, which are the first day of the first date's year and the last day of the last date's year, respectively. So, for the example we would have, `startdate=2012-01-01` and `enddate=2013-12-31`.
+Important 2: The calendar has `startdate` and `enddate`, which are defined as the first day of the first date's year and the last day of the last date's year, respectively. So that, for the example we would have, `startdate=2012-01-01` and `enddate=2013-12-31`.
+
+Another way to create a calendar is instanciating `Calendar` directly providing `startdate`, `enddate`, a list of `holidays` and `weekdays` that will be considered non-working days.
+
+	crazyCal = Calendar(holidays, startdate='2013-01-01', enddate='2013-12-31',
+		weekdays=('Monday', 'Tuesday'))
+
+The `holidays` list must be a list of `datetime.date` objects.
 
 ### bizdays
 
