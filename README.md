@@ -1,3 +1,5 @@
+![downloads](https://pypip.in/download/bizdays/badge.png)
+
 # bizdays
 
 In several countries and markets, the accountability of the price of a financial
