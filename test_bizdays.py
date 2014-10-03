@@ -15,15 +15,15 @@ class TestCalendar(unittest.TestCase):
     def testCalendar_bizdays(self):
         'it should return the amount of business days'
         cal = Calendar(startdate='2013-01-01', enddate='2013-12-31')
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-02')), 1)
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-05')), 3)
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-06')), 3)
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-07')), 4)
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-02'), 1)
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-05'), 3)
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-06'), 3)
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-07'), 4)
     
     def testCalendar_consistency_check(self):
         'it should compare bizdays and currentdays'
         cal = Calendar(startdate='2013-01-01', enddate='2013-12-31', weekdays=[])
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-06')), cal.currentdays(('2013-01-01', '2013-01-06')))
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-06'), cal.currentdays(('2013-01-01', '2013-01-06')))
     
     def testCalendarSpec_name(self):
         "it should check the calendar's name"
@@ -54,14 +54,14 @@ class TestCalendar(unittest.TestCase):
     def test_CalendarSpec_big_calendar_load_and_bizdays(self):
         'loading a big calendar and computing bizdays between 2 dates'
         cal = CalendarSpec('ANBIMA')
-        days = cal.bizdays(('2002-01-01', '2002-01-02'))
+        days = cal.bizdays('2002-01-01', '2002-01-02')
         self.assertEqual(0, days, 'Wrong business days amount')
-        self.assertEqual(cal.bizdays(('2013-01-01', '2013-01-31')), 21)
-        self.assertEqual(cal.bizdays(('2013-01-01', '2014-01-01')), 252)
-        self.assertEqual(cal.bizdays(('2014-01-01', '2015-01-01')), 252)
-        self.assertEqual(cal.bizdays(('2013-08-21', '2013-08-24')), 2)
-        self.assertEqual(cal.bizdays(('2002-07-12', '2002-07-22')), 6)
-        self.assertEqual(cal.bizdays(('2012-12-31', '2013-01-03')), 2)
+        self.assertEqual(cal.bizdays('2013-01-01', '2013-01-31'), 21)
+        self.assertEqual(cal.bizdays('2013-01-01', '2014-01-01'), 252)
+        self.assertEqual(cal.bizdays('2014-01-01', '2015-01-01'), 252)
+        self.assertEqual(cal.bizdays('2013-08-21', '2013-08-24'), 2)
+        self.assertEqual(cal.bizdays('2002-07-12', '2002-07-22'), 6)
+        self.assertEqual(cal.bizdays('2012-12-31', '2013-01-03'), 2)
     
     def test_CalendarSpec_currentdays(self):
         'calendar count of currentdays'

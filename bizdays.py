@@ -41,6 +41,30 @@ def create_date_index(holidays, startdate, enddate, weekdays):
     return _index
 
 
+class asdate(object):
+    def __init__(self, d=None, format='%Y-%m-%d'):
+        d = d if d else date.today()
+        if type(d) in (str, unicode):
+            d = datetime.strptime(d, format).date()
+        elif type(d) is datetime:
+            d = d.date()
+        elif type(d) is asdate:
+            d = d.date
+        elif type(d) is date:
+            pass
+        else:
+            raise ValueError()
+        self.date = d
+    
+    def format(self, fmts='%Y-%m-%d'):
+        return datetime.strftime(self.date, fmts)
+    
+    def __repr__(self):
+        return self.format()
+    
+    __str__ = __repr__
+
+
 class Calendar(object):
     ''' Calendar class to compute business days accordingly a list of holidays.
     '''
@@ -81,10 +105,10 @@ class Calendar(object):
         return self._index
     index = property(__get_index)
     
-    def bizdays(self, dates):
+    def bizdays(self, date_from, date_to):
         '''Returns the number of business days between 2 dates. 
         dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).'''
-        d1, d2 = dates
+        d1, d2 = date_from, date_to
         d1 = datetime.strptime(d1, '%Y-%m-%d').date()
         d1 = self.__adjust_next(d1)
         d2 = datetime.strptime(d2, '%Y-%m-%d').date()
