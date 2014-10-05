@@ -11,9 +11,8 @@ holidays. It follows an example::
 
 Classes:
     Calendar
-    CalendarSpec
-Functions:
-    create_date_index
+    Date
+    DateIndex
 '''
 
 import os
