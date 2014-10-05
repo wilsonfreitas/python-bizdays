@@ -27,7 +27,7 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.enddate.isoformat(), '2013-01-01')
         self.assertEqual(cal.isbizday('2001-01-02'), True)
     
-    def test_CalendarSpec_big_calendar_load_and_bizdays(self):
+    def test_Calendar_big_calendar_load_and_bizdays(self):
         'loading a big calendar and computing bizdays between 2 dates'
         cal = Calendar.load('ANBIMA.cal')
         days = cal.bizdays('2002-01-01', '2002-01-02')
@@ -39,20 +39,20 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.bizdays('2002-07-12', '2002-07-22'), 6)
         self.assertEqual(cal.bizdays('2012-12-31', '2013-01-03'), 2)
     
-    def test_CalendarSpec_isbizday(self):
+    def test_Calendar_isbizday(self):
         'calendar count of currentdays'
         cal = Calendar.load('Test.cal')
         self.assertEqual(cal.isbizday('2002-01-01'), False) # New year
         self.assertEqual(cal.isbizday('2002-01-02'), True)  # First bizday
         self.assertEqual(cal.isbizday('2002-01-05'), False) # Saturday
     
-    def test_CalendarSpec_next_bizday(self):
+    def test_Calendar_next_bizday(self):
         """next_bizday calculations"""
         cal = Calendar.load('Test.cal')
         self.assertEqual(cal.adjust_next('2001-01-01').isoformat(), '2001-01-02')
         self.assertEqual(cal.adjust_next('2001-01-02').isoformat(), '2001-01-02')
     
-    def test_CalendarSpec_previous_bizday(self):
+    def test_Calendar_previous_bizday(self):
         """previous_bizday calculations"""
         cal = Calendar.load('Test.cal')
         self.assertEqual(cal.adjust_previous('2001-08-12').isoformat(), '2001-08-10')
