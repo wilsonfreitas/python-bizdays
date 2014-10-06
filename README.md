@@ -43,7 +43,7 @@ cal = Calendar(holidays, ['Sunday', 'Saturday'])
 ```
 
 where `holidays` is a sequence of dates which represents nonworking dates and the second argument, `weekdays`, is a sequence with nonworking weekdays.
-`holidays` must a sequence of strings with ISO formated dates or `datetime.date` objects and `weekdays` a sequence of weekdays in words.
+`holidays` must a sequence of strings with ISO formatted dates or `datetime.date` objects and `weekdays` a sequence of weekdays in words.
 
 Once you have a `Calendar` you can
 
@@ -74,12 +74,12 @@ In this example I used the list of holidays released by [ANBIMA](http://www.anbi
 
 > **Important note on date arguments and returning dates**
 > 
-> As you can see in the examples all date arguments are strings ISO formated (`YYYY-mm-dd` or `%Y-%m-%d`), but they can also be passed as `datetime.date` objects.
+> As you can see in the examples all date arguments are strings ISO formatted (`YYYY-mm-dd` or `%Y-%m-%d`), but they can also be passed as `datetime.date` objects.
 > All returning dates are `datetime.date` objects (or a sequence of it).
 
 ### Calendar Specification
 
-Calendar specification is a `.cal` file containing the weekdays to be considered as nonworking days and a ISO formated list of dates representing holidays.
+Calendar specification is a `.cal` file containing the weekdays to be considered as nonworking days and a ISO formatted list of dates representing holidays.
 Here it follows an example called `Test.cal`:
 
 	Saturday
