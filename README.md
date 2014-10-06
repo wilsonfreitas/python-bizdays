@@ -74,7 +74,8 @@ In this example I used the list of holidays released by [ANBIMA](http://www.anbi
 
 > **Important note on date arguments and returning dates**
 > 
-> As you can see in the examples all date arguments are strings ISO formated (`YYYY-mm-dd` or `%Y-%m-%d`) and all returning dates are `datetime.date` objects (or a sequence of it).
+> As you can see in the examples all date arguments are strings ISO formated (`YYYY-mm-dd` or `%Y-%m-%d`), but they can also be passed as `datetime.date` objects.
+> All returning dates are `datetime.date` objects (or a sequence of it).
 
 ### Calendar Specification
 
