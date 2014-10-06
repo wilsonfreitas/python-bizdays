@@ -168,7 +168,7 @@ class Calendar(object):
             yield _from.date
             _from = self.__adjust_next(_from.date + d1)
     
-    def offset(self, dt, n):    
+    def offset(self, dt, n):
         """
         Offsets the given date by n days
         """
