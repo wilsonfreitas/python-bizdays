@@ -194,16 +194,17 @@ class Calendar(object):
         if not os.path.exists(fname):
             raise Exception('Invalid calendar specification: \
             file not found (%s)' % fname)
-        w = '|'.join(cls._weekdays)
+        w = '|'.join( w.lower() for w in cls._weekdays )
+        wre = '^%s$' % w
         _holidays = []
         _nonwork_weekdays = []
         with open(fname) as fcal:
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
                 if cal_reg is '': continue
-                if re.match('^%s$' % w, cal_reg):
+                if re.match(wre, cal_reg.lower()):
                     _nonwork_weekdays.append(cal_reg)
-                else:
+                elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
         return Calendar(_holidays, weekdays=_nonwork_weekdays)
 
