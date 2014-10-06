@@ -12,6 +12,11 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.enddate.isoformat(), '2013-12-31')
         self.assertEqual(cal.weekdays, ('Saturday', 'Sunday'))
     
+    def testCalendar_weekdays_case_sensitive(self):
+        'it should check if weekdays definition is case sensitive'
+        cal = Calendar(startdate='2013-01-01', enddate='2013-12-31', weekdays=('saturday', 'sunday'))
+        self.assertEqual(cal.weekdays, ('Saturday', 'Sunday'))
+    
     def testCalendar_bizdays(self):
         'it should return the amount of business days'
         cal = Calendar(startdate='2013-01-01', enddate='2013-12-31')

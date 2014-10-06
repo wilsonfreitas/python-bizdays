@@ -83,7 +83,7 @@ class Calendar(object):
                        adjust_from='next', adjust_to='previous'):
         self.name = name
         self._holidays = [Date(d) for d in holidays]
-        self._nonwork_weekdays = [self._weekdays.index(wd) for wd in weekdays]
+        self._nonwork_weekdays = [[w.lower() for w in self._weekdays].index(wd.lower()) for wd in weekdays]
         if len(self._holidays):
             self._startdate = min(self._holidays)
             self._enddate = max(self._holidays)
