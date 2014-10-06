@@ -79,7 +79,7 @@ class Calendar(object):
     ''' Calendar class to compute business days accordingly a list of holidays.
     '''
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-    def __init__(self, holidays=[], startdate='1970-01-01', enddate='2071-01-01', weekdays=[], name=None,
+    def __init__(self, holidays=[], weekdays=[], startdate='1970-01-01', enddate='2071-01-01', name=None,
                        adjust_from='next', adjust_to='previous'):
         self.name = name
         self._holidays = [Date(d) for d in holidays]
