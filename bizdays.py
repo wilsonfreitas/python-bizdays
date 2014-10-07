@@ -227,6 +227,14 @@ class Calendar(object):
         return self.startdate == other.startdate and \
             self.enddate == other.enddate and \
             self._cal_spec == other._cal_spec
+    
+    def __str__(self):
+        return '''Calendar: {0}
+Start: {1}
+End: {2}
+Holidays: {3}'''.format(self.name, self.startdate, self.enddate, len(self._holidays))
+    
+    __repr__ = __str__
 
 
 class VectorizedOps(object):
