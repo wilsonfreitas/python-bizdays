@@ -211,7 +211,7 @@ class Calendar(object):
         return Calendar(_holidays, weekdays=_nonwork_weekdays)
 
     @staticmethod
-    def load_holidays(fname):
+    def load_holidays(fname, format='%Y-%m-%d'):
         if not os.path.exists(fname):
             raise Exception('Invalid calendar specification: \
             file not found (%s)' % fname)
@@ -220,7 +220,7 @@ class Calendar(object):
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
                 if cal_reg is '': continue
-                _holidays.append(Date(cal_reg).date)
+                _holidays.append(Date(cal_reg, format=format).date)
         return _holidays
     
     def __eq__(self, other):
