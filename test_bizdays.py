@@ -88,6 +88,32 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.offset('2012-01-02', -1).isoformat(), '2011-12-30')
         self.assertEqual(cal.offset('2012-01-02', -3).isoformat(), '2011-12-28')
         self.assertEqual(cal.offset('2012-01-01', -1).isoformat(), '2011-12-29')
+    
+    def test_Vectorized_operations_isbizday(self):
+        'it should check in a vector of dates which are bizdays'
+        cal = Calendar.load('Test.cal')
+        dates = ('2002-01-01', '2002-01-02')
+        self.assertEqual(list(cal.vec.isbizday(dates)), [False, True])
+    
+    def test_Vectorized_operations_bizdays(self):
+        'it should compute bizdays for many dates at once'
+        cal = Calendar.load('Test.cal')
+        dates = ('2002-01-01', '2002-01-02', '2002-01-03')
+        self.assertEqual(list(cal.vec.bizdays(dates, '2002-01-05')), [2, 2, 1])
+        self.assertEqual(list(cal.vec.bizdays('2001-12-31', dates)), [0, 1, 2])
+    
+    def test_Vectorized_operations_adjust_dates(self):
+        'it should adjust (next or previous) many days at once'
+        cal = Calendar.load('Test.cal')
+        dates = ('2002-01-01', '2002-01-02', '2002-01-03')
+        self.assertEqual(tuple(d.isoformat() for d in cal.vec.adjust_next(dates)), ('2002-01-02', '2002-01-02', '2002-01-03'))
+        self.assertEqual(tuple(d.isoformat() for d in cal.vec.adjust_previous(dates)), ('2001-12-31', '2002-01-02', '2002-01-03'))
+    
+    def test_Vectorized_operations_offset(self):
+        'it should offset many days at once'
+        cal = Calendar.load('Test.cal')
+        dates = ('2002-01-01', '2002-01-02', '2002-01-03')
+        self.assertEqual(tuple(d.isoformat() for d in cal.vec.offset(dates, 1)), ('2002-01-03', '2002-01-03', '2002-01-04'))
 
 
 if __name__ == '__main__':

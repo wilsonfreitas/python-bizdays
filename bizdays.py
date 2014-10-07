@@ -16,8 +16,9 @@ Classes:
 '''
 
 import os
-from datetime import datetime, date, timedelta
 import re
+from datetime import datetime, date, timedelta
+from itertools import izip, cycle
 
 class DateIndex(object):
     def __init__(self, holidays, startdate, enddate, weekdays):
@@ -91,6 +92,7 @@ class Calendar(object):
             self._startdate = Date(startdate)
             self._enddate = Date(enddate)
         self._index = DateIndex(self._holidays, self._startdate, self._enddate, self._nonwork_weekdays)
+        self.vec = VectorizedOps(self)
     
     def __get_weekdays(self):
         return tuple( self._weekdays[nwd] for nwd in self._nonwork_weekdays )
@@ -227,3 +229,37 @@ class Calendar(object):
             self._cal_spec == other._cal_spec
 
 
+class VectorizedOps(object):
+    def __init__(self, calendar):
+        self.cal = calendar
+    
+    def isbizday(self, dates):
+        return (self.cal.isbizday(dt) for dt in dates)
+    
+    def bizdays(self, dates_from, dates_to):
+        if type(dates_from) in (str, unicode):
+            dates_from = [dates_from]
+        if type(dates_to) in (str, unicode):
+            dates_to = [dates_to]
+        if len(dates_from) < len(dates_to):
+            dates_from = cycle(dates_from)
+        else:
+            dates_to = cycle(dates_to)
+        return (self.cal.bizdays(_from, _to) for _from, _to in izip(dates_from, dates_to))
+    
+    def adjust_next(self, dates):
+        return ( self.cal.adjust_next(dt) for dt in dates )
+    
+    def adjust_previous(self, dates):
+        return ( self.cal.adjust_previous(dt) for dt in dates )
+    
+    def offset(self, dates, ns):
+        if type(dates) in (str, unicode):
+            dates = [dates]
+        if type(ns) in (int, long):
+            ns = [ns]
+        if len(dates) < len(ns):
+            dates = cycle(dates)
+        else:
+            ns = cycle(ns)
+        return (self.cal.offset(dt, n) for dt, n in izip(dates, ns))
