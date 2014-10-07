@@ -1,19 +1,3 @@
-'''Business days calculations and utilities for a given calendar specification.
-The calendar specification is a .cal file containing the weekdays to be 
-considered as non-business days and a iso-formated list of dates representing
-holidays. It follows an example::
-
-    Saturday
-    Sunday
-    2001-01-01
-    2002-01-01
-    2013-01-01
-
-Classes:
-    Calendar
-    Date
-    DateIndex
-'''
 
 import os
 import re
@@ -77,8 +61,6 @@ class Date(object):
 
 
 class Calendar(object):
-    ''' Calendar class to compute business days accordingly a list of holidays.
-    '''
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     def __init__(self, holidays=[], weekdays=[], startdate='1970-01-01', enddate='2071-01-01', name=None,
                        adjust_from='next', adjust_to='previous'):
@@ -115,8 +97,6 @@ class Calendar(object):
     index = property(__get_index)
     
     def bizdays(self, date_from, date_to):
-        '''Returns the number of business days between 2 dates. 
-        dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).'''
         d1 = self.__adjust_next(date_from)
         d2 = self.__adjust_previous(date_to)
         if d1 > d2:
@@ -124,8 +104,6 @@ class Calendar(object):
         return self._index[d2][0] - self._index[d1][0]
     
     def isbizday(self, dt):
-        '''Returns True whether dt is a business day or False otherwise.
-        dt is a string ISO-formated date (%%Y-%%m-%%d).'''
         return not self._index[dt][2]
     
     def __adjust_next(self, dt):
@@ -136,10 +114,6 @@ class Calendar(object):
         return Date(dt)
         
     def adjust_next(self, dt):
-        """Returns the next business day whether the passed date isn't a
-        business day or returns the given date.
-        dt is a string ISO-formated date (%%Y-%%m-%%d).
-        """
         return self.__adjust_next(dt).date
     
     def __adjust_previous(self, dt):
@@ -150,17 +124,9 @@ class Calendar(object):
         return Date(dt)
     
     def adjust_previous(self, dt):
-        """Returns the first business day before the passed date whether
-        the given date isn't a business day or returns the given date.
-        dt is a string ISO-formated date (%%Y-%%m-%%d).
-        """
         return self.__adjust_previous(dt).date
     
     def seq(self, date_from, date_to):
-        '''Returns a sequence generator which generates business days between
-        the 2 given dates.
-        dates is a tuple with 2 strings ISO-formated dates (%%Y-%%m-%%d).
-        '''
         _from, _to = Date(date_from), Date(date_to)
         d1 = timedelta(1)
         if _from > _to:
@@ -171,9 +137,6 @@ class Calendar(object):
             _from = self.__adjust_next(_from.date + d1)
     
     def offset(self, dt, n):
-        """
-        Offsets the given date by n days
-        """
         dt = Date(dt)
         if n >= 0:
             d1 = timedelta(1)
