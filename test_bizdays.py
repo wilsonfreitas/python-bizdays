@@ -96,7 +96,7 @@ class TestCalendar(unittest.TestCase):
         'it should compute bizdays for many dates at once'
         cal = Calendar.load('Test.cal')
         dates = ('2002-01-01', '2002-01-02', '2002-01-03')
-        self.assertEqual(list(cal.vec.bizdays(dates, '2002-01-05')), [2, 2, 1])
+        self.assertEqual(list(cal.vec.bizdays(dates, Date('2002-01-05'))), [2, 2, 1])
         self.assertEqual(list(cal.vec.bizdays('2001-12-31', dates)), [0, 1, 2])
     
     def test_Vectorized_operations_adjust_dates(self):
@@ -111,6 +111,12 @@ class TestCalendar(unittest.TestCase):
         cal = Calendar.load('Test.cal')
         dates = ('2002-01-01', '2002-01-02', '2002-01-03')
         self.assertEqual(tuple(d.isoformat() for d in cal.vec.offset(dates, 1)), ('2002-01-03', '2002-01-03', '2002-01-04'))
+    
+    def test_isseq(self):
+        'it should test if an object is a sequence or not'
+        self.assertEqual(isseq('wilson'), False)
+        self.assertEqual(isseq(1), False)
+        self.assertEqual(isseq([]), True)
 
 
 if __name__ == '__main__':

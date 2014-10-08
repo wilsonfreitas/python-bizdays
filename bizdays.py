@@ -204,6 +204,16 @@ Holidays: {3}'''.format(self.name, self.startdate, self.enddate, len(self._holid
     __repr__ = __str__
 
 
+def isseq(seq):
+    if type(seq) in (str, unicode):
+        return False
+    try:
+        iter(seq)
+    except:
+        return False
+    else:
+        return True
+
 class VectorizedOps(object):
     def __init__(self, calendar):
         self.cal = calendar
@@ -212,9 +222,9 @@ class VectorizedOps(object):
         return (self.cal.isbizday(dt) for dt in dates)
     
     def bizdays(self, dates_from, dates_to):
-        if type(dates_from) in (str, unicode):
+        if not isseq(dates_from):
             dates_from = [dates_from]
-        if type(dates_to) in (str, unicode):
+        if not isseq(dates_to):
             dates_to = [dates_to]
         if len(dates_from) < len(dates_to):
             dates_from = cycle(dates_from)
@@ -223,15 +233,19 @@ class VectorizedOps(object):
         return (self.cal.bizdays(_from, _to) for _from, _to in izip(dates_from, dates_to))
     
     def adjust_next(self, dates, iso=False):
+        if not isseq(dates):
+            dates = [dates]
         return ( self.cal.adjust_next(dt, iso=iso) for dt in dates )
     
     def adjust_previous(self, dates, iso=False):
+        if not isseq(dates):
+            dates = [dates]
         return ( self.cal.adjust_previous(dt, iso=iso) for dt in dates )
     
     def offset(self, dates, ns, iso=False):
-        if type(dates) in (str, unicode):
+        if not isseq(dates):
             dates = [dates]
-        if type(ns) in (int, long):
+        if not isseq(ns):
             ns = [ns]
         if len(dates) < len(ns):
             dates = cycle(dates)
