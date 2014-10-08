@@ -73,9 +73,6 @@ class TestCalendar(unittest.TestCase):
         seq = cal.seq('2012-01-02', '2012-01-02')
         for i, dt in enumerate(seq):
             self.assertEqual(dt.isoformat(), '2012-01-02')
-        seq = cal.seq('2012-01-01', '2012-01-01')
-        with self.assertRaises(StopIteration):
-            seq.next()
     
     def test_Calendar_offset(self):
         """it should offset the given date by n days (forward or backward)"""

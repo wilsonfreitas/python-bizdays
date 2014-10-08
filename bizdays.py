@@ -75,6 +75,8 @@ class Calendar(object):
             self._enddate = Date(enddate)
         self._index = DateIndex(self._holidays, self._startdate, self._enddate, self._nonwork_weekdays)
         self.vec = VectorizedOps(self)
+        self.__adjust_from = self.__adjust_next if adjust_from == 'next' else self.__adjust_previous
+        self.__adjust_to = self.__adjust_previous if adjust_to == 'previous' else self.__adjust_next
     
     def __get_weekdays(self):
         return tuple( self._weekdays[nwd] for nwd in self._nonwork_weekdays )
@@ -97,8 +99,8 @@ class Calendar(object):
     index = property(__get_index)
     
     def bizdays(self, date_from, date_to):
-        d1 = self.__adjust_next(date_from)
-        d2 = self.__adjust_previous(date_to)
+        d1 = self.__adjust_from(date_from)
+        d2 = self.__adjust_to(date_to)
         if d1 > d2:
             raise ValueError("The first date must be before the second.")
         return self._index[d2][0] - self._index[d1][0]
@@ -127,11 +129,11 @@ class Calendar(object):
         return self.__adjust_previous(dt).date
     
     def seq(self, date_from, date_to):
-        _from, _to = Date(date_from), Date(date_to)
-        d1 = timedelta(1)
+        _from = self.__adjust_from(date_from)
+        _to = self.__adjust_to(date_to)
         if _from > _to:
             raise ValueError("The first date must be before the second.")
-        _from = self.__adjust_next(_from)
+        d1 = timedelta(1)
         while _from <= _to:
             yield _from.date
             _from = self.__adjust_next(_from.date + d1)
