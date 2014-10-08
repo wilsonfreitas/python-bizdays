@@ -101,7 +101,7 @@ End: 2013-01-01
 Holidays: 4
 ```
 
-> The `startdate` and `enddate` of a `Calendar` are defined accordingly the first and last holidays.
+> The `startdate` and `enddate` of a `Calendar` are defined accordingly the first and last given holidays.
 
 ### bizdays
 
@@ -219,7 +219,9 @@ The Calendar's methods: `isbizday`, `bizdays`, `adjust_previous`, `adjust_next`,
 >>> cal = Calendar.load('Test.cal')
 >>> dates = ('2002-01-01', '2002-01-02', '2002-01-03')
 >>> tuple(cal.vec.adjust_next(dates))
-(datetime.date(2002, 1, 2), datetime.date(2002, 1, 2), datetime.date(2002, 1, 3))
+(datetime.date(2002, 1, 2),
+ datetime.date(2002, 1, 2),
+ datetime.date(2002, 1, 3))
 >>> list(cal.vec.bizdays('2001-12-31', dates))
 [0, 1, 2]
 ```
