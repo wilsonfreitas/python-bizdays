@@ -8,19 +8,15 @@ rules to compute the way the days go by.
 In some countries, like in Brazil, several financial instrument only pay interest for business days along their life cycle.
 Therefore, having a way to compute the number of business days between 2 dates is quite useful to price the financial instruments properly.
 It is necessary the holidays which occur between the 2 dates, to compute the business days and they are intrinsically related to counties and local markets.
-In Brazil, [ANBIMA](www.anbima.com.br) disposes a file with a list of holidays up to the year of 1978 which is largely used by market practioners for pricing financial instruments.
+In Brazil, [ANBIMA](www.anbima.com.br) prepares a file with a list of holidays up to the year of 1978 which is largely used by market practioners for pricing financial instruments.
 <!-- Usually you have a list with the holidays and all you want
 is to find out the number of business days between two dates, nothing more. 
 It is necessary for pricing properly the financial instrument. -->
 Several financial libraries compute the holidays, giving no option to users set it by their own.
 Furtherly, the financial calendar is usually a small feature of a huge library, as [quantlib](quantlib.org), for example, and some users, including myself, don't want to put a hand in such a huge library only to use the financial calendar.
 
-**bizdays** is a pure Python module relying on its simplicity and the
-power of Python's batteries.
-bizdays computes business days between two dates and
-other collateral effects, like adjust a given date for the next or previous
-business day, check whether a date is a business day, creates generators of
-business days sequences, and so forth.
+**bizdays** is a pure Python module relying on its simplicity and the power of Python's batteries.
+bizdays computes business days between two dates and other collateral effects, like adjust a given date for the next or previous business day, check whether a date is a business day, creates generators of business days sequences, and so forth.
 bizdays is a module without further dependencies, what makes it appropriated for small implementations.
 
 ## Install
@@ -79,7 +75,8 @@ In this example I used the list of holidays released by [ANBIMA](http://www.anbi
 
 ### Calendar Specification
 
-Calendar specification is a `.cal` file containing the weekdays to be considered as nonworking days and a ISO formatted list of dates representing holidays.
+Calendar specification is a text file containing the weekdays to be considered as nonworking days and a ISO formatted list of dates representing holidays.
+I usually use a `.cal` extension on those files.
 Here it follows an example called `Test.cal`:
 
 	Saturday
@@ -87,9 +84,12 @@ Here it follows an example called `Test.cal`:
 	2012-12-25
 	2013-01-01
 
+It has 2 holidays and the weekend as nonworking days.
 To create that calendar you need to call `Calendar.load`
 
-	cal = Calendar.load('Test.cal')
+```{python}
+cal = Calendar.load('Test.cal')
+```
 
 ### bizdays
 
@@ -179,3 +179,15 @@ datetime.date(2012, 12, 28)
 ```
 This happens because before starting to offset the date, the given date is adjusted to its next or previous business day. If `n >= 0` the adjustment is positive, so to the next business day, otherwise it is adjusted to the previous business day.
 
+## Actual Calendar
+
+The Actual Calendar can be defined as
+
+```{python}
+cal = Calendar(name='Actual')
+```
+
+The Actual Calendar doesn't consider holidays, nor nonworking weekdays for counting business days between 2 dates.
+This is the same of subtracting 2 dates, and adjust methods will return the given argument.
+But the idea of using the Actual Calendar is working with the same interface for any calendar you work with.
+When you price financial instruments you don't have to check if it uses business days or not.
