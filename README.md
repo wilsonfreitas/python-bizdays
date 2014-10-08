@@ -61,7 +61,10 @@ datetime.date(2014, 1, 2)
 >>> cal.seq('2014-01-02', '2014-01-07')
 <generator object seq at 0x1092b02d0>
 >>> list(cal.seq('2014-01-02', '2014-01-07'))
-[datetime.date(2014, 1, 2), datetime.date(2014, 1, 3), datetime.date(2014, 1, 6), datetime.date(2014, 1, 7)]
+[datetime.date(2014, 1, 2),
+ datetime.date(2014, 1, 3),
+ datetime.date(2014, 1, 6),
+ datetime.date(2014, 1, 7)]
 >>> cal.offset('2014-01-02', 5)
 datetime.date(2014, 1, 9)
 ```
@@ -71,7 +74,7 @@ In this example I used the list of holidays released by [ANBIMA](http://www.anbi
 > **Important note on date arguments and returning dates**
 > 
 > As you can see in the examples all date arguments are strings ISO formatted (`YYYY-mm-dd` or `%Y-%m-%d`), but they can also be passed as `datetime.date` objects.
-> All returning dates are `datetime.date` objects (or a sequence of it).
+> All returning dates are `datetime.date` objects (or a sequence of it), unless you set `iso=True`, that will return an ISO formatted string.
 
 ### Calendar Specification
 
@@ -81,15 +84,24 @@ Here it follows an example called `Test.cal`:
 
 	Saturday
 	Sunday
+	2001-01-01
+	2002-01-01
 	2012-12-25
 	2013-01-01
 
-It has 2 holidays and the weekend as nonworking days.
+It has 4 holidays and the weekend as nonworking days.
 To create that calendar you need to call `Calendar.load`
 
 ```{python}
-cal = Calendar.load('Test.cal')
+>>> cal = Calendar.load('Test.cal')
+>>> cal
+Calendar: Test
+Start: 2001-01-01
+End: 2013-01-01
+Holidays: 4
 ```
+
+> The `startdate` and `enddate` of a `Calendar` are defined accordingly the first and last holidays.
 
 ### bizdays
 
@@ -184,10 +196,50 @@ This happens because before starting to offset the date, the given date is adjus
 The Actual Calendar can be defined as
 
 ```{python}
-cal = Calendar(name='Actual')
+>>> cal = Calendar(name='Actual')
+>>> cal
+Calendar: Actual
+Start: 1970-01-01
+End: 2071-01-01
+Holidays: 0
 ```
 
 The Actual Calendar doesn't consider holidays, nor nonworking weekdays for counting business days between 2 dates.
 This is the same of subtracting 2 dates, and adjust methods will return the given argument.
 But the idea of using the Actual Calendar is working with the same interface for any calendar you work with.
 When you price financial instruments you don't have to check if it uses business days or not.
+
+> `startdate` and `enddate` defaults to `1970-01-01` and `2071-01-01`, but they can be set during Calendar's instanciation.
+
+## Vectorized operations
+
+The Calendar's methods: `isbizday`, `bizdays`, `adjust_previous`, `adjust_next`, and `offset`, have a vectorized counterparty, inside `Calendar.vec` attribute.
+
+```{python}
+>>> cal = Calendar.load('Test.cal')
+>>> dates = ('2002-01-01', '2002-01-02', '2002-01-03')
+>>> tuple(cal.vec.adjust_next(dates))
+(datetime.date(2002, 1, 2), datetime.date(2002, 1, 2), datetime.date(2002, 1, 3))
+>>> list(cal.vec.bizdays('2001-12-31', dates))
+[0, 1, 2]
+```
+
+These functions accept sequences and single values, but always return generators.
+In `bizdays` call a date and a sequence have been passed, computing business days between that date and all the others.
+
+### Recycle rule
+
+Once you pass 2 sequences for `bizdays` and `offset` and those sequences doesn't have the same length, no problem.
+The shorter collection is cycled to fit the longer's length.
+
+```{python}
+>>> dates = ('2002-01-01', '2002-01-02', '2002-01-03', '2002-01-04', '2002-01-05')
+>>> tuple(cal.vec.offset(dates, (1, 2, 3)))
+(datetime.date(2002, 1, 3),
+ datetime.date(2002, 1, 4),
+ datetime.date(2002, 1, 8),
+ datetime.date(2002, 1, 7),
+ datetime.date(2002, 1, 9))
+```
+
+> These methods work well with sequences but not with generators, since I haven't found an easy way to find out which generator is the shorter.
