@@ -115,8 +115,9 @@ class Calendar(object):
             dt = dt + d1
         return Date(dt)
         
-    def adjust_next(self, dt):
-        return self.__adjust_next(dt).date
+    def adjust_next(self, dt, iso=False):
+        dt = self.__adjust_next(dt)
+        return dt.date if not iso else str(dt)
     
     def __adjust_previous(self, dt):
         d1 = timedelta(1)
@@ -125,20 +126,21 @@ class Calendar(object):
             dt = dt - d1
         return Date(dt)
     
-    def adjust_previous(self, dt):
-        return self.__adjust_previous(dt).date
+    def adjust_previous(self, dt, iso=False):
+        dt = self.__adjust_previous(dt)
+        return dt.date if not iso else str(dt)
     
-    def seq(self, date_from, date_to):
+    def seq(self, date_from, date_to, iso=False):
         _from = self.__adjust_from(date_from)
         _to = self.__adjust_to(date_to)
         if _from > _to:
             raise ValueError("The first date must be before the second.")
         d1 = timedelta(1)
         while _from <= _to:
-            yield _from.date
+            yield _from.date if not iso else str(_from)
             _from = self.__adjust_next(_from.date + d1)
     
-    def offset(self, dt, n):
+    def offset(self, dt, n, iso=False):
         dt = Date(dt)
         if n >= 0:
             d1 = timedelta(1)
@@ -154,7 +156,7 @@ class Calendar(object):
             dt.date += d1
             dt = adjust(dt)
             i += 1
-        return dt.date
+        return dt.date if not iso else str(dt)
     
     @classmethod
     def load(cls, fname):
@@ -220,13 +222,13 @@ class VectorizedOps(object):
             dates_to = cycle(dates_to)
         return (self.cal.bizdays(_from, _to) for _from, _to in izip(dates_from, dates_to))
     
-    def adjust_next(self, dates):
-        return ( self.cal.adjust_next(dt) for dt in dates )
+    def adjust_next(self, dates, iso=False):
+        return ( self.cal.adjust_next(dt, iso=iso) for dt in dates )
     
-    def adjust_previous(self, dates):
-        return ( self.cal.adjust_previous(dt) for dt in dates )
+    def adjust_previous(self, dates, iso=False):
+        return ( self.cal.adjust_previous(dt, iso=iso) for dt in dates )
     
-    def offset(self, dates, ns):
+    def offset(self, dates, ns, iso=False):
         if type(dates) in (str, unicode):
             dates = [dates]
         if type(ns) in (int, long):
@@ -235,4 +237,4 @@ class VectorizedOps(object):
             dates = cycle(dates)
         else:
             ns = cycle(ns)
-        return (self.cal.offset(dt, n) for dt, n in izip(dates, ns))
+        return (self.cal.offset(dt, n, iso=iso) for dt, n in izip(dates, ns))

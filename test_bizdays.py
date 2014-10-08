@@ -77,11 +77,11 @@ class TestCalendar(unittest.TestCase):
     def test_Calendar_offset(self):
         """it should offset the given date by n days (forward or backward)"""
         cal = Calendar.load('Test.cal')
-        self.assertEqual(cal.offset('2012-01-02', 1).isoformat(), '2012-01-03')
-        self.assertEqual(cal.offset('2012-01-02', 3).isoformat(), '2012-01-05')
-        self.assertEqual(cal.offset('2012-01-01', 1).isoformat(), '2012-01-03')
-        self.assertEqual(cal.offset('2012-01-01', 0).isoformat(), '2012-01-02')
-        self.assertEqual(cal.offset('2012-01-02', 0).isoformat(), '2012-01-02')
+        self.assertEqual(cal.offset('2012-01-02', 1, iso=True), '2012-01-03')
+        self.assertEqual(cal.offset('2012-01-02', 3, iso=True), '2012-01-05')
+        self.assertEqual(cal.offset('2012-01-01', 1, iso=True), '2012-01-03')
+        self.assertEqual(cal.offset('2012-01-01', 0, iso=True), '2012-01-02')
+        self.assertEqual(cal.offset('2012-01-02', 0, iso=True), '2012-01-02')
         self.assertEqual(cal.offset('2012-01-02', -1).isoformat(), '2011-12-30')
         self.assertEqual(cal.offset('2012-01-02', -3).isoformat(), '2011-12-28')
         self.assertEqual(cal.offset('2012-01-01', -1).isoformat(), '2011-12-29')
@@ -103,8 +103,8 @@ class TestCalendar(unittest.TestCase):
         'it should adjust (next or previous) many days at once'
         cal = Calendar.load('Test.cal')
         dates = ('2002-01-01', '2002-01-02', '2002-01-03')
-        self.assertEqual(tuple(d.isoformat() for d in cal.vec.adjust_next(dates)), ('2002-01-02', '2002-01-02', '2002-01-03'))
-        self.assertEqual(tuple(d.isoformat() for d in cal.vec.adjust_previous(dates)), ('2001-12-31', '2002-01-02', '2002-01-03'))
+        self.assertEqual(tuple(cal.vec.adjust_next(dates, iso=True)), ('2002-01-02', '2002-01-02', '2002-01-03'))
+        self.assertEqual(tuple(cal.vec.adjust_previous(dates, iso=True)), ('2001-12-31', '2002-01-02', '2002-01-03'))
     
     def test_Vectorized_operations_offset(self):
         'it should offset many days at once'
