@@ -163,6 +163,11 @@ class Calendar(object):
         if not os.path.exists(fname):
             raise Exception('Invalid calendar specification: \
             file not found (%s)' % fname)
+        name = os.path.split(fname)[-1]
+        if name.endswith('.cal'):
+            name = name.replace('.cal', '')
+        else:
+            name = None
         w = '|'.join( w.lower() for w in cls._weekdays )
         wre = '^%s$' % w
         _holidays = []
@@ -175,7 +180,7 @@ class Calendar(object):
                     _nonwork_weekdays.append(cal_reg)
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
-        return Calendar(_holidays, weekdays=_nonwork_weekdays)
+        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=name)
 
     @staticmethod
     def load_holidays(fname, format='%Y-%m-%d'):
