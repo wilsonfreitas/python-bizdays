@@ -1,4 +1,7 @@
-![downloads](https://pypip.in/download/bizdays/badge.png)
+[![Downloads](https://pypip.in/download/bizdays/badge.svg?period=week)](https://pypi.python.org/pypi/bizdays/)
+[![Latest Version](https://pypip.in/version/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Supported Python versions](https://pypip.in/py_versions/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Development Status](https://pypip.in/status/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
 
 # bizdays
 
