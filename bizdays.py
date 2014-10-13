@@ -7,6 +7,7 @@ from itertools import izip, cycle
 class DateIndex(object):
     def __init__(self, holidays, startdate, enddate, weekdays):
         self._index = {}
+        self._years = {}
         self.startdate = Date(startdate).date
         self.enddate = Date(enddate).date
         self.weekdays = weekdays
@@ -20,11 +21,68 @@ class DateIndex(object):
             c += 1
             if not is_hol:
                 w += 1
+            col = self._years.get(dt.year, [])
+            col.append((dt, dt.month, dt.weekday(), is_hol, c))
+            self._years[dt.year] = col
             dt = dt + d1
     
     def get(self, dt):
         dt = Date(dt)
         return self._index[dt.date]
+    
+    def getnthday(self, n, year, month=None):
+        n = n - 1 if n > 0 else n
+        if month:
+            col = [d[0] for d in self._years[year] if d[1] == month]
+            return col[n]
+        else:
+            return self._years[year][n][0]
+    
+    def getnthweekday(self, n, weekday, year, month=None):
+        n = n - 1 if n > 0 else n
+        weekdays = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+        if month:
+            col = [d[0] for d in self._years[year] if weekdays[d[2]] == weekday and d[1] == month]
+        else:
+            col = [d[0] for d in self._years[year] if weekdays[d[2]] == weekday]
+        return col[n]
+    
+    def get_closestweekday_to_nthday(self, n, weekday, year, month=None):
+        n = n - 1 if n > 0 else n
+        weekdays = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+        if month:
+            nth_pos = [d[4] for d in self._years[year] if d[1] == month][n]
+            col = [(d[0], abs(d[4]-nth_pos)) for d in self._years[year] if weekdays[d[2]] == weekday and d[1] == month]
+            v, m = col[0]
+            for i,j in col:
+                v = i if j < m else v
+                m = j if j < m else m
+            return v
+        else:
+            nth_pos = [d[4] for d in self._years[year]][n]
+            col = [(d[0], abs(d[4]-nth_pos)) for d in self._years[year] if weekdays[d[2]] == weekday]
+            v, m = col[0]
+            for i,j in col:
+                v = i if j < m else v
+                m = j if j < m else m
+            return v
+    
+    def getnthbizday(self, n, year, month=None):
+        n = n - 1 if n > 0 else n
+        if month:
+            col = [d[0] for d in self._years[year] if not d[3] and d[1] == month]
+        else:
+            col = [d[0] for d in self._years[year] if not d[3]]
+        return col[n]
+    
+    def getnthbizweekday(self, n, weekday, year, month=None):
+        n = n - 1 if n > 0 else n
+        weekdays = ('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
+        if month:
+            col = [d[0] for d in self._years[year] if not d[3] and weekdays[d[2]] == weekday and d[1] == month]
+        else:
+            col = [d[0] for d in self._years[year] if not d[3] and weekdays[d[2]] == weekday]
+        return col[n]
     
     def __getitem__(self, dt):
         return self.get(dt)
@@ -156,6 +214,57 @@ class Calendar(object):
             dt.date += d1
             dt = adjust(dt)
             i += 1
+        return dt.date if not iso else str(dt)
+    
+    def getnthday(self, nth, year, month=None, iso=False, adjust=None):
+        dt = self._index.getnthday(nth, year, month)
+        if adjust == 'next':
+            dt = self.__adjust_next(dt)
+        elif adjust == 'previous':
+            dt = self.__adjust_previous(dt)
+        else:
+            dt = Date(dt)
+        return dt.date if not iso else str(dt)
+    
+    def getnthweekday(self, nth, weekday, year, month=None, iso=False, adjust=None):
+        dt = self._index.getnthweekday(nth, weekday, year, month)
+        if adjust == 'next':
+            dt = self.__adjust_next(dt)
+        elif adjust == 'previous':
+            dt = self.__adjust_previous(dt)
+        else:
+            dt = Date(dt)
+        return dt.date if not iso else str(dt)
+    
+    def get_closestweekday_to_nthday(self, nth, weekday, year, month=None, iso=False, adjust=None):
+        dt = self._index.get_closestweekday_to_nthday(nth, weekday, year, month)
+        if adjust == 'next':
+            dt = self.__adjust_next(dt)
+        elif adjust == 'previous':
+            dt = self.__adjust_previous(dt)
+        else:
+            dt = Date(dt)
+        return dt.date if not iso else str(dt)
+    
+    def get_nth_offset_nthday(self, nth, offset, year, month=None, iso=False, adjust=None):
+        dt = self._index.getnthday(nth, year, month)
+        if adjust == 'next':
+            dt = self.__adjust_next(dt)
+        elif adjust == 'previous':
+            dt = self.__adjust_previous(dt)
+        else:
+            dt = Date(dt)
+        dt = self.offset(dt, offset)
+        return dt.date if not iso else str(dt)
+    
+    def getnthbizday(self, nth, year, month=None, iso=False):
+        dt = self._index.getnthbizday(nth, year, month)
+        dt = Date(dt)
+        return dt.date if not iso else str(dt)
+    
+    def getnthbizweekday(self, nth, weekday, year, month=None, iso=False):
+        dt = self._index.getnthbizweekday(nth, weekday, year, month)
+        dt = Date(dt)
         return dt.date if not iso else str(dt)
     
     @classmethod

@@ -117,6 +117,27 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(isseq('wilson'), False)
         self.assertEqual(isseq(1), False)
         self.assertEqual(isseq([]), True)
+    
+    def test_getnth_bizday(self):
+        cal = Calendar.load('ANBIMA.cal')
+        # first
+        self.assertEqual(cal.getnthbizday(1, 2002, iso=True), '2002-01-02')
+        self.assertEqual(cal.getnthday(1, 2002, 1, iso=True), '2002-01-01')
+        self.assertEqual(cal.getnthbizday(1, 2002, 1, iso=True), '2002-01-02')
+        self.assertEqual(cal.getnthweekday(1, 'wed', 2002, 2, iso=True), '2002-02-06')
+        # last
+        self.assertEqual(cal.getnthday(-1, 2002, 2, iso=True), '2002-02-28')
+        self.assertEqual(cal.getnthbizday(-1, 2002, 2, iso=True), '2002-02-28')
+        # nth
+        self.assertEqual(cal.getnthbizday(2, 2002, 2, iso=True), '2002-02-04')
+        self.assertEqual(cal.getnthweekday(3, 'tue', 2002, 2, iso=True), '2002-02-19')
+        # closest
+        self.assertEqual(cal.get_closestweekday_to_nthday(15, 'wed', 2002, 2, iso=True), '2002-02-13')
+        self.assertEqual(cal.get_closestweekday_to_nthday(50, 'wed', 2002, iso=True), '2002-02-20')
+        # before
+        self.assertEqual(cal.get_nth_offset_nthday(-1, -6, 2002, 2, iso=True), '2002-02-20')
+        # last day before month == offset('first day of month', -1) 
+        self.assertEqual(cal.get_nth_offset_nthday(1, -1, 2002, 6, iso=True, adjust='next'), '2002-05-31')
 
 
 if __name__ == '__main__':
