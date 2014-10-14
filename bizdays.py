@@ -4,15 +4,36 @@ import re
 from datetime import datetime, date, timedelta
 from itertools import izip, cycle
 
+D1 = timedelta(1)
+
+def datehandler(func):
+    def handler(self, dt, *args):
+        return func(self, Date(dt).date, *args)
+    return handler
+
+
+def load_holidays(fname, format='%Y-%m-%d'):
+    if not os.path.exists(fname):
+        raise Exception('Invalid calendar specification: \
+        file not found (%s)' % fname)
+    _holidays = []
+    with open(fname) as fcal:
+        for cal_reg in fcal:
+            cal_reg = cal_reg.strip()
+            if cal_reg is '': continue
+            _holidays.append(Date(cal_reg, format=format).date)
+    return _holidays
+
+
 class DateIndex(object):
     def __init__(self, holidays, startdate, enddate, weekdays):
         self._index = {}
+        self._bizdays = []
         self._years = {}
         self.startdate = Date(startdate).date
         self.enddate = Date(enddate).date
         self.weekdays = weekdays
-        self.holidays = [d.date for d in holidays]
-        d1 = timedelta(1)
+        self.holidays = [Date(d).date for d in holidays]
         dt = self.startdate
         w = c = 1
         while dt <= self.enddate:
@@ -21,14 +42,53 @@ class DateIndex(object):
             c += 1
             if not is_hol:
                 w += 1
+                self._bizdays.append(dt)
             col = self._years.get(dt.year, [])
             col.append((dt, dt.month, dt.weekday(), is_hol, c))
             self._years[dt.year] = col
-            dt = dt + d1
+            dt = dt + D1
     
+    @datehandler
+    def _getpos(self, dt):
+        return self._index[dt][0] - 1
+        
+    
+    @datehandler
+    def offset(self, dt, n):
+        if not self._index[dt][2]:
+            pos = self._getpos(dt) + n
+            return self._bizdays[pos]
+        else:
+            raise ValueError('Cannot offset a nonworking day: ' + dt.isoformat())
+    
+    @datehandler
+    def following(self, dt):
+        if not self._index[dt][2]:
+            return dt
+        else:
+            return self.following(dt + D1)
+    
+    @datehandler
+    def preceding(self, dt):
+        if not self._index[dt][2]:
+            return dt
+        else:
+            return self.preceding(dt - D1)
+    
+    def seq(self, dt1, dt2):
+        dt1 = Date(dt1).date
+        dt2 = Date(dt2).date
+        if self._index[dt1][2]:
+            raise ValueError('Cannot start a sequence of working days with a nonworking day: ' + dt1.isoformat())
+        if self._index[dt2][2]:
+            raise ValueError('Cannot end a sequence of working days with a nonworking day: ' + dt2.isoformat())
+        pos1 = self._getpos(dt1)
+        pos2 = self._getpos(dt2) + 1
+        return self._bizdays[pos1:pos2]
+    
+    @datehandler
     def get(self, dt):
-        dt = Date(dt)
-        return self._index[dt.date]
+        return self._index[dt]
     
     def getnthday(self, n, year, month=None):
         n = n - 1 if n > 0 else n
@@ -83,6 +143,27 @@ class DateIndex(object):
         else:
             col = [d[0] for d in self._years[year] if not d[3] and weekdays[d[2]] == weekday]
         return col[n]
+    
+    # def getnth(self, ds1, prep=None, ds2=None, year, month):
+    #     weekdays = ('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
+    #     nth, dsp = ds1
+    #     nth = int(nth[:-2])
+    #     if prep:
+    #         nth2, dsp2 = ds2
+    #         nth2 = int(nth2[:-2])
+    #         if dsp2 in weekdays:
+    #             dt = self.getnthweekday(nth2, dsp2, year, month)
+    #         else:
+    #             dt = self.getnthday(nth2, year, month)
+    #         if prep == 'after':
+    #             pass
+    #         else:
+    #             pass
+    #     else:
+    #         if dsp in weekdays:
+    #             return self.getnthweekday(nth, dsp, year, month)
+    #         else:
+    #             return self.getnthday(nth, year, month)
     
     def __getitem__(self, dt):
         return self.get(dt)
@@ -290,19 +371,6 @@ class Calendar(object):
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
         return Calendar(_holidays, weekdays=_nonwork_weekdays, name=name)
-
-    @staticmethod
-    def load_holidays(fname, format='%Y-%m-%d'):
-        if not os.path.exists(fname):
-            raise Exception('Invalid calendar specification: \
-            file not found (%s)' % fname)
-        _holidays = []
-        with open(fname) as fcal:
-            for cal_reg in fcal:
-                cal_reg = cal_reg.strip()
-                if cal_reg is '': continue
-                _holidays.append(Date(cal_reg, format=format).date)
-        return _holidays
     
     def __eq__(self, other):
         return self.startdate == other.startdate and \

@@ -140,5 +140,22 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.get_nth_offset_nthday(1, -1, 2002, 6, iso=True, adjust='next'), '2002-05-31')
 
 
+class TestDateIndex(unittest.TestCase):
+    def test_DateIndex(self):
+        'it should test DateIndex'
+        holidays = load_holidays('ANBIMA.txt')
+        di = DateIndex(holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6))
+        self.assertEqual(di.following('2011-01-01').isoformat(), '2011-01-03')
+        self.assertEqual(di.preceding('2011-01-09').isoformat(), '2011-01-07')
+        self.assertEqual(di.offset('2011-01-07', 1).isoformat(), '2011-01-10')
+        self.assertEqual(di.offset('2011-01-10', -1).isoformat(), '2011-01-07')
+        with self.assertRaises(ValueError):
+            di.offset('2011-01-01', -1)
+        seq = di.seq('2011-01-03', '2011-01-14')
+        self.assertEqual(seq[0].isoformat(), '2011-01-03')
+        self.assertEqual(seq[-1].isoformat(), '2011-01-14')
+
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=1)
