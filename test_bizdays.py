@@ -146,7 +146,9 @@ class TestDateIndex(unittest.TestCase):
         holidays = load_holidays('ANBIMA.txt')
         di = DateIndex(holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6))
         self.assertEqual(di.following('2011-01-01').isoformat(), '2011-01-03')
+        self.assertEqual(di.following('2011-01-03').isoformat(), '2011-01-03')
         self.assertEqual(di.preceding('2011-01-09').isoformat(), '2011-01-07')
+        self.assertEqual(di.preceding('2011-01-07').isoformat(), '2011-01-07')
         self.assertEqual(di.offset('2011-01-07', 1).isoformat(), '2011-01-10')
         self.assertEqual(di.offset('2011-01-10', -1).isoformat(), '2011-01-07')
         with self.assertRaises(ValueError):
@@ -154,6 +156,8 @@ class TestDateIndex(unittest.TestCase):
         seq = di.seq('2011-01-03', '2011-01-14')
         self.assertEqual(seq[0].isoformat(), '2011-01-03')
         self.assertEqual(seq[-1].isoformat(), '2011-01-14')
+        seq = di.seq('2011-01-03', '2011-01-03')
+        self.assertEqual(len(seq), 1)
 
 
 

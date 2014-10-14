@@ -248,22 +248,14 @@ class Calendar(object):
         return not self._index[dt][2]
     
     def __adjust_next(self, dt):
-        d1 = timedelta(1)
-        dt = Date(dt).date
-        while self._index[dt][2]:
-            dt = dt + d1
-        return Date(dt)
+        return Date(self._index.following(dt))
         
     def adjust_next(self, dt, iso=False):
         dt = self.__adjust_next(dt)
         return dt.date if not iso else str(dt)
     
     def __adjust_previous(self, dt):
-        d1 = timedelta(1)
-        dt = Date(dt).date
-        while self._index[dt][2]:
-            dt = dt - d1
-        return Date(dt)
+        return Date(self._index.preceding(dt))
     
     def adjust_previous(self, dt, iso=False):
         dt = self.__adjust_previous(dt)
@@ -274,28 +266,13 @@ class Calendar(object):
         _to = self.__adjust_to(date_to)
         if _from > _to:
             raise ValueError("The first date must be before the second.")
-        d1 = timedelta(1)
-        while _from <= _to:
-            yield _from.date if not iso else str(_from)
-            _from = self.__adjust_next(_from.date + d1)
+        isoornot = lambda dt: dt if not iso else dt.isoformat()
+        return (isoornot(dt) for dt in self._index.seq(_from, _to))
     
     def offset(self, dt, n, iso=False):
-        dt = Date(dt)
-        if n >= 0:
-            d1 = timedelta(1)
-            adjust = lambda d: self.__adjust_next(d)
-            dt = adjust(dt)
-        else:
-            d1 = timedelta(-1)
-            adjust = lambda d: self.__adjust_previous(d)
-            dt = adjust(dt)
-            n = abs(n)
-        i = 0
-        while i < n:
-            dt.date += d1
-            dt = adjust(dt)
-            i += 1
-        return dt.date if not iso else str(dt)
+        dt = self.__adjust_next(dt) if n >= 0 else self.__adjust_previous(dt)
+        isoornot = lambda dt: dt if not iso else dt.isoformat()
+        return isoornot(self._index.offset(dt, n))
     
     def getnthday(self, nth, year, month=None, iso=False, adjust=None):
         dt = self._index.getnthday(nth, year, month)
