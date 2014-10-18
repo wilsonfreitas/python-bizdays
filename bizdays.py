@@ -295,10 +295,6 @@ class Calendar(object):
         return [d.date for d in self._holidays]
     holidays = property(__get_holidays)
     
-    def __get_index(self):
-        return self._index
-    index = property(__get_index)
-    
     def bizdays(self, date_from, date_to):
         d1 = self.__adjust_from(date_from)
         d2 = self.__adjust_to(date_to)
@@ -316,12 +312,16 @@ class Calendar(object):
         dt = self.__adjust_next(dt)
         return dt.date if not iso else str(dt)
     
+    following = adjust_next
+    
     def __adjust_previous(self, dt):
         return Date(self._index.preceding(dt))
     
     def adjust_previous(self, dt, iso=False):
         dt = self.__adjust_previous(dt)
         return dt.date if not iso else str(dt)
+    
+    preceding = adjust_previous
     
     def seq(self, date_from, date_to, iso=False):
         _from = self.__adjust_from(date_from)
