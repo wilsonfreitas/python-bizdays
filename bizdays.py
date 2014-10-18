@@ -2,7 +2,15 @@
 import os
 import re
 from datetime import datetime, date, timedelta
-from itertools import izip, cycle
+
+try:
+    from itertools import izip, cycle
+    isstr = lambda d: type(d) in (str, unicode)
+except ImportError:
+    from itertools import cycle
+    isstr = lambda d: type(d) is str
+else:
+    zip = izip
 
 D1 = timedelta(1)
 
@@ -10,7 +18,7 @@ def find_date_pos(col, dt):
     beg = 0
     end = len(col)
     while (end - beg) > 1:
-        mid = (end + beg)/2
+        mid = int((end + beg)/2)
         if dt > col[mid]:
             beg = mid
         elif dt < col[mid]:
@@ -233,7 +241,7 @@ class DateIndex(object):
 class Date(object):
     def __init__(self, d=None, format='%Y-%m-%d'):
         d = d if d else date.today()
-        if type(d) in (str, unicode):
+        if isstr(d):
             d = datetime.strptime(d, format).date()
         elif type(d) is datetime:
             d = d.date()
@@ -247,6 +255,18 @@ class Date(object):
     
     def format(self, fmts='%Y-%m-%d'):
         return datetime.strftime(self.date, fmts)
+    
+    def __gt__(self, other):
+        return self.date > other.date
+    
+    def __ge__(self, other):
+        return self.date >= other.date
+    
+    def __lt__(self, other):
+        return self.date < other.date
+    
+    def __le__(self, other):
+        return self.date <= other.date
     
     def __cmp__(self, other):
         return cmp(self.date, other.date)
@@ -396,7 +416,7 @@ Holidays: {3}'''.format(self.name, self.startdate, self.enddate, len(self._holid
 
 
 def isseq(seq):
-    if type(seq) in (str, unicode):
+    if isstr(seq):
         return False
     try:
         iter(seq)
@@ -421,7 +441,7 @@ class VectorizedOps(object):
             dates_from = cycle(dates_from)
         else:
             dates_to = cycle(dates_to)
-        return (self.cal.bizdays(_from, _to) for _from, _to in izip(dates_from, dates_to))
+        return (self.cal.bizdays(_from, _to) for _from, _to in zip(dates_from, dates_to))
     
     def adjust_next(self, dates, iso=False):
         if not isseq(dates):
@@ -442,4 +462,4 @@ class VectorizedOps(object):
             dates = cycle(dates)
         else:
             ns = cycle(ns)
-        return (self.cal.offset(dt, n, iso=iso) for dt, n in izip(dates, ns))
+        return (self.cal.offset(dt, n, iso=iso) for dt, n in zip(dates, ns))
