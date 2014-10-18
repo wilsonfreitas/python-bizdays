@@ -261,13 +261,12 @@ class Date(object):
 
 
 class Calendar(object):
-    _weekdays_abv = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     def __init__(self, holidays=[], weekdays=[], startdate='1970-01-01', enddate='2071-01-01', name=None,
                        adjust_from='next', adjust_to='previous'):
         self.name = name
         self._holidays = [Date(d) for d in holidays]
-        self._nonwork_weekdays = [[w.lower() for w in self._weekdays_abv].index(wd[:3].lower()) for wd in weekdays]
+        self._nonwork_weekdays = [[w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays]
         if len(self._holidays):
             self._startdate = min(self._holidays)
             self._enddate = max(self._holidays)
