@@ -314,6 +314,12 @@ class Calendar(object):
     
     following = adjust_next
     
+    def modified_following(self, dt, iso=False):
+        dtx = self.__adjust_next(dt)
+        if dtx.date.month != dt.month:
+            dtx = self.__adjust_previous(dt)
+        return dtx.date if not iso else str(dtx)
+    
     def __adjust_previous(self, dt):
         return Date(self._index.preceding(dt))
     
@@ -322,6 +328,12 @@ class Calendar(object):
         return dt.date if not iso else str(dt)
     
     preceding = adjust_previous
+    
+    def modified_preceding(self, dt, iso=False):
+        dtx = self.__adjust_previous(dt)
+        if dtx.date.month != dt.month:
+            dtx = self.__adjust_next(dt)
+        return dtx.date if not iso else str(dtx)
     
     def seq(self, date_from, date_to, iso=False):
         _from = self.__adjust_from(date_from)

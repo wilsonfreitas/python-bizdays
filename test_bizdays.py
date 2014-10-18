@@ -65,6 +65,20 @@ class TestCalendar(unittest.TestCase):
         cal = Calendar.load('Test.cal')
         self.assertEqual(cal.adjust_previous('2001-08-12', iso=True), '2001-08-10')
         self.assertEqual(cal.preceding('2001-08-12', iso=True), '2001-08-10')
+        self.assertEqual(cal.adjust_previous('2002-03-31', iso=True), '2002-03-29')
+        self.assertEqual(cal.preceding('2002-03-31', iso=True), '2002-03-29')
+    
+    def test_Calendar_modified_following(self):
+        """modified_following calculations"""
+        cal = Calendar.load('Test.cal')
+        dt = cal.getdate('last day', 2002, 3)
+        self.assertEqual(cal.modified_following(dt, iso=True), '2002-03-29')
+    
+    def test_Calendar_modified_preceding(self):
+        """modified_preceding calculations"""
+        cal = Calendar.load('Test.cal')
+        dt = cal.getdate('first day', 2002, 6)
+        self.assertEqual(cal.modified_preceding(dt, iso=True), '2002-06-03')
     
     def test_Calendar_seq(self):
         '''sequence generator of bizdays'''
