@@ -262,17 +262,17 @@ class Date(object):
 
 class Calendar(object):
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-    def __init__(self, holidays=[], weekdays=[], startdate='1970-01-01', enddate='2071-01-01', name=None,
+    def __init__(self, holidays=[], weekdays=[], startdate=None, enddate=None, name=None,
                        adjust_from='next', adjust_to='previous'):
         self.name = name
         self._holidays = [Date(d) for d in holidays]
         self._nonwork_weekdays = [[w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays]
         if len(self._holidays):
-            self._startdate = min(self._holidays)
-            self._enddate = max(self._holidays)
+            self._startdate = Date(startdate) if startdate else min(self._holidays)
+            self._enddate = Date(enddate) if enddate else max(self._holidays)
         else:
-            self._startdate = Date(startdate)
-            self._enddate = Date(enddate)
+            self._startdate = Date(startdate) if startdate else Date('1970-01-01')
+            self._enddate = Date(enddate) if enddate else Date('2070-12-31')
         self._index = DateIndex(self._holidays, self._startdate, self._enddate, self._nonwork_weekdays)
         self.vec = VectorizedOps(self)
         self.__adjust_from = self.__adjust_next if adjust_from == 'next' else self.__adjust_previous
