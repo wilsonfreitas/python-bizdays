@@ -70,6 +70,14 @@ datetime.date(2014, 1, 2)
  datetime.date(2014, 1, 7)]
 >>> cal.offset('2014-01-02', 5)
 datetime.date(2014, 1, 9)
+>>> cal.getdate('15th day', 2002, 5)
+datetime.date(2002, 5, 15)
+>>> cal.getdate('15th bizday', 2002, 5)
+datetime.date(2002, 5, 22)
+>>> cal.getdate('last wed', 2002, 5)
+datetime.date(2002, 5, 29)
+>>> cal.getdate('first fri before last day ', 2002, 5)
+datetime.date(2002, 5, 24)
 ```
 
 In this example I used the list of holidays released by [ANBIMA](http://www.anbima.com.br/feriados/feriados.asp).
@@ -125,6 +133,46 @@ Here we have the output of `cal` for January of 2013 which allow us to check the
 	20 21 22 23 24 25 26
 	27 28 29 30 31      
 
+### getdate
+
+You specify dates by its position or related to other dates, for example:
+
+```{python}
+>>> cal.getdate('15th day', 2002, 5)
+datetime.date(2002, 5, 15)
+```
+
+it returns the 15th day of 2002 may. You can also reffer to the whole year.
+
+```{python}
+>>> cal.getdate('150th day', 2002)
+datetime.date(2002, 5, 30)
+```
+
+It accepts `day`, `bizday` and weekdays by: `sun`, `mon`, `tue`, `wed`, `thu`, `fri`, and `sat`.
+
+```{python}
+>>> cal.getdate('last day', 2006)
+datetime.date(2006, 12, 31)
+>>> cal.getdate('last bizday', 2006)
+datetime.date(2006, 12, 29)
+>>> cal.getdate('last mon', 2006)
+datetime.date(2006, 12, 25)
+```
+
+For postion you use: `first`, `second`, `third`, `1st`, `2nd`, `3rd`, `[n]th`, and `last`.
+
+#### Using date postions as a reference
+
+You can find before and after other date positions (using date positions as a reference).
+
+```{python}
+>>> cal.getdate('last mon before 30th day', 2006, 7)
+datetime.date(2006, 7, 24)
+>>> cal.getdate('second bizday after 15th day', 2006)
+datetime.date(2006, 1, 18)
+```
+
 ### adjust_next and adjust_previous
 
 Several contracts, by default, always expiry in the same day, for example, 1st Januray, which isn't a business day, so instead of carrying your code
@@ -143,6 +191,37 @@ We also have `adjust_previous`, although I suppose it is unusual, too.
 ```{python}
 >>> cal.adjust_previous('2013-01-01')
 datetime.date(2012, 12, 31)
+```
+
+#### following and preceding
+
+The functions `following` and `preceding` reffer to `adjust_next` and `adjust_previous`, respectively.
+
+```{python}
+>>> cal.following('2013-01-01')
+datetime.date(2013, 1, 2)
+>>> cal.preceding('2013-01-01')
+datetime.date(2012, 12, 31)
+```
+
+#### modified_following and modified_preceding
+
+`modified_following` and `modified_preceding` are common functions used to specify maturity of contracts.
+They work the same way `following` and `preceding` but once the returning date is a different month it is adjusted to the `following` or `preceding` business day in the same month.
+
+```{python}
+>>> dt = cal.getdate('last day', 2002, 3)
+>>> dt
+datetime.date(2002, 3, 31)
+>>> cal.modified_following(dt, iso=True)
+'2002-03-28'
+>>> cal.isbizday('2002-03-29')
+False
+>>> dt = cal.getdate('first day', 2002, 6)
+>>> dt
+datetime.date(2002, 6, 1)
+>>> cal.modified_preceding(dt, iso=True)
+'2002-06-03'
 ```
 
 ### seq
