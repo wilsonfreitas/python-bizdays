@@ -268,9 +268,6 @@ class Date(object):
     def __le__(self, other):
         return self.date <= other.date
     
-    def __cmp__(self, other):
-        return cmp(self.date, other.date)
-    
     def __eq__(self, other):
         return self.date == other.date
     
