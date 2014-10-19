@@ -3,16 +3,17 @@
 from distutils.core import setup
 
 setup(name="bizdays",
-      version="0.2.0",
+      version="v0.2.0",
       py_modules=['bizdays'],
       author='Wilson Freitas',
       author_email='wilson.freitas@gmail.com',
       description='Functions to handle business days calculations',
       url='https://github.com/wilsonfreitas/bizdays',
       license='MIT',
+      keywords='business days, finance, calendar, bizdays',
       long_description='''\
       
-**That version has been completely rewriten and many functions have been redesigned to signature differen from the
+**That version has been completely rewritten and many functions have been redesigned to signature differen from the
 earlier version.**
 
 In several countries and markets, to account the value of financial instruments, mainly bonds and derivatives, it is
@@ -85,5 +86,17 @@ Examples::
     datetime.date(2002, 5, 24)
 
 
-''', )
+''',
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Utilities",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
+        "Operating System :: OS Independent"
+    ],
+)
 
