@@ -42,7 +42,7 @@ cal = Calendar(holidays, ['Sunday', 'Saturday'])
 ```
 
 where `holidays` is a sequence of dates which represents nonworking dates and the second argument, `weekdays`, is a sequence with nonworking weekdays.
-`holidays` must a sequence of strings with ISO formatted dates or `datetime.date` objects and `weekdays` a sequence of weekdays in words.
+`holidays` must be a sequence of strings with ISO formatted dates or `datetime.date` objects and `weekdays` a sequence of weekdays in words.
 
 Once you have a `Calendar` you can
 
