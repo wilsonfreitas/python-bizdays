@@ -1,7 +1,7 @@
-[![Downloads](https://pypip.in/download/bizdays/badge.svg?period=week)](https://pypi.python.org/pypi/bizdays/)
-[![Latest Version](https://pypip.in/version/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
-[![Supported Python versions](https://pypip.in/py_versions/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
-[![Development Status](https://pypip.in/status/bizdays/badge.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Downloads](https://img.shields.io/pypi/dm/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Latest Version](https://img.shields.io/pypi/v/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
+[![Development Status](https://img.shields.io/pypi/status/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
 
 # [python-bizdays](http://aboutwilson.net/python-bizdays/)
 
