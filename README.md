@@ -3,7 +3,7 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
 [![Development Status](https://img.shields.io/pypi/status/bizdays.svg)](https://pypi.python.org/pypi/bizdays/)
 
-# [python-bizdays](http://aboutwilson.net/python-bizdays/)
+# [python-bizdays](http://wilsonfreitas.github.io/python-bizdays/)
 
 In several countries and markets, the accountability of the price of a financial
 instrument, mainly bonds and derivatives, involves the use of different
