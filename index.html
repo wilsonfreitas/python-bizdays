@@ -1,41 +1,38 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <title>python-bizdays by wilsonfreitas</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>python-bizdays by wilsonfreitas</title>
   </head>
-
   <body>
-    <div id="container">
-      <div class="inner">
+    <div class="wrapper">
+      <header>
+        <h1>python-bizdays</h1>
+        <p>Business Days Calculations and Utilities in Python</p>
 
-        <header>
-          <h1>python-bizdays</h1>
-          <h2>Business Days Calculations and Utilities in Python</h2>
-        </header>
+        <p class="view"><a href="https://github.com/wilsonfreitas/python-bizdays">View the Project on GitHub <small>wilsonfreitas/python-bizdays</small></a></p>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/wilsonfreitas/python-bizdays/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/wilsonfreitas/python-bizdays/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/wilsonfreitas/python-bizdays" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
 
-        <hr>
-
-        <section id="main_content">
-          <p><strong>bizdays</strong> computes business days between two dates based on the definition of nonworking days (usually holidays and nonworking weekdays).
+        <ul>
+          <li><a href="https://github.com/wilsonfreitas/python-bizdays/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/wilsonfreitas/python-bizdays/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/wilsonfreitas/python-bizdays">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p><strong>bizdays</strong> computes business days between two dates based on the definition of nonworking days (usually holidays and nonworking weekdays).
 It also computes other collateral effects like adjust dates for the next or previous business day, check whether a date is a business day, create generators of business days sequences, and so forth.</p>
 
 <h2>
-<a id="install" class="anchor" href="#install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install</h2>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Install</h2>
 
 <p><strong>bizdays</strong> is avalilable at PyPI, so it is pip and easy_install instalable.</p>
 
@@ -48,11 +45,11 @@ It also computes other collateral effects like adjust dates for the next or prev
 </code></pre>
 
 <h2>
-<a id="using" class="anchor" href="#using" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using</h2>
+<a id="using" class="anchor" href="#using" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using</h2>
 
 <p>Business days calculations are done defining a <code>Calendar</code> object.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">from</span> bizdays <span class="pl-k">import</span> Calendar
+<div class="highlight highlight-source-python"><pre><span class="pl-k">from</span> bizdays <span class="pl-k">import</span> Calendar
 cal <span class="pl-k">=</span> Calendar(holidays, [<span class="pl-s"><span class="pl-pds">'</span>Sunday<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Saturday<span class="pl-pds">'</span></span>])</pre></div>
 
 <p>where <code>holidays</code> is a sequence of dates which represents nonworking dates and the second argument, <code>weekdays</code>, is a sequence with nonworking weekdays.
@@ -60,36 +57,36 @@ cal <span class="pl-k">=</span> Calendar(holidays, [<span class="pl-s"><span cla
 
 <p>Once you have a <code>Calendar</code> you can</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2014-01-12<span class="pl-pds">'</span></span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2014-01-12<span class="pl-pds">'</span></span>)
 <span class="pl-c1">False</span>
-<span class="pl-k">&gt;&gt;&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2014-01-13<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2014-01-13<span class="pl-pds">'</span></span>)
 <span class="pl-c1">True</span>
-<span class="pl-k">&gt;&gt;&gt;</span> cal.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2014-01-13<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2015-01-13<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2014-01-13<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2015-01-13<span class="pl-pds">'</span></span>)
 <span class="pl-c1">253</span>
-<span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2015-12-25<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2015-12-25<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2015</span>, <span class="pl-c1">12</span>, <span class="pl-c1">28</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2015-12-28<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2015-12-28<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2015</span>, <span class="pl-c1">12</span>, <span class="pl-c1">28</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2014-01-01<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2014-01-01<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">12</span>, <span class="pl-c1">31</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2014-01-07<span class="pl-pds">'</span></span>)
-<span class="pl-k">&lt;</span>generator <span class="pl-c1">object</span> seq at <span class="pl-c1">0x</span>1092b02d0<span class="pl-k">&gt;</span>
-<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">list</span>(cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2014-01-07<span class="pl-pds">'</span></span>))
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2014-01-07<span class="pl-pds">'</span></span>)
+<span class="pl-k">&lt;</span>generator <span class="pl-c1">object</span> seq at <span class="pl-c1"><span class="pl-k">0x</span>1092b02d0</span><span class="pl-k">&gt;</span>
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">list</span>(cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2014-01-07<span class="pl-pds">'</span></span>))
 [datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>),
  datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">3</span>),
  datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>),
  datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">7</span>)]
-<span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">5</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2014-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2014</span>, <span class="pl-c1">1</span>, <span class="pl-c1">9</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">15</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th bizday<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th bizday<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">22</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last wed<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last wed<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">29</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>first fri before last day <span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>first fri before last day <span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">24</span>)</pre></div>
 
 <p>In this example I used the list of holidays released by <a href="http://www.anbima.com.br/feriados/feriados.asp">ANBIMA</a>.</p>
@@ -102,7 +99,7 @@ All returning dates are <code>datetime.date</code> objects (or a sequence of it)
 </blockquote>
 
 <h3>
-<a id="calendar-specification" class="anchor" href="#calendar-specification" aria-hidden="true"><span class="octicon octicon-link"></span></a>Calendar Specification</h3>
+<a id="calendar-specification" class="anchor" href="#calendar-specification" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Calendar Specification</h3>
 
 <p>Calendar specification is a text file containing the weekdays to be considered as nonworking days and an ISO formatted list of dates representing holidays.
 I usually use a <code>.cal</code> extension on those files.
@@ -119,11 +116,11 @@ Sunday
 <p>It has 4 holidays and the weekend as nonworking days.
 To create that calendar you need to call <code>Calendar.load</code></p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal <span class="pl-k">=</span> Calendar.load(<span class="pl-s"><span class="pl-pds">'</span>Test.cal<span class="pl-pds">'</span></span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal <span class="pl-k">=</span> Calendar.load(<span class="pl-s"><span class="pl-pds">'</span>Test.cal<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal
 Calendar: Test
-Start: <span class="pl-c1">2001</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">01</span>
-End: <span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">01</span>
+Start: <span class="pl-c1">2001</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span>
+End: <span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span>
 Holidays: <span class="pl-c1">4</span></pre></div>
 
 <blockquote>
@@ -131,147 +128,147 @@ Holidays: <span class="pl-c1">4</span></pre></div>
 </blockquote>
 
 <h3>
-<a id="bizdays" class="anchor" href="#bizdays" aria-hidden="true"><span class="octicon octicon-link"></span></a>bizdays</h3>
+<a id="bizdays" class="anchor" href="#bizdays" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>bizdays</h3>
 
 <p>To compute the business days between two dates you call <code>bizdays</code> passing <code>from</code> and <code>to</code> dates as arguments.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2012-12-31<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2013-01-03<span class="pl-pds">'</span></span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2012-12-31<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2013-01-03<span class="pl-pds">'</span></span>)
 <span class="pl-c1">2</span></pre></div>
 
 <h3>
-<a id="getdate" class="anchor" href="#getdate" aria-hidden="true"><span class="octicon octicon-link"></span></a>getdate</h3>
+<a id="getdate" class="anchor" href="#getdate" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>getdate</h3>
 
 <p>You specify dates by its position or related to other dates, for example:</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">5</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">15</span>)</pre></div>
 
 <p>it returns the 15th day of 2002 may. You can also reffer to the whole year.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>150th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>150th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>)
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">5</span>, <span class="pl-c1">30</span>)</pre></div>
 
 <p>It accepts <code>day</code>, <code>bizday</code> and weekdays by: <code>sun</code>, <code>mon</code>, <code>tue</code>, <code>wed</code>, <code>thu</code>, <code>fri</code>, and <code>sat</code>.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
 datetime.date(<span class="pl-c1">2006</span>, <span class="pl-c1">12</span>, <span class="pl-c1">31</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last bizday<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last bizday<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
 datetime.date(<span class="pl-c1">2006</span>, <span class="pl-c1">12</span>, <span class="pl-c1">29</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last mon<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last mon<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
 datetime.date(<span class="pl-c1">2006</span>, <span class="pl-c1">12</span>, <span class="pl-c1">25</span>)</pre></div>
 
 <p>For postion use: <code>first</code>, <code>second</code>, <code>third</code>, <code>1st</code>, <code>2nd</code>, <code>3rd</code>, <code>[n]th</code>, and <code>last</code>.</p>
 
 <h4>
-<a id="using-date-postions-as-a-reference" class="anchor" href="#using-date-postions-as-a-reference" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using date postions as a reference</h4>
+<a id="using-date-postions-as-a-reference" class="anchor" href="#using-date-postions-as-a-reference" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using date postions as a reference</h4>
 
 <p>You can find before and after other date positions (using date positions as a reference).</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last mon before 30th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>, <span class="pl-c1">7</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last mon before 30th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>, <span class="pl-c1">7</span>)
 datetime.date(<span class="pl-c1">2006</span>, <span class="pl-c1">7</span>, <span class="pl-c1">24</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>second bizday after 15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>second bizday after 15th day<span class="pl-pds">'</span></span>, <span class="pl-c1">2006</span>)
 datetime.date(<span class="pl-c1">2006</span>, <span class="pl-c1">1</span>, <span class="pl-c1">18</span>)</pre></div>
 
 <h3>
-<a id="adjust_next-and-adjust_previous" class="anchor" href="#adjust_next-and-adjust_previous" aria-hidden="true"><span class="octicon octicon-link"></span></a>adjust_next and adjust_previous</h3>
+<a id="adjust_next-and-adjust_previous" class="anchor" href="#adjust_next-and-adjust_previous" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>adjust_next and adjust_previous</h3>
 
 <p>Several contracts, by default, always expiry in the same day, for example, 1st Januray, which isn't a business day, so instead of carrying your code with awful test you could call <code>adjust_next</code> which returns the given date
 whether it is a business day or the next business day.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_next(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)</pre></div>
 
 <p>We also have <code>adjust_previous</code>, although I suppose it is unusual, too.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.adjust_previous(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2012</span>, <span class="pl-c1">12</span>, <span class="pl-c1">31</span>)</pre></div>
 
 <h4>
-<a id="following-and-preceding" class="anchor" href="#following-and-preceding" aria-hidden="true"><span class="octicon octicon-link"></span></a>following and preceding</h4>
+<a id="following-and-preceding" class="anchor" href="#following-and-preceding" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>following and preceding</h4>
 
 <p>The functions <code>following</code> and <code>preceding</code> reffer to <code>adjust_next</code> and <code>adjust_previous</code>, respectively.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.following(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.following(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.preceding(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.preceding(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>)
 datetime.date(<span class="pl-c1">2012</span>, <span class="pl-c1">12</span>, <span class="pl-c1">31</span>)</pre></div>
 
 <h4>
-<a id="modified_following-and-modified_preceding" class="anchor" href="#modified_following-and-modified_preceding" aria-hidden="true"><span class="octicon octicon-link"></span></a>modified_following and modified_preceding</h4>
+<a id="modified_following-and-modified_preceding" class="anchor" href="#modified_following-and-modified_preceding" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>modified_following and modified_preceding</h4>
 
 <p><code>modified_following</code> and <code>modified_preceding</code> are common functions used to specify maturity of contracts.
 They work the same way <code>following</code> and <code>preceding</code> but once the returning date is a different month it is adjusted to the <code>following</code> or <code>preceding</code> business day in the same month.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> dt <span class="pl-k">=</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">3</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> dt
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dt <span class="pl-k">=</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>last day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">3</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dt
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">3</span>, <span class="pl-c1">31</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.modified_following(dt, <span class="pl-smi">iso</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.modified_following(dt, <span class="pl-v">iso</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
 <span class="pl-s"><span class="pl-pds">'</span>2002-03-28<span class="pl-pds">'</span></span>
-<span class="pl-k">&gt;&gt;&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2002-03-29<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.isbizday(<span class="pl-s"><span class="pl-pds">'</span>2002-03-29<span class="pl-pds">'</span></span>)
 <span class="pl-c1">False</span>
-<span class="pl-k">&gt;&gt;&gt;</span> dt <span class="pl-k">=</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>first day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">6</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> dt
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dt <span class="pl-k">=</span> cal.getdate(<span class="pl-s"><span class="pl-pds">'</span>first day<span class="pl-pds">'</span></span>, <span class="pl-c1">2002</span>, <span class="pl-c1">6</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dt
 datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.modified_preceding(dt, <span class="pl-smi">iso</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.modified_preceding(dt, <span class="pl-v">iso</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
 <span class="pl-s"><span class="pl-pds">'</span>2002-06-03<span class="pl-pds">'</span></span></pre></div>
 
 <h3>
-<a id="seq" class="anchor" href="#seq" aria-hidden="true"><span class="octicon octicon-link"></span></a>seq</h3>
+<a id="seq" class="anchor" href="#seq" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>seq</h3>
 
 <p>To execute calculations through sequential dates, sometimes you must consider only business days.
 For example, you want to compute the price of a bond from its issue date up to its maturity.
 You have to walk over business days in order to carry the contract up to maturity.
 To accomplish that you use the <code>seq</code> method (stolen from R) which returns a sequence generator of business days.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-k">for</span> dt <span class="pl-k">in</span> cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2012-12-31<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2013-01-03<span class="pl-pds">'</span></span>):
-...     <span class="pl-k">print</span> dt
-... 
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-k">for</span> dt <span class="pl-k">in</span> cal.seq(<span class="pl-s"><span class="pl-pds">'</span>2012-12-31<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2013-01-03<span class="pl-pds">'</span></span>):
+<span class="pl-c1">...</span>     <span class="pl-c1">print</span> dt
+<span class="pl-c1">...</span> 
 <span class="pl-c1">2012</span><span class="pl-k">-</span><span class="pl-c1">12</span><span class="pl-k">-</span><span class="pl-c1">31</span>
-<span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">02</span>
-<span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">03</span></pre></div>
+<span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">2</span></span>
+<span class="pl-c1">2013</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">3</span></span></pre></div>
 
 <h3>
-<a id="offset" class="anchor" href="#offset" aria-hidden="true"><span class="octicon octicon-link"></span></a>offset</h3>
+<a id="offset" class="anchor" href="#offset" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>offset</h3>
 
 <p>This method offsets the given date by <code>n</code> days respecting the calendar, so it obligatorily returns a business day.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">1</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">1</span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">3</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">3</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">3</span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">7</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">0</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-c1">0</span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)</pre></div>
 
 <p>Obviously, if you want to offset backwards you can use <code>-n</code>.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-k">print</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">1</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">print</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">1</span>)
 <span class="pl-c1">2012</span><span class="pl-k">-</span><span class="pl-c1">12</span><span class="pl-k">-</span><span class="pl-c1">31</span>
-<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-k">print</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">3</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">print</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-02<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">3</span>)
 <span class="pl-c1">2012</span><span class="pl-k">-</span><span class="pl-c1">12</span><span class="pl-k">-</span><span class="pl-c1">27</span></pre></div>
 
 <p>Once the given date is a business day there is no problems, but if instead it isn't a working day the offset can lead to unexpected results. For example:</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-c1">1</span>)
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-c1">1</span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">3</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-c1">0</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-c1">0</span>)
 datetime.date(<span class="pl-c1">2013</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">1</span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal.offset(<span class="pl-s"><span class="pl-pds">'</span>2013-01-01<span class="pl-pds">'</span></span>, <span class="pl-k">-</span><span class="pl-c1">1</span>)
 datetime.date(<span class="pl-c1">2012</span>, <span class="pl-c1">12</span>, <span class="pl-c1">28</span>)</pre></div>
 
 <p>This happens because before starting to offset the date, the given date is adjusted to its next or previous business day. If <code>n &gt;= 0</code> the adjustment is positive, so to the next business day, otherwise it is adjusted to the previous business day.</p>
 
 <h2>
-<a id="actual-calendar" class="anchor" href="#actual-calendar" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actual Calendar</h2>
+<a id="actual-calendar" class="anchor" href="#actual-calendar" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Actual Calendar</h2>
 
 <p>The Actual Calendar can be defined as</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal <span class="pl-k">=</span> Calendar(<span class="pl-smi">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>Actual<span class="pl-pds">'</span></span>)
-<span class="pl-k">&gt;&gt;&gt;</span> cal
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal <span class="pl-k">=</span> Calendar(<span class="pl-v">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>Actual<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal
 Calendar: Actual
-Start: <span class="pl-c1">1970</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">01</span>
-End: <span class="pl-c1">2071</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">01</span>
+Start: <span class="pl-c1">1970</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span>
+End: <span class="pl-c1">2071</span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span><span class="pl-k">-</span><span class="pl-c1">0<span class="pl-ii">1</span></span>
 Holidays: <span class="pl-c1">0</span></pre></div>
 
 <p>The Actual Calendar doesn't consider holidays, nor nonworking weekdays for counting business days between 2 dates.
@@ -284,30 +281,30 @@ When you price financial instruments you don't have to check if it uses business
 </blockquote>
 
 <h2>
-<a id="vectorized-operations" class="anchor" href="#vectorized-operations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Vectorized operations</h2>
+<a id="vectorized-operations" class="anchor" href="#vectorized-operations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vectorized operations</h2>
 
 <p>The Calendar's methods: <code>isbizday</code>, <code>bizdays</code>, <code>adjust_previous</code>, <code>adjust_next</code>, and <code>offset</code>, have a vectorized counterparty, inside <code>Calendar.vec</code> attribute.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> cal <span class="pl-k">=</span> Calendar.load(<span class="pl-s"><span class="pl-pds">'</span>Test.cal<span class="pl-pds">'</span></span>)
-<span class="pl-k">&gt;&gt;&gt;</span> dates <span class="pl-k">=</span> (<span class="pl-s"><span class="pl-pds">'</span>2002-01-01<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-03<span class="pl-pds">'</span></span>)
-<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">tuple</span>(cal.vec.adjust_next(dates))
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> cal <span class="pl-k">=</span> Calendar.load(<span class="pl-s"><span class="pl-pds">'</span>Test.cal<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dates <span class="pl-k">=</span> (<span class="pl-s"><span class="pl-pds">'</span>2002-01-01<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-03<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">tuple</span>(cal.vec.adjust_next(dates))
 (datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>),
  datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>),
  datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">3</span>))
-<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">list</span>(cal.vec.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2001-12-31<span class="pl-pds">'</span></span>, dates))
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">list</span>(cal.vec.bizdays(<span class="pl-s"><span class="pl-pds">'</span>2001-12-31<span class="pl-pds">'</span></span>, dates))
 [<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>]</pre></div>
 
 <p>These functions accept sequences and single values, but always return generators.
 In <code>bizdays</code> call a date and a sequence have been passed, computing business days between that date and all the others.</p>
 
 <h3>
-<a id="recycle-rule" class="anchor" href="#recycle-rule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recycle rule</h3>
+<a id="recycle-rule" class="anchor" href="#recycle-rule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Recycle rule</h3>
 
 <p>Once you pass 2 sequences for <code>bizdays</code> and <code>offset</code> and those sequences doesn't have the same length, no problem.
 The shorter collection is cycled to fit the longer's length.</p>
 
-<div class="highlight highlight-python"><pre><span class="pl-k">&gt;&gt;&gt;</span> dates <span class="pl-k">=</span> (<span class="pl-s"><span class="pl-pds">'</span>2002-01-01<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-03<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-04<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-05<span class="pl-pds">'</span></span>)
-<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">tuple</span>(cal.vec.offset(dates, (<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>)))
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> dates <span class="pl-k">=</span> (<span class="pl-s"><span class="pl-pds">'</span>2002-01-01<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-02<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-03<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-04<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>2002-01-05<span class="pl-pds">'</span></span>)
+<span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-c1">tuple</span>(cal.vec.offset(dates, (<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>)))
 (datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">3</span>),
  datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">4</span>),
  datetime.date(<span class="pl-c1">2002</span>, <span class="pl-c1">1</span>, <span class="pl-c1">8</span>),
@@ -317,14 +314,14 @@ The shorter collection is cycled to fit the longer's length.</p>
 <blockquote>
 <p>These methods work well with sequences but not with generators, since I haven't found an easy way to find out which generator is the shorter.</p>
 </blockquote>
-        </section>
-
-        <footer>
-          python-bizdays is maintained by <a href="https://github.com/wilsonfreitas">wilsonfreitas</a><br>
-          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-                  <script type="text/javascript">
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/wilsonfreitas">wilsonfreitas</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -335,7 +332,5 @@ The shorter collection is cycled to fit the longer's length.</p>
             } catch(err) {}
           </script>
 
-      </div>
-    </div>
   </body>
 </html>
