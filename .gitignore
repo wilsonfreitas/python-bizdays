@@ -1,3 +1,6 @@
 *.pyc
 build/*
 dist/*
+.python-version
+.DS_Store
+.vscode/settings.json
