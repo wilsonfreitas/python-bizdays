@@ -127,6 +127,14 @@ class DateIndex(object):
         else:
             return self.preceding(dt - D1)
     
+    @daterangecheck
+    @datehandler
+    def modified_preceding(self, dt):
+        dtx = self.preceding(dt)
+        if dtx.month != dt.month:
+            dtx = self.following(dt)
+        return dtx
+    
     def seq(self, dt1, dt2):
         dt1 = Date(dt1).date
         dt2 = Date(dt2).date
@@ -373,9 +381,7 @@ class Calendar(object):
     preceding = adjust_previous
     
     def modified_preceding(self, dt, iso=False):
-        dtx = self.__adjust_previous(dt)
-        if dtx.date.month != dt.month:
-            dtx = self.__adjust_next(dt)
+        dtx = self._index.modified_preceding(dt)
         return dtx.date if not iso else str(dtx)
     
     def seq(self, date_from, date_to, iso=False):
