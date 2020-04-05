@@ -14,6 +14,9 @@ else:
 
 D1 = timedelta(1)
 
+class DateOutOfRange(Exception):
+    pass
+
 def find_date_pos(col, dt):
     beg = 0
     end = len(col)
@@ -30,6 +33,15 @@ def find_date_pos(col, dt):
 def datehandler(func):
     def handler(self, dt, *args):
         return func(self, Date(dt).date, *args)
+    return handler
+
+
+def daterangecheck(func):
+    def handler(self, dt, *args):
+        dt = Date(dt).date
+        if dt > self.enddate or dt < self.startdate:
+            raise DateOutOfRange('Given date out of calendar range')
+        return func(self, dt, *args)
     return handler
 
 
@@ -77,10 +89,12 @@ class DateIndex(object):
                 self._bizdays.append(dt)
             dt = dt + D1
     
+    @daterangecheck
     @datehandler
     def _getpos(self, dt):
         return self._index[dt][0] - 1
     
+    @daterangecheck
     @datehandler
     def offset(self, dt, n):
         if not self._index[dt][2]:
@@ -89,6 +103,7 @@ class DateIndex(object):
         else:
             raise ValueError('Cannot offset a nonworking day: ' + dt.isoformat())
     
+    @daterangecheck
     @datehandler
     def following(self, dt):
         if not self._index[dt][2]:
@@ -96,6 +111,7 @@ class DateIndex(object):
         else:
             return self.following(dt + D1)
     
+    @daterangecheck
     @datehandler
     def preceding(self, dt):
         if not self._index[dt][2]:
@@ -106,6 +122,10 @@ class DateIndex(object):
     def seq(self, dt1, dt2):
         dt1 = Date(dt1).date
         dt2 = Date(dt2).date
+        if dt1 > self.enddate or dt1 < self.startdate:
+            raise DateOutOfRange('Given date out of calendar range')
+        if dt2 > self.enddate or dt2 < self.startdate:
+            raise DateOutOfRange('Given date out of calendar range')
         if self._index[dt1][2]:
             raise ValueError('Cannot start a sequence of working days with a nonworking day: ' + dt1.isoformat())
         if self._index[dt2][2]:
@@ -114,6 +134,7 @@ class DateIndex(object):
         pos2 = self._getpos(dt2) + 1
         return self._bizdays[pos1:pos2]
     
+    @daterangecheck
     @datehandler
     def get(self, dt):
         return self._index[dt]
@@ -280,7 +301,7 @@ class Date(object):
 class Calendar(object):
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     def __init__(self, holidays=[], weekdays=[], startdate=None, enddate=None, name=None,
-                       adjust_from='next', adjust_to='previous'):
+                       adjust_from='next', adjust_to='previous', financial=True):
         self.name = name
         self._holidays = [Date(d) for d in holidays]
         self._nonwork_weekdays = [[w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays]
@@ -289,7 +310,7 @@ class Calendar(object):
             self._enddate = Date(enddate) if enddate else max(self._holidays)
         else:
             self._startdate = Date(startdate) if startdate else Date('1970-01-01')
-            self._enddate = Date(enddate) if enddate else Date('2070-12-31')
+            self._enddate = Date(enddate) if enddate else Date('2071-01-01')
         self._index = DateIndex(self._holidays, self._startdate, self._enddate, self._nonwork_weekdays)
         self.vec = VectorizedOps(self)
         self.__adjust_from = self.__adjust_next if adjust_from == 'next' else self.__adjust_previous
