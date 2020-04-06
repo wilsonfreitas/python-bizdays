@@ -334,6 +334,7 @@ class Calendar(object):
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     def __init__(self, holidays=[], weekdays=[], startdate=None, enddate=None, name=None,
                        adjust_from='next', adjust_to='previous', financial=True):
+        self.financial = financial
         self.name = name
         self._holidays = [Date(d) for d in holidays]
         self._nonwork_weekdays = [[w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays]
@@ -372,7 +373,8 @@ class Calendar(object):
         # TODO: improve this! _rindex should not be directly called.
         dif = self._index[d2][0] - self._index[d1][0]
         rdif = self._index._rindex[d2.date][0] - self._index._rindex[d1.date][0]
-        return min(dif, rdif)
+        bdays = min(dif, rdif)
+        return bdays + int(not self.financial)
     
     def isbizday(self, dt):
         return not self._index[dt][2]
