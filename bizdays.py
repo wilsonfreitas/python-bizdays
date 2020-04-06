@@ -62,6 +62,7 @@ class DateIndex(object):
     WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
     def __init__(self, holidays, startdate, enddate, weekdays):
         self._index = {}
+        self._rindex = {}
         self._bizdays = []
         self._days = []
         self._years = {}
@@ -71,24 +72,37 @@ class DateIndex(object):
         self.weekdays = weekdays
         self.holidays = [Date(d).date for d in holidays]
         dt = self.startdate
-        w = c = 1
+        w = 0
+        c = 1
         while dt <= self.enddate:
             is_hol = dt in self.holidays or dt.weekday() in weekdays
+            if not is_hol:
+                w += 1
+                self._bizdays.append(dt)
             self._index[dt] = (w, c, is_hol)
+            # ----
             col = self._years.get(dt.year, [])
             col.append((dt, dt.month, dt.weekday(), is_hol, c, w))
             self._years[dt.year] = col
-            # ----
             col = self._weekdays.get(dt.weekday(), [])
             col.append(dt)
             self._weekdays[dt.weekday()] = col
             self._days.append(dt)
+            # ----
             c += 1
-            if not is_hol:
-                w += 1
-                self._bizdays.append(dt)
             dt = dt + D1
-    
+        dt = self.enddate
+        max_w = self._index[self.enddate][0]
+        w = max_w + 1
+        c = self._index[self.enddate][1]
+        while dt >= self.startdate:
+            is_hol = self._index[dt][2]
+            if not is_hol:
+                w -= 1
+            self._rindex[dt] = (min(w, max_w), c, is_hol)
+            c -= 1
+            dt = dt - D1
+            
     @daterangecheck
     @datehandler
     def _getpos(self, dt):
@@ -97,11 +111,13 @@ class DateIndex(object):
     @daterangecheck
     @datehandler
     def offset(self, dt, n):
-        if not self._index[dt][2]:
-            pos = self._getpos(dt) + n
-            return self._bizdays[pos]
+        if n > 0:
+            pos = self._index[dt][0] - 1 + n
+        elif n < 0:
+            pos = self._rindex[dt][0] - 1 + n
         else:
-            raise ValueError('Cannot offset a nonworking day: ' + dt.isoformat())
+            return dt
+        return self._bizdays[pos]
     
     @daterangecheck
     @datehandler
@@ -353,7 +369,10 @@ class Calendar(object):
         d2 = self.__adjust_to(date_to)
         if d1 > d2:
             raise ValueError("The first date must be before the second.")
-        return self._index[d2][0] - self._index[d1][0]
+        # TODO: improve this! _rindex should not be directly called.
+        dif = self._index[d2][0] - self._index[d1][0]
+        rdif = self._index._rindex[d2.date][0] - self._index._rindex[d1.date][0]
+        return min(dif, rdif)
     
     def isbizday(self, dt):
         return not self._index[dt][2]
@@ -393,7 +412,6 @@ class Calendar(object):
         return (isoornot(dt) for dt in self._index.seq(_from, _to))
     
     def offset(self, dt, n, iso=False):
-        dt = self.__adjust_next(dt) if n >= 0 else self.__adjust_previous(dt)
         isoornot = lambda dt: dt if not iso else dt.isoformat()
         return isoornot(self._index.offset(dt, n))
     
