@@ -62,7 +62,6 @@ class DateIndex(object):
     WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
     def __init__(self, holidays, startdate, enddate, weekdays):
         self._index = {}
-        self._rindex = {}
         self._bizdays = []
         self._days = []
         self._years = {}
@@ -71,15 +70,21 @@ class DateIndex(object):
         self.enddate = Date(enddate).date
         self.weekdays = weekdays
         self.holidays = [Date(d).date for d in holidays]
+
+        dts = []
         dt = self.startdate
+        while dt <= self.enddate:
+            dts.append(dt)
+            dt = dt + D1
+        
         w = 0
         c = 1
-        while dt <= self.enddate:
+        for dt in dts:
             is_hol = dt in self.holidays or dt.weekday() in weekdays
             if not is_hol:
                 w += 1
                 self._bizdays.append(dt)
-            self._index[dt] = (w, c, is_hol)
+            self._index[dt] = [w, c, is_hol, None]
             # ----
             col = self._years.get(dt.year, [])
             col.append((dt, dt.month, dt.weekday(), is_hol, c, w))
@@ -90,18 +95,14 @@ class DateIndex(object):
             self._days.append(dt)
             # ----
             c += 1
-            dt = dt + D1
-        dt = self.enddate
+        
         max_w = self._index[self.enddate][0]
         w = max_w + 1
-        c = self._index[self.enddate][1]
-        while dt >= self.startdate:
+        for dt in reversed(dts):
             is_hol = self._index[dt][2]
             if not is_hol:
                 w -= 1
-            self._rindex[dt] = (min(w, max_w), c, is_hol)
-            c -= 1
-            dt = dt - D1
+            self._index[dt][3] = min(w, max_w)
             
     @daterangecheck
     @datehandler
@@ -114,7 +115,7 @@ class DateIndex(object):
         if n > 0:
             pos = self._index[dt][0] - 1 + n
         elif n < 0:
-            pos = self._rindex[dt][0] - 1 + n
+            pos = self._index[dt][3] - 1 + n
         else:
             return dt
         return self._bizdays[pos]
@@ -370,9 +371,8 @@ class Calendar(object):
         d2 = self.__adjust_to(date_to)
         if d1 > d2:
             raise ValueError("The first date must be before the second.")
-        # TODO: improve this! _rindex should not be directly called.
         dif = self._index[d2][0] - self._index[d1][0]
-        rdif = self._index._rindex[d2.date][0] - self._index._rindex[d1.date][0]
+        rdif = self._index[d2][3] - self._index[d1][3]
         bdays = min(dif, rdif)
         return bdays + int(not self.financial)
     
