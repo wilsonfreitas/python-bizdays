@@ -85,15 +85,6 @@ class DateIndex(object):
                 w += 1
                 self._bizdays.append(dt)
             self._index[dt] = [w, c, is_hol, None]
-            # ----
-            col = self._years.get(dt.year, [])
-            col.append((dt, dt.month, dt.weekday(), is_hol, c, w))
-            self._years[dt.year] = col
-            col = self._weekdays.get(dt.weekday(), [])
-            col.append(dt)
-            self._weekdays[dt.weekday()] = col
-            self._days.append(dt)
-            # ----
             c += 1
         
         max_w = self._index[self.enddate][0]
@@ -103,6 +94,19 @@ class DateIndex(object):
             if not is_hol:
                 w -= 1
             self._index[dt][3] = min(w, max_w)
+        
+        for dt in dts:
+            # ----
+            ix = self._index[dt]
+            col = self._years.get(dt.year, [])
+            col.append((dt, dt.month, dt.weekday(), ix[2], ix[1], ix[0], ix[3]))
+            # col.append((dt, dt.month, dt.weekday(), is_hol, c, w))
+            self._years[dt.year] = col
+            col = self._weekdays.get(dt.weekday(), [])
+            col.append(dt)
+            self._weekdays[dt.weekday()] = col
+            self._days.append(dt)
+            # ----
             
     @daterangecheck
     @datehandler
@@ -235,25 +239,25 @@ class DateIndex(object):
     def _getnthdaypos(self, n, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            pos = [(d[4]-1, d[5]-1, d[0]) for d in self._years[year] if d[1] == month]
+            pos = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year] if d[1] == month]
             return pos[n]
         else:
-            return (self._years[year][n][4] - 1, self._years[year][n][5] - 1, self._years[year][n][0])
+            return (self._years[year][n][4] - 1, self._years[year][n][5] - 1, self._years[year][n][0], self._years[year][n][6])
     
     def _getnthbizdaypos(self, n, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            col = [(d[4]-1, d[5]-1, d[0]) for d in self._years[year] if not d[3] and d[1] == month]
+            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year] if not d[3] and d[1] == month]
         else:
-            col = [(d[4]-1, d[5]-1, d[0]) for d in self._years[year] if not d[3]]
+            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year] if not d[3]]
         return col[n]
     
     def _getnthweekdaypos(self, n, weekday, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            col = [(d[4]-1, d[5]-1, d[0]) for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday and d[1] == month]
+            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday and d[1] == month]
         else:
-            col = [(d[4]-1, d[5]-1, d[0]) for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday]
+            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday]
         return col[n]
     
     def _getnthday_beforeafter(self, n1, pos):
@@ -261,7 +265,10 @@ class DateIndex(object):
         return self._days[pos]
     
     def _getnthbizday_beforeafter(self, n1, pos):
-        pos = pos[1] + n1
+        if n1 > 0:
+            pos = pos[1] + n1
+        else:
+            pos = pos[3] + n1
         return self._bizdays[pos]
     
     def _getnthweekday_beforeafter(self, n1, weekday, pos):
