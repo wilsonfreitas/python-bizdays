@@ -457,12 +457,7 @@ class Calendar(object):
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
         return Calendar(_holidays, weekdays=_nonwork_weekdays, name=name)
-    
-    def __eq__(self, other):
-        return self.startdate == other.startdate and \
-            self.enddate == other.enddate and \
-            self._cal_spec == other._cal_spec
-    
+        
     def __str__(self):
         return '''Calendar: {0}
 Start: {1}
