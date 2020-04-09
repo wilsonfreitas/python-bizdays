@@ -304,11 +304,11 @@ class Date(object):
         d = d if d else date.today()
         if isstr(d):
             d = datetime.strptime(d, format).date()
-        elif type(d) is datetime:
+        elif isinstance(d, datetime):
             d = d.date()
-        elif type(d) is Date:
+        elif isinstance(d, Date):
             d = d.date
-        elif type(d) is date:
+        elif isinstance(d, date):
             pass
         else:
             raise ValueError()
