@@ -1,27 +1,11 @@
-<!-- In several countries and markets, the accountability of the price of a financial
-instrument, mainly bonds and derivatives, involves the use of different
-rules to compute the way the days go by.
-In some countries, like in Brazil, several financial instrument only pay interest for business days along their life cycle.
-Therefore, having a way to compute the number of business days between 2 dates is quite useful to price the financial instruments properly.
-It is necessary the holidays which occur between the 2 dates, to compute the business days and they are intrinsically related to counties and local markets.
-In Brazil, [ANBIMA](www.anbima.com.br) prepares a file with a list of holidays up to the year of 1978 which is largely used by market practioners for pricing financial instruments.
-
-Several financial libraries compute the holidays, giving no option to users set it by their own.
-Furtherly, the financial calendar is usually a small feature of a huge library, as [quantlib](quantlib.org), for example, and some users, including myself, don't want to put a hand in such a huge library only to use the financial calendar. -->
-
-**bizdays** computes business days between two dates based on the definition of nonworking days (usually holidays and nonworking weekdays).
+**bizdays** computes business days between two dates based on the definition of nonworking days (usually holidays and weekends—nonworking weekdays).
 It also computes other collateral effects like adjust dates for the next or previous business day, check whether a date is a business day, create generators of business days sequences, and so forth.
-
 
 ## Install
 
-**bizdays** is avalilable at PyPI, so it is pip and easy_install instalable.
+**bizdays** is avalilable at PyPI, so it is pip instalable.
 
 	pip install bizdays
-
-or
-
-	easy_install bizdays
 
 ## Using
 
@@ -55,10 +39,7 @@ datetime.date(2014, 1, 2)
 >>> cal.seq('2014-01-02', '2014-01-07')
 <generator object seq at 0x1092b02d0>
 >>> list(cal.seq('2014-01-02', '2014-01-07'))
-[datetime.date(2014, 1, 2),
- datetime.date(2014, 1, 3),
- datetime.date(2014, 1, 6),
- datetime.date(2014, 1, 7)]
+[datetime.date(2014, 1, 2), datetime.date(2014, 1, 3), datetime.date(2014, 1, 6), datetime.date(2014, 1, 7)]
 >>> cal.offset('2014-01-02', 5)
 datetime.date(2014, 1, 9)
 >>> cal.getdate('15th day', 2002, 5)
@@ -78,38 +59,13 @@ In this example I used the list of holidays released by [ANBIMA](http://www.anbi
 > As you can see in the examples all date arguments are strings ISO formatted (`YYYY-mm-dd` or `%Y-%m-%d`), but they can also be passed as `datetime.date` objects.
 > All returning dates are `datetime.date` objects (or a sequence of it), unless you set `iso=True`, that will return an ISO formatted string.
 
-### Calendar Specification
-
-Calendar specification is a text file containing the weekdays to be considered as nonworking days and an ISO formatted list of dates representing holidays.
-I usually use a `.cal` extension on those files.
-Here it follows an example called `Test.cal`:
-
-	Saturday
-	Sunday
-	2001-01-01
-	2002-01-01
-	2012-12-25
-	2013-01-01
-
-It has 4 holidays and the weekend as nonworking days.
-To create that calendar you need to call `Calendar.load`
-
-```{python}
->>> cal = Calendar.load('Test.cal')
->>> cal
-Calendar: Test
-Start: 2001-01-01
-End: 2013-01-01
-Holidays: 4
-```
-
 > The `startdate` and `enddate` of a `Calendar` are defined accordingly the first and last given holidays.
 
 ### bizdays
 
 To compute the business days between two dates you call `bizdays` passing `from` and `to` dates as arguments.
 
-```{python}
+```python
 >>> cal.bizdays('2012-12-31', '2013-01-03')
 2
 ```
@@ -118,21 +74,21 @@ To compute the business days between two dates you call `bizdays` passing `from`
 
 You specify dates by its position or related to other dates, for example:
 
-```{python}
+```python
 >>> cal.getdate('15th day', 2002, 5)
 datetime.date(2002, 5, 15)
 ```
 
 it returns the 15th day of 2002 may. You can also reffer to the whole year.
 
-```{python}
+```python
 >>> cal.getdate('150th day', 2002)
 datetime.date(2002, 5, 30)
 ```
 
 It accepts `day`, `bizday` and weekdays by: `sun`, `mon`, `tue`, `wed`, `thu`, `fri`, and `sat`.
 
-```{python}
+```python
 >>> cal.getdate('last day', 2006)
 datetime.date(2006, 12, 31)
 >>> cal.getdate('last bizday', 2006)
@@ -147,39 +103,28 @@ For postion use: `first`, `second`, `third`, `1st`, `2nd`, `3rd`, `[n]th`, and `
 
 You can find before and after other date positions (using date positions as a reference).
 
-```{python}
+```python
 >>> cal.getdate('last mon before 30th day', 2006, 7)
 datetime.date(2006, 7, 24)
 >>> cal.getdate('second bizday after 15th day', 2006)
 datetime.date(2006, 1, 18)
 ```
 
-### adjust_next and adjust_previous
-
-Several contracts, by default, always expiry in the same day, for example, 1st Januray, which isn't a business day, so instead of carrying your code with awful test you could call `adjust_next` which returns the given date
-whether it is a business day or the next business day.
-
-```{python}
->>> cal.adjust_next('2013-01-01')
-datetime.date(2013, 1, 2)
->>> cal.adjust_next('2013-01-02')
-datetime.date(2013, 1, 2)
-```
-
-We also have `adjust_previous`, although I suppose it is unusual, too.
-
-```{python}
->>> cal.adjust_previous('2013-01-01')
-datetime.date(2012, 12, 31)
-```
-
 #### following and preceding
 
-The functions `following` and `preceding` reffer to `adjust_next` and `adjust_previous`, respectively.
+Several contracts, by default, always expiry in the same day, for example, 1st Januray, which isn't a business day, so instead of carrying your code with awful checks you could call `following` which returns the given date
+whether it is a business day or the next business day.
 
-```{python}
+```python
 >>> cal.following('2013-01-01')
 datetime.date(2013, 1, 2)
+>>> cal.following('2013-01-02')
+datetime.date(2013, 1, 2)
+```
+
+We also have `preceding`, although I suppose it is unusual, too.
+
+```python
 >>> cal.preceding('2013-01-01')
 datetime.date(2012, 12, 31)
 ```
@@ -189,7 +134,7 @@ datetime.date(2012, 12, 31)
 `modified_following` and `modified_preceding` are common functions used to specify maturity of contracts.
 They work the same way `following` and `preceding` but once the returning date is a different month it is adjusted to the `following` or `preceding` business day in the same month.
 
-```{python}
+```python
 >>> dt = cal.getdate('last day', 2002, 3)
 >>> dt
 datetime.date(2002, 3, 31)
@@ -211,7 +156,7 @@ For example, you want to compute the price of a bond from its issue date up to i
 You have to walk over business days in order to carry the contract up to maturity.
 To accomplish that you use the `seq` method (stolen from R) which returns a sequence generator of business days.
 
-```{python}
+```python
 >>> for dt in cal.seq('2012-12-31', '2013-01-03'):
 ...     print dt
 ... 
@@ -224,7 +169,7 @@ To accomplish that you use the `seq` method (stolen from R) which returns a sequ
 
 This method offsets the given date by `n` days respecting the calendar, so it obligatorily returns a business day.
 
-```{python}
+```python
 >>> cal.offset('2013-01-02', 1)
 datetime.date(2013, 1, 3)
 >>> cal.offset('2013-01-02', 3)
@@ -235,35 +180,36 @@ datetime.date(2013, 1, 2)
 
 Obviously, if you want to offset backwards you can use `-n`.
 
-```{python}
+```python
 >>> print cal.offset('2013-01-02', -1)
 2012-12-31
 >>> print cal.offset('2013-01-02', -3)
 2012-12-27
 ```
+
 Once the given date is a business day there is no problems, but if instead it isn't a working day the offset can lead to unexpected results. For example:
 
-```{python}
+```python
 >>> cal.offset('2013-01-01', 1)
-datetime.date(2013, 1, 3)
->>> cal.offset('2013-01-01', 0)
 datetime.date(2013, 1, 2)
+>>> cal.offset('2013-01-01', 0)
+datetime.date(2013, 1, 1)
 >>> cal.offset('2013-01-01', -1)
-datetime.date(2012, 12, 28)
+datetime.date(2012, 12, 31)
 ```
-This happens because before starting to offset the date, the given date is adjusted to its next or previous business day. If `n >= 0` the adjustment is positive, so to the next business day, otherwise it is adjusted to the previous business day.
 
 ## Actual Calendar
 
 The Actual Calendar can be defined as
 
-```{python}
->>> cal = Calendar(name='Actual')
+```python
+>>> cal = Calendar(name='actual')
 >>> cal
-Calendar: Actual
+Calendar: actual
 Start: 1970-01-01
 End: 2071-01-01
 Holidays: 0
+Financial: True
 ```
 
 The Actual Calendar doesn't consider holidays, nor nonworking weekdays for counting business days between 2 dates.
@@ -277,7 +223,7 @@ When you price financial instruments you don't have to check if it uses business
 
 The Calendar's methods: `isbizday`, `bizdays`, `adjust_previous`, `adjust_next`, and `offset`, have a vectorized counterparty, inside `Calendar.vec` attribute.
 
-```{python}
+```python
 >>> cal = Calendar.load('Test.cal')
 >>> dates = ('2002-01-01', '2002-01-02', '2002-01-03')
 >>> tuple(cal.vec.adjust_next(dates))
@@ -296,7 +242,7 @@ In `bizdays` call a date and a sequence have been passed, computing business day
 Once you pass 2 sequences for `bizdays` and `offset` and those sequences doesn't have the same length, no problem.
 The shorter collection is cycled to fit the longer's length.
 
-```{python}
+```python
 >>> dates = ('2002-01-01', '2002-01-02', '2002-01-03', '2002-01-04', '2002-01-05')
 >>> tuple(cal.vec.offset(dates, (1, 2, 3)))
 (datetime.date(2002, 1, 3),
