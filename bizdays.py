@@ -53,7 +53,7 @@ def load_holidays(fname, format='%Y-%m-%d'):
     with open(fname) as fcal:
         for cal_reg in fcal:
             cal_reg = cal_reg.strip()
-            if cal_reg is '': continue
+            if cal_reg == '': continue
             _holidays.append(Date(cal_reg, format=format).date)
     return _holidays
 
@@ -451,7 +451,7 @@ class Calendar(object):
         with open(fname) as fcal:
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
-                if cal_reg is '': continue
+                if cal_reg == '': continue
                 if re.match(wre, cal_reg.lower()):
                     _nonwork_weekdays.append(cal_reg)
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
