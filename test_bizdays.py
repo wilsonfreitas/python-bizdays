@@ -6,6 +6,64 @@ from random import shuffle
 from bizdays import *
 
 
+def asDate(dt):
+    return Date(dt).date
+
+
+class TestBizdays(unittest.TestCase):
+    cal = Calendar(name='actual')
+
+    def test_bizdays_default_calendar(self):
+        bizdays = self.cal.bizdays
+        self.assertEqual(bizdays('2013-01-02', '2013-01-03'), 1)
+        self.assertEqual(bizdays(asDate('2013-01-02'), '2013-01-03'), 1)
+        self.assertEqual(bizdays(asDate('2013-01-02'), asDate('2013-01-03')),
+                         1)
+
+    def test_bizdays_default_calendar_sequence(self):
+        bizdays = self.cal.bizdays
+        self.assertEqual(bizdays(('2013-01-02', '2013-01-03'), '2013-01-03'),
+                         [1, 0])
+
+
+class TestVectorizedOpsInCalendar(unittest.TestCase):
+    cal = Calendar(name='actual')
+
+    def test_isbizday(self):
+        self.assertEqual(self.cal.isbizday(('2013-01-02', '2013-01-03')),
+                         [True, True])
+
+    def test_bizdays(self):
+        bizdays = self.cal.bizdays
+        self.assertEqual(bizdays(('2013-01-02', '2013-01-03'), '2013-01-03'),
+                         [1, 0])
+
+    def test_adjust(self):
+        adjust = self.cal.adjust_next
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+        adjust = self.cal.following
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+        adjust = self.cal.adjust_previous
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+        adjust = self.cal.preceding
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+        adjust = self.cal.modified_following
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+        adjust = self.cal.modified_preceding
+        self.assertEqual(adjust(('2013-01-02', '2013-01-03'), iso=True),
+                         ['2013-01-02', '2013-01-03'])
+
+    def test_offset(self):
+        offset = self.cal.offset
+        self.assertEqual(offset(('2013-01-02', '2013-01-03'), 1, iso=True),
+                         ['2013-01-03', '2013-01-04'])
+
+
 class TestCalendar(unittest.TestCase):
     cal_ANBIMA = Calendar.load('ANBIMA.cal')
 

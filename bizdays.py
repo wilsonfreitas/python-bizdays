@@ -3,6 +3,8 @@ import os
 import re
 from datetime import datetime, date, timedelta
 
+options = {}
+
 try:
     from itertools import izip, cycle
 
@@ -428,43 +430,61 @@ class Calendar(object):
     holidays = property(__get_holidays)
 
     def bizdays(self, date_from, date_to):
-        d1 = self.__adjust_from(date_from)
-        d2 = self.__adjust_to(date_to)
-        if d1 > d2:
-            raise ValueError("The first date must be before the second.")
-        dif = self._index[d2][0] - self._index[d1][0]
-        rdif = self._index[d2][3] - self._index[d1][3]
-        bdays = min(dif, rdif)
-        return bdays + int(not self.financial)
+        if isseq(date_from) or isseq(date_to):
+            return list(self.vec.bizdays(date_from, date_to))
+        else:
+            d1 = self.__adjust_from(date_from)
+            d2 = self.__adjust_to(date_to)
+            if d1 > d2:
+                raise ValueError("The first date must be before the second.")
+            dif = self._index[d2][0] - self._index[d1][0]
+            rdif = self._index[d2][3] - self._index[d1][3]
+            bdays = min(dif, rdif)
+            return bdays + int(not self.financial)
 
     def isbizday(self, dt):
-        return not self._index[dt][2]
+        if isseq(dt):
+            return list(self.vec.isbizday(dt))
+        else:
+            return not self._index[dt][2]
 
     def __adjust_next(self, dt):
         return Date(self._index.following(dt))
 
     def adjust_next(self, dt, iso=False):
-        dt = self.__adjust_next(dt)
-        return dt.date if not iso else str(dt)
+        if isseq(dt):
+            return list(self.vec.adjust_next(dt, iso))
+        else:
+            dt = self.__adjust_next(dt)
+            return dt.date if not iso else str(dt)
 
     following = adjust_next
 
     def modified_following(self, dt, iso=False):
-        dtx = self._index.modified_following(dt)
-        return dtx.date if not iso else str(dtx)
+        if isseq(dt):
+            return list(self.vec.modified_following(dt, iso))
+        else:
+            dtx = self._index.modified_following(dt)
+            return dtx.date if not iso else str(dtx)
 
     def __adjust_previous(self, dt):
         return Date(self._index.preceding(dt))
 
     def adjust_previous(self, dt, iso=False):
-        dt = self.__adjust_previous(dt)
-        return dt.date if not iso else str(dt)
+        if isseq(dt):
+            return list(self.vec.adjust_previous(dt, iso))
+        else:
+            dt = self.__adjust_previous(dt)
+            return dt.date if not iso else str(dt)
 
     preceding = adjust_previous
 
     def modified_preceding(self, dt, iso=False):
-        dtx = self._index.modified_preceding(dt)
-        return dtx.date if not iso else str(dtx)
+        if isseq(dt):
+            return list(self.vec.modified_preceding(dt, iso))
+        else:
+            dtx = self._index.modified_preceding(dt)
+            return dtx.date if not iso else str(dtx)
 
     def seq(self, date_from, date_to, iso=False):
         _from = self.__adjust_from(date_from)
@@ -474,7 +494,10 @@ class Calendar(object):
         return (isoornot(dt, iso) for dt in self._index.seq(_from, _to))
 
     def offset(self, dt, n, iso=False):
-        return isoornot(self._index.offset(dt, n), iso)
+        if isseq(dt):
+            return list(self.vec.offset(dt, n, iso))
+        else:
+            return isoornot(self._index.offset(dt, n), iso)
 
     def getdate(self, expr, year, month=None, iso=False, adjust=None):
         dt = self._index.getdate(expr, year, month)
@@ -557,10 +580,20 @@ class VectorizedOps(object):
             dates = [dates]
         return (self.cal.adjust_next(dt, iso=iso) for dt in dates)
 
+    def modified_following(self, dates, iso=False):
+        if not isseq(dates):
+            dates = [dates]
+        return (self.cal.modified_following(dt, iso=iso) for dt in dates)
+
     def adjust_previous(self, dates, iso=False):
         if not isseq(dates):
             dates = [dates]
         return (self.cal.adjust_previous(dt, iso=iso) for dt in dates)
+
+    def modified_preceding(self, dates, iso=False):
+        if not isseq(dates):
+            dates = [dates]
+        return (self.cal.modified_preceding(dt, iso=iso) for dt in dates)
 
     def offset(self, dates, ns, iso=False):
         if not isseq(dates):
