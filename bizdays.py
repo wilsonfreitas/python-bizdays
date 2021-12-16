@@ -494,7 +494,7 @@ class Calendar(object):
         return (isoornot(dt, iso) for dt in self._index.seq(_from, _to))
 
     def offset(self, dt, n, iso=False):
-        if isseq(dt):
+        if isseq(dt) or isseq(n):
             return list(self.vec.offset(dt, n, iso))
         else:
             return isoornot(self._index.offset(dt, n), iso)

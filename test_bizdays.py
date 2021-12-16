@@ -62,6 +62,8 @@ class TestVectorizedOpsInCalendar(unittest.TestCase):
         offset = self.cal.offset
         self.assertEqual(offset(('2013-01-02', '2013-01-03'), 1, iso=True),
                          ['2013-01-03', '2013-01-04'])
+        self.assertEqual(offset('2013-01-02', [1, 2], iso=True),
+                         ['2013-01-03', '2013-01-04'])
 
 
 class TestCalendar(unittest.TestCase):
