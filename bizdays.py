@@ -509,6 +509,9 @@ class Calendar(object):
             dt = Date(dt)
         return dt.date if not iso else str(dt)
 
+    def getbizdays(self, year, month=None):
+        return self._index.getbizdays(year, month)
+
     @classmethod
     def load(cls, fname):
         if not os.path.exists(fname):
