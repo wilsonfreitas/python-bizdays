@@ -433,14 +433,24 @@ class Calendar(object):
         if isseq(date_from) or isseq(date_to):
             return list(self.vec.bizdays(date_from, date_to))
         else:
-            d1 = self.__adjust_from(date_from)
-            d2 = self.__adjust_to(date_to)
-            if d1 > d2:
-                raise ValueError("The first date must be before the second.")
+            if date_from > date_to:
+                _from, _to = date_to, date_from
+            else:
+                _from, _to = date_from, date_to
+            d1 = self.__adjust_from(_from)
+            d2 = self.__adjust_to(_to)
             dif = self._index[d2][0] - self._index[d1][0]
             rdif = self._index[d2][3] - self._index[d1][3]
             bdays = min(dif, rdif)
-            return bdays + int(not self.financial)
+            if date_from > date_to:
+                bdays = -bdays
+            if self.financial:
+                return bdays
+            else:
+                if bdays >= 0:
+                    return bdays + 1
+                else:
+                    return bdays - 1
 
     def isbizday(self, dt):
         if isseq(dt):
