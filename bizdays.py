@@ -37,12 +37,6 @@ def find_date_pos(col, dt):
     return beg
 
 
-def datehandler(func):
-    def handler(self, dt, *args):
-        return func(self, Date(dt).date, *args)
-    return handler
-
-
 def daterangecheck(func):
     def handler(self, dt, *args):
         dt = Date(dt).date
@@ -119,12 +113,10 @@ class DateIndex(object):
             # ----
 
     @daterangecheck
-    @datehandler
     def _getpos(self, dt):
         return self._index[dt][0] - 1
 
     @daterangecheck
-    @datehandler
     def offset(self, dt, n):
         if n > 0:
             pos = self._index[dt][0] - 1 + n
@@ -135,7 +127,6 @@ class DateIndex(object):
         return self._bizdays[pos]
 
     @daterangecheck
-    @datehandler
     def following(self, dt):
         if not self._index[dt][2]:
             return dt
@@ -143,7 +134,6 @@ class DateIndex(object):
             return self.following(dt + D1)
 
     @daterangecheck
-    @datehandler
     def modified_following(self, dt):
         dtx = self.following(dt)
         if dtx.month != dt.month:
@@ -151,7 +141,6 @@ class DateIndex(object):
         return dtx
 
     @daterangecheck
-    @datehandler
     def preceding(self, dt):
         if not self._index[dt][2]:
             return dt
@@ -159,7 +148,6 @@ class DateIndex(object):
             return self.preceding(dt - D1)
 
     @daterangecheck
-    @datehandler
     def modified_preceding(self, dt):
         dtx = self.preceding(dt)
         if dtx.month != dt.month:
@@ -185,7 +173,6 @@ class DateIndex(object):
         return self._bizdays[pos1:pos2]
 
     @daterangecheck
-    @datehandler
     def get(self, dt):
         return self._index[dt]
 
