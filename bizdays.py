@@ -452,14 +452,14 @@ class Calendar(object):
             return not self._index[dt][2]
 
     def __adjust_next(self, dt):
-        return Date(self._index.following(dt))
+        return Date(self._index.following(dt)).date
 
     def adjust_next(self, dt, iso=False):
         if isseq(dt):
             return list(self.vec.adjust_next(dt, iso))
         else:
             dt = self.__adjust_next(dt)
-            return dt.date if not iso else str(dt)
+            return dt if not iso else str(dt)
 
     following = adjust_next
 
@@ -468,17 +468,17 @@ class Calendar(object):
             return list(self.vec.modified_following(dt, iso))
         else:
             dtx = self._index.modified_following(dt)
-            return dtx.date if not iso else str(dtx)
+            return dtx if not iso else str(dtx)
 
     def __adjust_previous(self, dt):
-        return Date(self._index.preceding(dt))
+        return Date(self._index.preceding(dt)).date
 
     def adjust_previous(self, dt, iso=False):
         if isseq(dt):
             return list(self.vec.adjust_previous(dt, iso))
         else:
             dt = self.__adjust_previous(dt)
-            return dt.date if not iso else str(dt)
+            return dt if not iso else str(dt)
 
     preceding = adjust_previous
 
@@ -487,7 +487,7 @@ class Calendar(object):
             return list(self.vec.modified_preceding(dt, iso))
         else:
             dtx = self._index.modified_preceding(dt)
-            return dtx.date if not iso else str(dtx)
+            return dtx if not iso else str(dtx)
 
     def seq(self, date_from, date_to, iso=False):
         _from = self.__adjust_from(date_from)
