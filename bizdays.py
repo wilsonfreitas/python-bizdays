@@ -2,23 +2,17 @@
 import os
 import re
 from datetime import datetime, date, timedelta
+from itertools import cycle
+
 
 options = {}
 
-try:
-    from itertools import izip, cycle
 
-    def isstr(d):
-        return isinstance(d, str) or isinstance(d, unicode)
-except ImportError:
-    from itertools import cycle
+D1 = timedelta(1)
+
 
     def isstr(d):
         return isinstance(d, str)
-else:
-    zip = izip
-
-D1 = timedelta(1)
 
 
 def isoornot(dt, iso):
