@@ -11,8 +11,8 @@ options = {}
 D1 = timedelta(1)
 
 
-    def isstr(d):
-        return isinstance(d, str)
+def isstr(d):
+    return isinstance(d, str)
 
 
 def isoornot(dt, iso):
@@ -571,6 +571,10 @@ class VectorizedOps(object):
             dates_from = [dates_from]
         if not isseq(dates_to):
             dates_to = [dates_to]
+        lengths = [len(dates_from), len(dates_to)]
+        if max(lengths) % min(lengths) != 0:
+            raise Exception('from length must be multiple of to length and '
+                            'vice-versa')
         if len(dates_from) < len(dates_to):
             dates_from = cycle(dates_from)
         else:
