@@ -424,6 +424,8 @@ class Calendar(object):
         if isseq(date_from) or isseq(date_to):
             return list(self.vec.bizdays(date_from, date_to))
         else:
+            date_from = Date(date_from).date
+            date_to = Date(date_to).date
             if date_from > date_to:
                 _from, _to = date_to, date_from
             else:
