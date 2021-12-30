@@ -406,12 +406,16 @@ class Calendar(object):
         self.vec = VectorizedOps(self)
         if adjust_from == 'next':
             self.__adjust_from = self.__adjust_next
-        else:
+        elif adjust_from == 'previous':
             self.__adjust_from = self.__adjust_previous
+        else:
+            self.__adjust_from = lambda x: x
         if adjust_to == 'previous':
             self.__adjust_to = self.__adjust_previous
-        else:
+        elif adjust_to == 'next':
             self.__adjust_to = self.__adjust_next
+        else:
+            self.__adjust_to = lambda x: x
 
     def __get_weekdays(self):
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
