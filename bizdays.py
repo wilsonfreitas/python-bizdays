@@ -195,6 +195,12 @@ class DateIndex(object):
     def get(self, dt):
         return self._index[dt]
 
+    def getbizdays(self, year, month=None):
+        if month:
+            return sum(not d[3] for d in self._years[year] if d[1] == month)
+        else:
+            return sum(not d[3] for d in self._years[year])
+
     def getdate(self, expr, year, month=None):
         tok = expr.split()
         if len(tok) == 2:
