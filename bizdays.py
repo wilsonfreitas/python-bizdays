@@ -37,6 +37,10 @@ def find_date_pos(col, dt):
     return beg
 
 
+def isnull(x):
+    return x is None
+
+
 def daterangecheck(func):
     def handler(self, dt, *args):
         dt = Date(dt).date
@@ -320,7 +324,7 @@ class DateIndex(object):
 
 class Date(object):
     def __init__(self, d=None, format='%Y-%m-%d'):
-        d = d if d else date.today()
+        # d = d if d else date.today()
         if isstr(d):
             d = datetime.strptime(d, format).date()
         elif isinstance(d, datetime):
@@ -328,6 +332,8 @@ class Date(object):
         elif isinstance(d, Date):
             d = d.date
         elif isinstance(d, date):
+            pass
+        elif d is None:
             pass
         else:
             raise ValueError()
@@ -424,6 +430,8 @@ class Calendar(object):
         if isseq(date_from) or isseq(date_to):
             return list(self.vec.bizdays(date_from, date_to))
         else:
+            if isnull(date_from) or isnull(date_to):
+                return None
             date_from = Date(date_from).date
             date_to = Date(date_to).date
             if date_from > date_to:
@@ -449,7 +457,10 @@ class Calendar(object):
         if isseq(dt):
             return list(self.vec.isbizday(dt))
         else:
-            return not self._index[dt][2]
+            if isnull(dt):
+                return dt
+            else:
+                return not self._index[dt][2]
 
     def __adjust_next(self, dt):
         return Date(self._index.following(dt)).date
@@ -458,6 +469,8 @@ class Calendar(object):
         if isseq(dt):
             return list(self.vec.adjust_next(dt, iso))
         else:
+            if isnull(dt):
+                return dt
             dt = self.__adjust_next(dt)
             return dt if not iso else str(dt)
 
@@ -467,6 +480,8 @@ class Calendar(object):
         if isseq(dt):
             return list(self.vec.modified_following(dt, iso))
         else:
+            if isnull(dt):
+                return dt
             dtx = self._index.modified_following(dt)
             return dtx if not iso else str(dtx)
 
@@ -477,6 +492,8 @@ class Calendar(object):
         if isseq(dt):
             return list(self.vec.adjust_previous(dt, iso))
         else:
+            if isnull(dt):
+                return dt
             dt = self.__adjust_previous(dt)
             return dt if not iso else str(dt)
 
@@ -486,6 +503,8 @@ class Calendar(object):
         if isseq(dt):
             return list(self.vec.modified_preceding(dt, iso))
         else:
+            if isnull(dt):
+                return dt
             dtx = self._index.modified_preceding(dt)
             return dtx if not iso else str(dtx)
 
@@ -500,6 +519,10 @@ class Calendar(object):
         if isseq(dt) or isseq(n):
             return list(self.vec.offset(dt, n, iso))
         else:
+            if isnull(dt):
+                return dt
+            elif isnull(n):
+                return n
             return isoornot(self._index.offset(dt, n), iso)
 
     def getdate(self, expr, year, month=None, iso=False, adjust=None):
