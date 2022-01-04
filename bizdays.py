@@ -494,7 +494,7 @@ class Calendar(object):
         _to = self.__adjust_to(date_to)
         if _from > _to:
             raise ValueError("The first date must be before the second.")
-        return (isoornot(dt, iso) for dt in self._index.seq(_from, _to))
+        return list(isoornot(dt, iso) for dt in self._index.seq(_from, _to))
 
     def offset(self, dt, n, iso=False):
         if isseq(dt) or isseq(n):
