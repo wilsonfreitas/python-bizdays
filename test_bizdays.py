@@ -2,6 +2,8 @@
 import unittest
 from random import shuffle
 from bizdays import *
+from bizdays import isseq, Date, DateIndex, load_holidays, DateOutOfRange
+from datetime import datetime, timedelta
 
 
 set_option('mode', 'python')
