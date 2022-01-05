@@ -1,26 +1,75 @@
 
+from io import StringIO
 import os
 import re
 from datetime import datetime, date, timedelta
+from itertools import cycle
+import pandas as pd
+import numpy as np
+import requests
 
-try:
-    from itertools import izip, cycle
 
-    def isstr(d):
-        return isinstance(d, str) or isinstance(d, unicode)
-except ImportError:
-    from itertools import cycle
+__all__ = [
+    'get_option',
+    'set_option',
+    'Calendar'
+]
 
-    def isstr(d):
-        return isinstance(d, str)
-else:
-    zip = izip
+
+options = {
+    'mode': 'python'
+}
+
+
+def get_option(name):
+    return options.get(name)
+
+
+def set_option(name, val):
+    options[name] = val
+
 
 D1 = timedelta(1)
 
 
-def isoornot(dt, iso):
-    return dt if not iso else dt.isoformat()
+def isstr(d):
+    return isinstance(d, str)
+
+
+def isnull(x):
+    return pd.isna(x)
+
+
+def isseq(seq):
+    if isstr(seq):
+        return False
+    try:
+        iter(seq)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
+def recseq(gen, rcls=pd.DatetimeIndex):
+    g = list(gen)
+    if get_option('mode') == 'pandas':
+        return rcls(g)
+    else:
+        return g
+
+
+def retdate(dt):
+    if get_option('mode.datetype') == 'datetime':
+        return datetime(dt.year, dt.month, dt.day)
+    elif get_option('mode.datetype') == 'date':
+        return dt
+    elif get_option('mode.datetype') == 'iso':
+        return dt.isoformat()
+    elif get_option('mode') == 'pandas':
+        return pd.to_datetime(dt)
+    else:
+        return dt
 
 
 class DateOutOfRange(Exception):
@@ -41,18 +90,25 @@ def find_date_pos(col, dt):
     return beg
 
 
-def datehandler(func):
-    def handler(self, dt, *args):
-        return func(self, Date(dt).date, *args)
-    return handler
+def __daterangecheck(obj, dt):
+    dt = Date(dt).date
+    if dt > obj.enddate or dt < obj.startdate:
+        raise DateOutOfRange('Given date out of calendar range')
+    return dt
 
 
 def daterangecheck(func):
     def handler(self, dt, *args):
-        dt = Date(dt).date
-        if dt > self.enddate or dt < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
+        dt = __daterangecheck(self, dt)
         return func(self, dt, *args)
+    return handler
+
+
+def daterangecheck2(func):
+    def handler(self, dt1, dt2, *args):
+        dt1 = __daterangecheck(self, dt1)
+        dt2 = __daterangecheck(self, dt2)
+        return func(self, dt1, dt2, *args)
     return handler
 
 
@@ -123,12 +179,10 @@ class DateIndex(object):
             # ----
 
     @daterangecheck
-    @datehandler
     def _getpos(self, dt):
         return self._index[dt][0] - 1
 
     @daterangecheck
-    @datehandler
     def offset(self, dt, n):
         if n > 0:
             pos = self._index[dt][0] - 1 + n
@@ -139,7 +193,6 @@ class DateIndex(object):
         return self._bizdays[pos]
 
     @daterangecheck
-    @datehandler
     def following(self, dt):
         if not self._index[dt][2]:
             return dt
@@ -147,7 +200,6 @@ class DateIndex(object):
             return self.following(dt + D1)
 
     @daterangecheck
-    @datehandler
     def modified_following(self, dt):
         dtx = self.following(dt)
         if dtx.month != dt.month:
@@ -155,7 +207,6 @@ class DateIndex(object):
         return dtx
 
     @daterangecheck
-    @datehandler
     def preceding(self, dt):
         if not self._index[dt][2]:
             return dt
@@ -163,20 +214,14 @@ class DateIndex(object):
             return self.preceding(dt - D1)
 
     @daterangecheck
-    @datehandler
     def modified_preceding(self, dt):
         dtx = self.preceding(dt)
         if dtx.month != dt.month:
             dtx = self.following(dt)
         return dtx
 
+    @daterangecheck2
     def seq(self, dt1, dt2):
-        dt1 = Date(dt1).date
-        dt2 = Date(dt2).date
-        if dt1 > self.enddate or dt1 < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
-        if dt2 > self.enddate or dt2 < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
         if self._index[dt1][2]:
             _ = 'Cannot start a sequence of working days with a ' + \
                 'nonworking day: '
@@ -189,9 +234,14 @@ class DateIndex(object):
         return self._bizdays[pos1:pos2]
 
     @daterangecheck
-    @datehandler
     def get(self, dt):
         return self._index[dt]
+
+    def getbizdays(self, year, month=None):
+        if month:
+            return sum(not d[3] for d in self._years[year] if d[1] == month)
+        else:
+            return sum(not d[3] for d in self._years[year])
 
     def getdate(self, expr, year, month=None):
         tok = expr.split()
@@ -331,7 +381,7 @@ class DateIndex(object):
 
 class Date(object):
     def __init__(self, d=None, format='%Y-%m-%d'):
-        d = d if d else date.today()
+        # d = d if d else date.today()
         if isstr(d):
             d = datetime.strptime(d, format).date()
         elif isinstance(d, datetime):
@@ -339,6 +389,8 @@ class Date(object):
         elif isinstance(d, Date):
             d = d.date
         elif isinstance(d, date):
+            pass
+        elif d is None:
             pass
         else:
             raise ValueError()
@@ -404,12 +456,16 @@ class Calendar(object):
         self.vec = VectorizedOps(self)
         if adjust_from == 'next':
             self.__adjust_from = self.__adjust_next
-        else:
+        elif adjust_from == 'previous':
             self.__adjust_from = self.__adjust_previous
+        else:
+            self.__adjust_from = lambda x: x
         if adjust_to == 'previous':
             self.__adjust_to = self.__adjust_previous
-        else:
+        elif adjust_to == 'next':
             self.__adjust_to = self.__adjust_next
+        else:
+            self.__adjust_to = lambda x: x
 
     def __get_weekdays(self):
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
@@ -428,79 +484,134 @@ class Calendar(object):
     holidays = property(__get_holidays)
 
     def bizdays(self, date_from, date_to):
-        d1 = self.__adjust_from(date_from)
-        d2 = self.__adjust_to(date_to)
-        if d1 > d2:
-            raise ValueError("The first date must be before the second.")
-        dif = self._index[d2][0] - self._index[d1][0]
-        rdif = self._index[d2][3] - self._index[d1][3]
-        bdays = min(dif, rdif)
-        return bdays + int(not self.financial)
+        if isseq(date_from) or isseq(date_to):
+            return recseq(self.vec.bizdays(date_from, date_to), np.array)
+        else:
+            if isnull(date_from) or isnull(date_to):
+                return None
+            date_from = Date(date_from).date
+            date_to = Date(date_to).date
+            if date_from > date_to:
+                _from, _to = date_to, date_from
+            else:
+                _from, _to = date_from, date_to
+            d1 = self.__adjust_from(_from)
+            d2 = self.__adjust_to(_to)
+            dif = self._index[d2][0] - self._index[d1][0]
+            rdif = self._index[d2][3] - self._index[d1][3]
+            bdays = min(dif, rdif)
+            if date_from > date_to:
+                bdays = -bdays
+            if self.financial:
+                return bdays
+            else:
+                if bdays >= 0:
+                    return bdays + 1
+                else:
+                    return bdays - 1
 
     def isbizday(self, dt):
-        return not self._index[dt][2]
+        if isseq(dt):
+            return recseq(self.vec.isbizday(dt), np.array)
+        else:
+            if isnull(dt):
+                return dt
+            else:
+                return not self._index[dt][2]
 
     def __adjust_next(self, dt):
-        return Date(self._index.following(dt))
+        return Date(self._index.following(dt)).date
 
-    def adjust_next(self, dt, iso=False):
-        dt = self.__adjust_next(dt)
-        return dt.date if not iso else str(dt)
+    def adjust_next(self, dt):
+        if isseq(dt):
+            return recseq(self.vec.adjust_next(dt))
+        else:
+            if isnull(dt):
+                return dt
+            return retdate(self.__adjust_next(dt))
 
     following = adjust_next
 
-    def modified_following(self, dt, iso=False):
-        dtx = self._index.modified_following(dt)
-        return dtx.date if not iso else str(dtx)
+    def modified_following(self, dt):
+        if isseq(dt):
+            return recseq(self.vec.modified_following(dt))
+        else:
+            if isnull(dt):
+                return dt
+            dtx = self._index.modified_following(dt)
+            return retdate(dtx)
 
     def __adjust_previous(self, dt):
-        return Date(self._index.preceding(dt))
+        return Date(self._index.preceding(dt)).date
 
-    def adjust_previous(self, dt, iso=False):
-        dt = self.__adjust_previous(dt)
-        return dt.date if not iso else str(dt)
+    def adjust_previous(self, dt):
+        if isseq(dt):
+            return recseq(self.vec.adjust_previous(dt))
+        else:
+            if isnull(dt):
+                return dt
+            dt = self.__adjust_previous(dt)
+            return retdate(dt)
 
     preceding = adjust_previous
 
-    def modified_preceding(self, dt, iso=False):
-        dtx = self._index.modified_preceding(dt)
-        return dtx.date if not iso else str(dtx)
+    def modified_preceding(self, dt):
+        if isseq(dt):
+            return recseq(self.vec.modified_preceding(dt))
+        else:
+            if isnull(dt):
+                return dt
+            dtx = self._index.modified_preceding(dt)
+            return retdate(dtx)
 
-    def seq(self, date_from, date_to, iso=False):
+    def seq(self, date_from, date_to):
         _from = self.__adjust_from(date_from)
         _to = self.__adjust_to(date_to)
         if _from > _to:
             raise ValueError("The first date must be before the second.")
-        return (isoornot(dt, iso) for dt in self._index.seq(_from, _to))
+        return recseq(retdate(dt) for dt in self._index.seq(_from, _to))
 
-    def offset(self, dt, n, iso=False):
-        return isoornot(self._index.offset(dt, n), iso)
-
-    def getdate(self, expr, year, month=None, iso=False, adjust=None):
-        dt = self._index.getdate(expr, year, month)
-        if adjust == 'next':
-            dt = self.__adjust_next(dt)
-        elif adjust == 'previous':
-            dt = self.__adjust_previous(dt)
+    def offset(self, dt, n):
+        if isseq(dt) or isseq(n):
+            return recseq(self.vec.offset(dt, n))
         else:
-            dt = Date(dt)
-        return dt.date if not iso else str(dt)
+            if isnull(dt):
+                return dt
+            elif isnull(n):
+                return n
+            return retdate(self._index.offset(dt, n))
+
+    def getdate(self, expr, year, month=None, adjust=None):
+        if any([isseq(expr), isseq(year), isseq(month)]):
+            return recseq(self.vec.getdate(expr, year, month, adjust))
+        else:
+            dt = self._index.getdate(expr, year, month)
+            if adjust == 'next':
+                dt = self.__adjust_next(dt)
+            elif adjust == 'previous':
+                dt = self.__adjust_previous(dt)
+            else:
+                dt = Date(dt).date
+            return retdate(dt)
+
+    def getbizdays(self, year, month=None):
+        if any([isseq(year), isseq(month)]):
+            return recseq(self.vec.getbizdays(year, month), np.array)
+        else:
+            return self._index.getbizdays(year, month)
 
     @classmethod
-    def load(cls, fname):
-        if not os.path.exists(fname):
-            raise Exception('Invalid calendar specification: \
-            file not found (%s)' % fname)
-        name = os.path.split(fname)[-1]
-        if name.endswith('.cal'):
-            name = name.replace('.cal', '')
-        else:
-            name = None
+    def load(cls, name=None, filename=None):
+        if filename:
+            res = _checkfile(filename)
+        elif name:
+            res = _checkurl(name)
+
         w = '|'.join(w.lower() for w in cls._weekdays)
         wre = '^%s$' % w
         _holidays = []
         _nonwork_weekdays = []
-        with open(fname) as fcal:
+        with res['iter'] as fcal:
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
                 if cal_reg == '':
@@ -509,7 +620,9 @@ class Calendar(object):
                     _nonwork_weekdays.append(cal_reg)
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
-        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=name)
+        return Calendar(_holidays,
+                        weekdays=_nonwork_weekdays,
+                        name=res['name'])
 
     def __str__(self):
         return '''Calendar: {0}
@@ -522,15 +635,29 @@ Financial: {4}'''.format(self.name, self.startdate, self.enddate,
     __repr__ = __str__
 
 
-def isseq(seq):
-    if isstr(seq):
-        return False
-    try:
-        iter(seq)
-    except TypeError:
-        return False
+def _checkfile(fname):
+    if not os.path.exists(fname):
+        raise Exception(f'Invalid calendar: {fname}')
+    name = os.path.split(fname)[-1]
+    if name.endswith('.cal'):
+        name = name.replace('.cal', '')
     else:
-        return True
+        name = None
+    return {
+        'name': name,
+        'iter': open(fname)
+    }
+
+
+def _checkurl(name):
+    url = f'https://storage.googleapis.com/bizdays-calendars/{name}.cal'
+    res = requests.get(url, verify=False)
+    if res.status_code != 200:
+        raise Exception(f'Invalid calendar: {name}')
+    return {
+        'name': name,
+        'iter': StringIO(res.text)
+    }
 
 
 class VectorizedOps(object):
@@ -545,6 +672,10 @@ class VectorizedOps(object):
             dates_from = [dates_from]
         if not isseq(dates_to):
             dates_to = [dates_to]
+        lengths = [len(dates_from), len(dates_to)]
+        if max(lengths) % min(lengths) != 0:
+            raise Exception('from length must be multiple of to length and '
+                            'vice-versa')
         if len(dates_from) < len(dates_to):
             dates_from = cycle(dates_from)
         else:
@@ -552,17 +683,27 @@ class VectorizedOps(object):
         return (self.cal.bizdays(_from, _to)
                 for _from, _to in zip(dates_from, dates_to))
 
-    def adjust_next(self, dates, iso=False):
+    def adjust_next(self, dates):
         if not isseq(dates):
             dates = [dates]
-        return (self.cal.adjust_next(dt, iso=iso) for dt in dates)
+        return (self.cal.adjust_next(dt) for dt in dates)
 
-    def adjust_previous(self, dates, iso=False):
+    def modified_following(self, dates):
         if not isseq(dates):
             dates = [dates]
-        return (self.cal.adjust_previous(dt, iso=iso) for dt in dates)
+        return (self.cal.modified_following(dt) for dt in dates)
 
-    def offset(self, dates, ns, iso=False):
+    def adjust_previous(self, dates):
+        if not isseq(dates):
+            dates = [dates]
+        return (self.cal.adjust_previous(dt) for dt in dates)
+
+    def modified_preceding(self, dates):
+        if not isseq(dates):
+            dates = [dates]
+        return (self.cal.modified_preceding(dt) for dt in dates)
+
+    def offset(self, dates, ns):
         if not isseq(dates):
             dates = [dates]
         if not isseq(ns):
@@ -571,4 +712,39 @@ class VectorizedOps(object):
             dates = cycle(dates)
         else:
             ns = cycle(ns)
-        return (self.cal.offset(dt, n, iso=iso) for dt, n in zip(dates, ns))
+        return (self.cal.offset(dt, n) for dt, n in zip(dates, ns))
+
+    def getdate(self, expr, year, month, adjust):
+        if not isseq(expr):
+            expr = [expr]
+        if not isseq(year):
+            year = [year]
+        if not isseq(month):
+            month = [month]
+        if len(expr) >= len(year) and len(expr) >= len(month):
+            year = cycle(year)
+            month = cycle(month)
+        elif len(year) >= len(expr) and len(year) >= len(month):
+            expr = cycle(expr)
+            month = cycle(month)
+        elif len(month) >= len(expr) and len(month) >= len(year):
+            expr = cycle(expr)
+            year = cycle(year)
+        return (
+            self.cal.getdate(ex, ye, mo, adjust)
+            for ex, ye, mo in zip(expr, year, month)
+        )
+
+    def getbizdays(self, year, month):
+        if not isseq(year):
+            year = [year]
+        if not isseq(month):
+            month = [month]
+        if len(year) > len(month):
+            month = cycle(month)
+        else:
+            year = cycle(year)
+        return (
+            self.cal.getbizdays(ye, mo)
+            for ye, mo in zip(year, month)
+        )
