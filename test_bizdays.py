@@ -759,6 +759,13 @@ class TestDateIndex(unittest.TestCase):
             '2nd bizday before first day', 2002, 1).isoformat(), '2001-12-28')
 
 
+def test_calendar_load():
+    cal = Calendar.load(name='ANBIMA')
+    assert cal.name == 'ANBIMA'
+    cal = Calendar.load(filename='ANBIMA.cal')
+    assert cal.name == 'ANBIMA'
+
+
 def test_getbizdays():
     cal = Calendar(name='actual')
     assert cal.getbizdays(2021) == 365

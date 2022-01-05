@@ -1,10 +1,12 @@
 
+from io import StringIO
 import os
 import re
 from datetime import datetime, date, timedelta
 from itertools import cycle
 import pandas as pd
 import numpy as np
+import requests
 
 
 __all__ = [
@@ -599,20 +601,17 @@ class Calendar(object):
             return self._index.getbizdays(year, month)
 
     @classmethod
-    def load(cls, fname):
-        if not os.path.exists(fname):
-            raise Exception('Invalid calendar specification: \
-            file not found (%s)' % fname)
-        name = os.path.split(fname)[-1]
-        if name.endswith('.cal'):
-            name = name.replace('.cal', '')
-        else:
-            name = None
+    def load(cls, name=None, filename=None):
+        if filename:
+            res = _checkfile(filename)
+        elif name:
+            res = _checkurl(name)
+
         w = '|'.join(w.lower() for w in cls._weekdays)
         wre = '^%s$' % w
         _holidays = []
         _nonwork_weekdays = []
-        with open(fname) as fcal:
+        with res['iter'] as fcal:
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
                 if cal_reg == '':
@@ -621,7 +620,9 @@ class Calendar(object):
                     _nonwork_weekdays.append(cal_reg)
                 elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
                     _holidays.append(Date(cal_reg))
-        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=name)
+        return Calendar(_holidays,
+                        weekdays=_nonwork_weekdays,
+                        name=res['name'])
 
     def __str__(self):
         return '''Calendar: {0}
@@ -632,6 +633,31 @@ Financial: {4}'''.format(self.name, self.startdate, self.enddate,
                          len(self._holidays), self.financial)
 
     __repr__ = __str__
+
+
+def _checkfile(fname):
+    if not os.path.exists(fname):
+        raise Exception(f'Invalid calendar: {fname}')
+    name = os.path.split(fname)[-1]
+    if name.endswith('.cal'):
+        name = name.replace('.cal', '')
+    else:
+        name = None
+    return {
+        'name': name,
+        'iter': open(fname)
+    }
+
+
+def _checkurl(name):
+    url = f'https://storage.googleapis.com/bizdays-calendars/{name}.cal'
+    res = requests.get(url, verify=False)
+    if res.status_code != 200:
+        raise Exception(f'Invalid calendar: {name}')
+    return {
+        'name': name,
+        'iter': StringIO(res.text)
+    }
 
 
 class VectorizedOps(object):
