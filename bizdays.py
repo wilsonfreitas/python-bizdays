@@ -81,12 +81,25 @@ def find_date_pos(col, dt):
     return beg
 
 
+def __daterangecheck(obj, dt):
+    dt = Date(dt).date
+    if dt > obj.enddate or dt < obj.startdate:
+        raise DateOutOfRange('Given date out of calendar range')
+    return dt
+
+
 def daterangecheck(func):
     def handler(self, dt, *args):
-        dt = Date(dt).date
-        if dt > self.enddate or dt < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
+        dt = __daterangecheck(self, dt)
         return func(self, dt, *args)
+    return handler
+
+
+def daterangecheck2(func):
+    def handler(self, dt1, dt2, *args):
+        dt1 = __daterangecheck(self, dt1)
+        dt2 = __daterangecheck(self, dt2)
+        return func(self, dt1, dt2, *args)
     return handler
 
 
@@ -198,13 +211,8 @@ class DateIndex(object):
             dtx = self.following(dt)
         return dtx
 
+    @daterangecheck2
     def seq(self, dt1, dt2):
-        dt1 = Date(dt1).date
-        dt2 = Date(dt2).date
-        if dt1 > self.enddate or dt1 < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
-        if dt2 > self.enddate or dt2 < self.startdate:
-            raise DateOutOfRange('Given date out of calendar range')
         if self._index[dt1][2]:
             _ = 'Cannot start a sequence of working days with a ' + \
                 'nonworking day: '
@@ -565,17 +573,23 @@ class Calendar(object):
             return retdate(self._index.offset(dt, n))
 
     def getdate(self, expr, year, month=None, adjust=None):
-        dt = self._index.getdate(expr, year, month)
-        if adjust == 'next':
-            dt = self.__adjust_next(dt)
-        elif adjust == 'previous':
-            dt = self.__adjust_previous(dt)
+        if any([isseq(expr), isseq(year), isseq(month)]):
+            return recseq(self.vec.getdate(expr, year, month, adjust))
         else:
-            dt = Date(dt).date
-        return retdate(dt)
+            dt = self._index.getdate(expr, year, month)
+            if adjust == 'next':
+                dt = self.__adjust_next(dt)
+            elif adjust == 'previous':
+                dt = self.__adjust_previous(dt)
+            else:
+                dt = Date(dt).date
+            return retdate(dt)
 
     def getbizdays(self, year, month=None):
-        return self._index.getbizdays(year, month)
+        if any([isseq(year), isseq(month)]):
+            return recseq(self.vec.getbizdays(year, month))
+        else:
+            return self._index.getbizdays(year, month)
 
     @classmethod
     def load(cls, fname):
@@ -666,3 +680,38 @@ class VectorizedOps(object):
         else:
             ns = cycle(ns)
         return (self.cal.offset(dt, n) for dt, n in zip(dates, ns))
+
+    def getdate(self, expr, year, month, adjust):
+        if not isseq(expr):
+            expr = [expr]
+        if not isseq(year):
+            year = [year]
+        if not isseq(month):
+            month = [month]
+        if len(expr) >= len(year) and len(expr) >= len(month):
+            year = cycle(year)
+            month = cycle(month)
+        elif len(year) >= len(expr) and len(year) >= len(month):
+            expr = cycle(expr)
+            month = cycle(month)
+        elif len(month) >= len(expr) and len(month) >= len(year):
+            expr = cycle(expr)
+            year = cycle(year)
+        return (
+            self.cal.getdate(ex, ye, mo, adjust)
+            for ex, ye, mo in zip(expr, year, month)
+        )
+
+    def getbizdays(self, year, month):
+        if not isseq(year):
+            year = [year]
+        if not isseq(month):
+            month = [month]
+        if len(year) > len(month):
+            month = cycle(month)
+        else:
+            year = cycle(year)
+        return (
+            self.cal.getbizdays(ye, mo)
+            for ye, mo in zip(year, month)
+        )

@@ -181,6 +181,21 @@ class TestVectorizedOpsInCalendar(unittest.TestCase):
         self.assertEqual(offset('2013-01-02', [1, 2]),
                          asDate(['2013-01-03', '2013-01-04']))
 
+    def test_getdate(self):
+        expr = '15th day'
+        x = self.cal.getdate(expr, [2002, 2001], 1)
+        assert x == asDate(['2002-01-15', '2001-01-15'])
+        expr = ['15th day', '16th day']
+        x = self.cal.getdate(expr, [2002, 2001], 1)
+        assert x == asDate(['2002-01-15', '2001-01-16'])
+
+    def test_getbizdays(self):
+        actual = Calendar(name='actual')
+        x = actual.getbizdays([2002, 2001], 1)
+        assert x == [31, 31]
+        x = actual.getbizdays([2002, 2001], [1, 2])
+        assert x == [31, 28]
+
 
 class TestCalendar(unittest.TestCase):
     cal_ANBIMA = Calendar.load('ANBIMA.cal')
@@ -557,6 +572,18 @@ class TestVectorizedOperations(unittest.TestCase):
             tuple(d.isoformat() for d in self.cal.vec.offset(dates, 1)),
             ('2002-01-02', '2002-01-03', '2002-01-04')
         )
+
+    def test_Vectorized_operations_getdate(self):
+        'it should getdate vectorised'
+        expr = '15th day'
+        x = list(self.cal.vec.getdate(expr, [2002, 2001], 1, None))
+        assert x == asDate(['2002-01-15', '2001-01-15'])
+
+    def test_Vectorized_operations_getbizdays(self):
+        'it should getbizdays vectorised'
+        actual = Calendar(name='actual')
+        x = list(actual.vec.getbizdays([2002, 2001], 1))
+        assert x == [31, 31]
 
 
 class TestDateIndex(unittest.TestCase):
