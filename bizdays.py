@@ -596,7 +596,7 @@ class Calendar(object):
 
     def getbizdays(self, year, month=None):
         if any([isseq(year), isseq(month)]):
-            return recseq(self.vec.getbizdays(year, month))
+            return recseq(self.vec.getbizdays(year, month), np.array)
         else:
             return self._index.getbizdays(year, month)
 
