@@ -488,7 +488,10 @@ class Calendar(object):
             return recseq(self.vec.bizdays(date_from, date_to), np.array)
         else:
             if isnull(date_from) or isnull(date_to):
-                return None
+                if get_option('mode') == 'pandas':
+                    return pd.NA
+                else:
+                    return None
             date_from = Date(date_from).date
             date_to = Date(date_to).date
             if date_from > date_to:
