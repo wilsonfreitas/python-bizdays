@@ -4,9 +4,66 @@ import os
 import re
 from datetime import datetime, date, timedelta
 from itertools import cycle
+
+PANDAS_INSTALLED = False
+
+try:
 import pandas as pd
 import numpy as np
-import requests
+
+    PANDAS_INSTALLED = True
+
+    def isnull(x):
+        return pd.isna(x)
+
+    def recseq(gen, typo='DatetimeIndex'):
+        g = list(gen)
+        if get_option('mode') == 'pandas':
+            if typo == 'DatetimeIndex':
+                return pd.DatetimeIndex(g)
+            elif typo == 'array':
+                return np.array(g)
+        else:
+            return g
+
+    def retdate(dt):
+        if get_option('mode.datetype') == 'datetime':
+            return datetime(dt.year, dt.month, dt.day)
+        elif get_option('mode.datetype') == 'date':
+            return dt
+        elif get_option('mode.datetype') == 'iso':
+            return dt.isoformat()
+        elif get_option('mode') == 'pandas':
+            return pd.to_datetime(dt)
+        else:
+            return dt
+
+    def return_none():
+        if get_option('mode') == 'pandas':
+            return pd.NA
+        else:
+            return None
+
+except ImportError:
+
+    def isnull(x):
+        return x is None
+
+    def recseq(gen, typo=None):
+        return list(gen)
+
+    def retdate(dt):
+        if get_option('mode.datetype') == 'datetime':
+            return datetime(dt.year, dt.month, dt.day)
+        elif get_option('mode.datetype') == 'date':
+            return dt
+        elif get_option('mode.datetype') == 'iso':
+            return dt.isoformat()
+        else:
+            return dt
+
+    def return_none():
+        return None
 
 
 __all__ = [
@@ -26,6 +83,8 @@ def get_option(name):
 
 
 def set_option(name, val):
+    if name == 'pandas' and not PANDAS_INSTALLED:
+        raise Exception('Cannot set mode pandas: pandas not installed')
     options[name] = val
 
 
@@ -34,10 +93,6 @@ D1 = timedelta(1)
 
 def isstr(d):
     return isinstance(d, str)
-
-
-def isnull(x):
-    return pd.isna(x)
 
 
 def isseq(seq):
@@ -49,27 +104,6 @@ def isseq(seq):
         return False
     else:
         return True
-
-
-def recseq(gen, rcls=pd.DatetimeIndex):
-    g = list(gen)
-    if get_option('mode') == 'pandas':
-        return rcls(g)
-    else:
-        return g
-
-
-def retdate(dt):
-    if get_option('mode.datetype') == 'datetime':
-        return datetime(dt.year, dt.month, dt.day)
-    elif get_option('mode.datetype') == 'date':
-        return dt
-    elif get_option('mode.datetype') == 'iso':
-        return dt.isoformat()
-    elif get_option('mode') == 'pandas':
-        return pd.to_datetime(dt)
-    else:
-        return dt
 
 
 class DateOutOfRange(Exception):
@@ -485,13 +519,10 @@ class Calendar(object):
 
     def bizdays(self, date_from, date_to):
         if isseq(date_from) or isseq(date_to):
-            return recseq(self.vec.bizdays(date_from, date_to), np.array)
+            return recseq(self.vec.bizdays(date_from, date_to), 'array')
         else:
             if isnull(date_from) or isnull(date_to):
-                if get_option('mode') == 'pandas':
-                    return pd.NA
-                else:
-                    return None
+                return return_none()
             date_from = Date(date_from).date
             date_to = Date(date_to).date
             if date_from > date_to:
@@ -515,7 +546,7 @@ class Calendar(object):
 
     def isbizday(self, dt):
         if isseq(dt):
-            return recseq(self.vec.isbizday(dt), np.array)
+            return recseq(self.vec.isbizday(dt), 'array')
         else:
             if isnull(dt):
                 return dt
@@ -599,7 +630,7 @@ class Calendar(object):
 
     def getbizdays(self, year, month=None):
         if any([isseq(year), isseq(month)]):
-            return recseq(self.vec.getbizdays(year, month), np.array)
+            return recseq(self.vec.getbizdays(year, month), 'array')
         else:
             return self._index.getbizdays(year, month)
 
