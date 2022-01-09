@@ -653,9 +653,16 @@ class Calendar(object):
         return '''Calendar: {0}
 Start: {1}
 End: {2}
+Weekdays: {5}
 Holidays: {3}
-Financial: {4}'''.format(self.name, self.startdate, self.enddate,
-                         len(self._holidays), self.financial)
+Financial: {4}'''.format(
+            self.name,
+            self.startdate,
+            self.enddate,
+            len(self._holidays),
+            self.financial,
+            ', '.join(self.weekdays) if self.weekdays else ''
+        )
 
     __repr__ = __str__
 
