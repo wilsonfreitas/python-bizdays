@@ -419,6 +419,34 @@
    "source": [
     "cal.getbizdays(2001, 5)"
    ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For a sequence of dates, the same way `diff` takes the difference between elements, `Calendar.diff` takes the difference in business days between given dates."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[2, 3]"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dates = ('2017-05-10', '2017-05-12', '2017-05-17')\n",
+    "cal.diff(dates)"
+   ]
   }
  ],
  "metadata": {
