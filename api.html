@@ -1,0 +1,505 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>API &#8212; bizdays 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="getdate" href="getdate.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">bizdays</a></h1>
+
+
+
+<p class="blurb">Business Days Calculations and Utilities</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=wilsonfreitas&repo=python-bizdays&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendars.html">Calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#calendar"><code class="xref py py-class docutils literal notranslate"><span class="pre">Calendar</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#options">options</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="getdate.html" title="previous chapter">getdate</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bizdays">
+<span id="api"></span><h1>API<a class="headerlink" href="#module-bizdays" title="Permalink to this headline">¶</a></h1>
+<section id="calendar">
+<h2><a class="reference internal" href="#bizdays.Calendar" title="bizdays.Calendar"><code class="xref py py-class docutils literal notranslate"><span class="pre">Calendar</span></code></a><a class="headerlink" href="#calendar" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bizdays.Calendar">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bizdays.</span></span><span class="sig-name descname"><span class="pre">Calendar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">holidays</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weekdays</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enddate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">financial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calendar class</p>
+<p>Calendar representation where holidays and nonworking weekdays are
+defined.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#bizdays.Calendar.name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.holidays">
+<span class="sig-name descname"><span class="pre">holidays</span></span><a class="headerlink" href="#bizdays.Calendar.holidays" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of dates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.enddate">
+<span class="sig-name descname"><span class="pre">enddate</span></span><a class="headerlink" href="#bizdays.Calendar.enddate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>date</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.startdate">
+<span class="sig-name descname"><span class="pre">startdate</span></span><a class="headerlink" href="#bizdays.Calendar.startdate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>date</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.weekdays">
+<span class="sig-name descname"><span class="pre">weekdays</span></span><a class="headerlink" href="#bizdays.Calendar.weekdays" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bizdays.Calendar.financial">
+<span class="sig-name descname"><span class="pre">financial</span></span><a class="headerlink" href="#bizdays.Calendar.financial" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>holidays</strong> (<em>list with dates</em>) – Dates can be ISO formated string, datetime.date or datetime.datetime.</p></li>
+<li><p><strong>weekdays</strong> (<em>list</em>) – <p>A list with weekdays representing nonworking days.</p>
+<dl class="simple">
+<dt>Accepts: ‘Monday’, ‘Tuesday’, ‘Wednesday’, ‘Thursday’, ‘Friday’,</dt><dd><p>’Saturday’, ‘Sunday’</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>startdate</strong> (<em>str</em><em> or </em><em>datetime.date</em>) – Calendar’s start date</p></li>
+<li><p><strong>enddate</strong> (<em>str</em><em> or </em><em>datetime.date</em>) – Calendar’s end date</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Calendar’s name</p></li>
+<li><p><strong>financial</strong> (<em>bool</em>) – Defines a financial calendar</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.bizdays">
+<span class="sig-name descname"><span class="pre">bizdays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.bizdays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the amount of business days between two dates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>date_from</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Start date</p></li>
+<li><p><strong>date_to</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – End date</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The number of business days between date_from and date_to</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int, list, numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.following">
+<span class="sig-name descname"><span class="pre">following</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.following" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the given dates to the next business day</p>
+<p>Rolls the given date to the next business day,
+unless it is a business day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be adjusted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>return the next business day if the given date is
+not a business day.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>datetime.date, datetime.datetime, pandas.Timestamp, str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.getbizdays">
+<span class="sig-name descname"><span class="pre">getbizdays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.getbizdays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Business days in a specific year or month.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list of int</em>) – Year</p></li>
+<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list of int</em>) – Month</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns the number of business days in the given time span.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int, list of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.getdate">
+<span class="sig-name descname"><span class="pre">getdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.getdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get dates using other dates (or month or year) as reference.</p>
+<p>Imagine you have one date and want the first or last day of this
+date’s month. For example, you have the date 2018-02-01 and want
+the last day of its month. You have to check whether or not its year
+is a leap year, and this sounds a tough task. getdate helps with
+returning specific dates according to a reference than can be another
+date, a month or an year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expr</strong> (<em>str</em><em>, </em><em>list of str</em>) – <p>String specifying the date to be returned.</p>
+<p>See <a class="reference internal" href="getdate.html"><span class="doc">getdate</span></a> for more information.</p>
+</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list of int</em>) – Year</p></li>
+<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list of int</em>) – Month</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns dates according to a reference that can be a month or an
+year.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>date, list of dates, pandas.DatetimeIndex</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.isbizday">
+<span class="sig-name descname"><span class="pre">isbizday</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.isbizday" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the given dates are business days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be checked</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns True if the given date is a business day and False
+otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool, list of bool, array of bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load calendars from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – <p>Name of the calendar <em>in development</em>.</p>
+<p>The idea is getting the calendars from a service
+where they could be uploaded and downloaded.</p>
+</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Text file with holidays  and weekdays.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Calendar object.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bizdays.Calendar" title="bizdays.Calendar">Calendar</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.modified_following">
+<span class="sig-name descname"><span class="pre">modified_following</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.modified_following" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the given dates to the next business day with a small
+difference.</p>
+<p>Rolls the given date to the next business day,
+unless it happens in the next month, in this case
+it returns the previous business day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be adjusted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>return the next business day if the given date is
+not a business day.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>datetime.date, datetime.datetime, pandas.Timestamp, str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.modified_preceding">
+<span class="sig-name descname"><span class="pre">modified_preceding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.modified_preceding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the given dates to the previous business day with a small
+difference.</p>
+<p>Rolls the given date to the previous business day,
+unless it happens in the previous month, in this case
+it returns the previous business day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be adjusted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>return the previous business day if the given date is
+not a business day.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>datetime.date, datetime.datetime, pandas.Timestamp, str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.offset">
+<span class="sig-name descname"><span class="pre">offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Offsets the given dates by n business days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be offset</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>list of int</em>) – the amount of business days to offset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns the given dates offset by the given amount of n business
+days.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>date, list of dates, pandas.DatetimeIndex</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.preceding">
+<span class="sig-name descname"><span class="pre">preceding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.preceding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the given dates to the previous business day</p>
+<p>Rolls the given date to the previous business day,
+unless it is a business day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be adjusted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>return the previous business day if the given date is
+not a business day.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>datetime.date, datetime.datetime, pandas.Timestamp, str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bizdays.Calendar.seq">
+<span class="sig-name descname"><span class="pre">seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.Calendar.seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sequence of business days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>date_from</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Start date</p></li>
+<li><p><strong>date_to</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – End date</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns a sequence of dates with business days only.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of dates, pandas.DatetimeIndex</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="options">
+<h2>options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bizdays.set_option">
+<span class="sig-prename descclassname"><span class="pre">bizdays.</span></span><span class="sig-name descname"><span class="pre">set_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.set_option" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets option value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – option name</p></li>
+<li><p><strong>val</strong> (<em>str</em>) – option value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>No return</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Options:</p>
+<ul class="simple">
+<li><p><cite>mode</cite>: accepts <cite>pandas</cite> and <cite>python</cite> (default).
+Pandas mode enable integration with pandas,
+check out <a class="reference internal" href="pandas.html"><span class="doc">pandas Integration</span></a> for more information.</p></li>
+<li><p><cite>mode.datetype</cite>: specify the date type returned by
+Calendar’s methods that return dates (<cite>seq</cite>, <cite>following</cite>, <cite>preceding</cite>, …).
+Accepts <cite>date</cite> (default), <cite>datetime</cite> and <cite>iso</cite> for ISO formated strings.
+In pandas mode this option is ignored.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bizdays</span> <span class="kn">import</span> <span class="n">set_option</span>
+<span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="bizdays.get_option">
+<span class="sig-prename descclassname"><span class="pre">bizdays.</span></span><span class="sig-name descname"><span class="pre">get_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bizdays.get_option" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets option value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – option name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>val</strong> – option value</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bizdays</span> <span class="kn">import</span> <span class="n">get_option</span>
+<span class="n">get_option</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2022, Wilson Freitas.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
