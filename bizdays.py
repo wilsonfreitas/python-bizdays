@@ -448,8 +448,7 @@ class Calendar(object):
                  'Saturday', 'Sunday')
 
     def __init__(self, holidays=[], weekdays=[], startdate=None, enddate=None,
-                 name=None, adjust_from='next', adjust_to='previous',
-                 financial=True):
+                 name=None, financial=True):
         self.financial = financial
         self.name = name
         self._holidays = [Date(d) for d in holidays]
@@ -477,18 +476,6 @@ class Calendar(object):
         self._index = DateIndex(self._holidays, self._startdate, self._enddate,
                                 self._nonwork_weekdays)
         self.vec = VectorizedOps(self)
-        if adjust_from == 'next':
-            self.__adjust_from = self.__adjust_next
-        elif adjust_from == 'previous':
-            self.__adjust_from = self.__adjust_previous
-        else:
-            self.__adjust_from = lambda x: x
-        if adjust_to == 'previous':
-            self.__adjust_to = self.__adjust_previous
-        elif adjust_to == 'next':
-            self.__adjust_to = self.__adjust_next
-        else:
-            self.__adjust_to = lambda x: x
 
     def __get_weekdays(self):
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
@@ -515,23 +502,30 @@ class Calendar(object):
             date_from = Date(date_from).date
             date_to = Date(date_to).date
             if date_from > date_to:
-                _from, _to = date_to, date_from
+                d1, d2 = date_to, date_from
             else:
-                _from, _to = date_from, date_to
-            d1 = self.__adjust_from(_from)
-            d2 = self.__adjust_to(_to)
-            dif = self._index[d2][0] - self._index[d1][0]
-            rdif = self._index[d2][3] - self._index[d1][3]
-            bdays = min(dif, rdif)
+                d1, d2 = date_from, date_to
+            t1 = (self._index[d1][0], self._index[d1][3])
+            t2 = (self._index[d2][0], self._index[d2][3])
+            if t1 == t2:
+                bdays = 0
+            else:
+                i1 = max(t1)
+                i2 = min(t2)
+                bdays = i2 - i1
             if date_from > date_to:
                 bdays = -bdays
             if self.financial:
                 return bdays
             else:
-                if bdays >= 0:
+                if bdays > 0:
                     return bdays + 1
-                else:
+                elif bdays < 0:
                     return bdays - 1
+                else:
+                    return 0 \
+                        if self._index[d1][2] and self._index[d2][0] \
+                        else 1
 
     def isbizday(self, dt):
         if isseq(dt):
