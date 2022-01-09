@@ -16,3 +16,5 @@ _build
 .pytest_cache
 .vscode
 __pycache__
+.ipynb_checkpoints/*
+docs/source/*.ipynb
