@@ -8,8 +8,8 @@ from itertools import cycle
 PANDAS_INSTALLED = False
 
 try:
-import pandas as pd
-import numpy as np
+    import pandas as pd
+    import numpy as np
 
     PANDAS_INSTALLED = True
 
@@ -79,10 +79,35 @@ options = {
 
 
 def get_option(name):
+    '''gets option value
+
+    Parameters
+    ----------
+    name : str
+        option name
+
+    Returns
+    -------
+    val : str
+        option value
+    '''
     return options.get(name)
 
 
 def set_option(name, val):
+    '''sets option value
+
+    Parameters
+    ----------
+    name : str
+        option name
+    val : str
+        option value
+
+    Returns
+    -------
+        No return
+    '''
     if name == 'pandas' and not PANDAS_INSTALLED:
         raise Exception('Cannot set mode pandas: pandas not installed')
     options[name] = val
@@ -444,6 +469,51 @@ class Date(object):
 
 
 class Calendar(object):
+    '''
+    Calendar class
+
+    Calendar representation where holidays and nonworking weekdays are
+    defined.
+
+    Attributes
+    ----------
+
+    name : str
+
+    holidays : list of dates
+
+    enddate : date
+
+    startdate : date
+
+    weekdays : list of str
+
+    financial : bool
+
+
+    Parameters
+    ----------
+    holidays : list with dates
+        Dates can be ISO formated string, datetime.date or datetime.datetime.
+
+    weekdays : list
+        A list with weekdays representing nonworking days.
+
+        Accepts: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+                 'Saturday', 'Sunday'
+
+    startdate : str or datetime.date
+        Calendar's start date
+
+    enddate : str or datetime.date
+        Calendar's end date
+
+    name : str
+        Calendar's name
+
+    financial : bool
+        Defines a financial calendar
+    '''
     _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
                  'Saturday', 'Sunday')
 
@@ -494,6 +564,23 @@ class Calendar(object):
     holidays = property(__get_holidays)
 
     def bizdays(self, date_from, date_to):
+        '''
+        Calculate the amount of business days between two dates
+
+        Parameters
+        ----------
+
+        date_from : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Start date
+
+        date_to : datetime.date, datetime.datetime, pandas.Timestamp, str
+            End date
+
+        Returns
+        -------
+        int, list, numpy.ndarray
+            The number of business days between date_from and date_to
+        '''
         if isseq(date_from) or isseq(date_to):
             return recseq(self.vec.bizdays(date_from, date_to), 'array')
         else:
@@ -528,6 +615,22 @@ class Calendar(object):
                         else 1
 
     def isbizday(self, dt):
+        '''
+        Checks if the given dates are business days.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be checked
+
+        Returns
+        -------
+
+        bool, list of bool, array of bool
+            Returns True if the given date is a business day and False
+            otherwise.
+        '''
         if isseq(dt):
             return recseq(self.vec.isbizday(dt), 'array')
         else:
@@ -540,6 +643,26 @@ class Calendar(object):
         return Date(self._index.following(dt)).date
 
     def adjust_next(self, dt):
+        '''
+        Adjusts the given dates to the next business day
+
+        Rolls the given date to the next business day,
+        unless it is a business day.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        datetime.date, datetime.datetime, pandas.Timestamp, str
+            return the next business day if the given date is
+            not a business day.
+
+        '''
         if isseq(dt):
             return recseq(self.vec.adjust_next(dt))
         else:
@@ -550,6 +673,28 @@ class Calendar(object):
     following = adjust_next
 
     def modified_following(self, dt):
+        '''
+        Adjusts the given dates to the next business day with a small
+        difference.
+
+        Rolls the given date to the next business day,
+        unless it happens in the next month, in this case
+        it returns the previous business day.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        datetime.date, datetime.datetime, pandas.Timestamp, str
+            return the next business day if the given date is
+            not a business day.
+
+        '''
         if isseq(dt):
             return recseq(self.vec.modified_following(dt))
         else:
@@ -562,6 +707,26 @@ class Calendar(object):
         return Date(self._index.preceding(dt)).date
 
     def adjust_previous(self, dt):
+        '''
+        Adjusts the given dates to the previous business day
+
+        Rolls the given date to the previous business day,
+        unless it is a business day.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        datetime.date, datetime.datetime, pandas.Timestamp, str
+            return the previous business day if the given date is
+            not a business day.
+
+        '''
         if isseq(dt):
             return recseq(self.vec.adjust_previous(dt))
         else:
@@ -573,6 +738,28 @@ class Calendar(object):
     preceding = adjust_previous
 
     def modified_preceding(self, dt):
+        '''
+        Adjusts the given dates to the previous business day with a small
+        difference.
+
+        Rolls the given date to the previous business day,
+        unless it happens in the previous month, in this case
+        it returns the previous business day.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        datetime.date, datetime.datetime, pandas.Timestamp, str
+            return the previous business day if the given date is
+            not a business day.
+
+        '''
         if isseq(dt):
             return recseq(self.vec.modified_preceding(dt))
         else:
@@ -582,6 +769,23 @@ class Calendar(object):
             return retdate(dtx)
 
     def seq(self, date_from, date_to):
+        '''
+        Sequence of business days.
+
+        Parameters
+        ----------
+
+        date_from : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Start date
+
+        date_to : datetime.date, datetime.datetime, pandas.Timestamp, str
+            End date
+
+        Returns
+        -------
+        list of dates, pandas.DatetimeIndex
+            Returns a sequence of dates with business days only.
+        '''
         _from = Date(date_from).date
         _to = Date(date_to).date
         reverse = False
@@ -597,6 +801,25 @@ class Calendar(object):
         return _seq
 
     def offset(self, dt, n):
+        '''
+        Offsets the given dates by n business days.
+
+        Parameters
+        ----------
+
+        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be offset
+
+        n : int, list of int
+            the amount of business days to offset
+
+        Returns
+        -------
+        date, list of dates, pandas.DatetimeIndex
+            Returns the given dates offset by the given amount of n business
+            days.
+
+        '''
         if isseq(dt) or isseq(n):
             return recseq(self.vec.offset(dt, n))
         else:
@@ -607,6 +830,37 @@ class Calendar(object):
             return retdate(self._index.offset(dt, n))
 
     def getdate(self, expr, year, month=None):
+        '''
+        Get dates using other dates (or month or year) as reference.
+
+        Imagine you have one date and want the first or last day of this
+        date's month. For example, you have the date 2018-02-01 and want
+        the last day of its month. You have to check whether or not its year
+        is a leap year, and this sounds a tough task. getdate helps with
+        returning specific dates according to a reference than can be another
+        date, a month or an year.
+
+        Parameters
+        ----------
+
+        expr : str, list of str
+            String specifying the date to be returned.
+
+            See :doc:`getdate` for more information.
+
+        year : int, list of int
+            Year
+
+        month : int, list of int
+            Month
+
+        Returns
+        -------
+        date, list of dates, pandas.DatetimeIndex
+            Returns dates according to a reference that can be a month or an
+            year.
+
+        '''
         if any([isseq(expr), isseq(year), isseq(month)]):
             return recseq(self.vec.getdate(expr, year, month))
         else:
@@ -614,6 +868,24 @@ class Calendar(object):
             return retdate(Date(dt).date)
 
     def getbizdays(self, year, month=None):
+        '''
+        Business days in a specific year or month.
+
+        Parameters
+        ----------
+
+        year : int, list of int
+            Year
+
+        month : int, list of int
+            Month
+
+        Returns
+        -------
+        int, list of int
+            Returns the number of business days in the given time span.
+
+        '''
         if any([isseq(year), isseq(month)]):
             return recseq(self.vec.getbizdays(year, month), 'array')
         else:
@@ -621,6 +893,27 @@ class Calendar(object):
 
     @classmethod
     def load(cls, name=None, filename=None):
+        '''
+        Load calendars from a file.
+
+        Parameters
+        ----------
+
+        name : str
+            Name of the calendar *in development*.
+
+            The idea is getting the calendars from a service
+            where they could be uploaded and downloaded.
+
+        filename : str
+            Text file with holidays  and weekdays.
+
+        Returns
+        -------
+        Calendar
+            A Calendar object.
+
+        '''
         if filename:
             res = _checkfile(filename)
         elif name:
