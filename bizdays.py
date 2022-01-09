@@ -213,10 +213,6 @@ class DateIndex(object):
             # ----
 
     @daterangecheck
-    def _getpos(self, dt):
-        return self._index[dt][0] - 1
-
-    @daterangecheck
     def offset(self, dt, n):
         if n > 0:
             pos = self._index[dt][0] - 1 + n
@@ -256,15 +252,8 @@ class DateIndex(object):
 
     @daterangecheck2
     def seq(self, dt1, dt2):
-        if self._index[dt1][2]:
-            _ = 'Cannot start a sequence of working days with a ' + \
-                'nonworking day: '
-            raise ValueError(_ + dt1.isoformat())
-        if self._index[dt2][2]:
-            _ = 'Cannot end a sequence of working days with a nonworking day: '
-            raise ValueError(_ + dt2.isoformat())
-        pos1 = self._getpos(dt1)
-        pos2 = self._getpos(dt2) + 1
+        pos1 = max(self._index[dt1][0], self._index[dt1][3]) - 1
+        pos2 = min(self._index[dt2][0], self._index[dt2][3])
         return self._bizdays[pos1:pos2]
 
     @daterangecheck
@@ -599,11 +588,19 @@ class Calendar(object):
             return retdate(dtx)
 
     def seq(self, date_from, date_to):
-        _from = self.__adjust_from(date_from)
-        _to = self.__adjust_to(date_to)
+        _from = Date(date_from).date
+        _to = Date(date_to).date
+        reverse = False
         if _from > _to:
-            raise ValueError("The first date must be before the second.")
-        return recseq(retdate(dt) for dt in self._index.seq(_from, _to))
+            _from, _to = _to, _from
+            reverse = True
+        _seq = recseq(
+            retdate(dt)
+            for dt in self._index.seq(_from, _to)
+        )
+        if reverse:
+            _seq.reverse()
+        return _seq
 
     def offset(self, dt, n):
         if isseq(dt) or isseq(n):
