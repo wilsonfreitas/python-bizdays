@@ -7,7 +7,7 @@ API
 -----------------
 
 .. autoclass:: Calendar
-   :members: bizdays, isbizday, offset, seq, getdate, getbizdays, following, preceding, modified_following, modified_preceding, load
+   :members: bizdays, isbizday, offset, seq, getdate, getbizdays, following, preceding, modified_following, modified_preceding, load, diff
    :undoc-members:
 
 options
