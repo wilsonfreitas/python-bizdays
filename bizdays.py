@@ -606,18 +606,12 @@ class Calendar(object):
                 return n
             return retdate(self._index.offset(dt, n))
 
-    def getdate(self, expr, year, month=None, adjust=None):
+    def getdate(self, expr, year, month=None):
         if any([isseq(expr), isseq(year), isseq(month)]):
-            return recseq(self.vec.getdate(expr, year, month, adjust))
+            return recseq(self.vec.getdate(expr, year, month))
         else:
             dt = self._index.getdate(expr, year, month)
-            if adjust == 'next':
-                dt = self.__adjust_next(dt)
-            elif adjust == 'previous':
-                dt = self.__adjust_previous(dt)
-            else:
-                dt = Date(dt).date
-            return retdate(dt)
+            return retdate(Date(dt).date)
 
     def getbizdays(self, year, month=None):
         if any([isseq(year), isseq(month)]):
