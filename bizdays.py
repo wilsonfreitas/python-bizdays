@@ -829,6 +829,27 @@ class Calendar(object):
                 return n
             return retdate(self._index.offset(dt, n))
 
+    def diff(self, dts):
+        '''
+        Compute the number of business days between dates in a given vector
+        of dates.
+
+        Parameters
+        ----------
+
+        dts : list of date
+            Sequence containing the dates to be differenced.
+
+        Returns
+        -------
+
+        list of int
+            The number of business days between given dates.
+        '''
+        if len(dts) <= 1:
+            return recseq([], 'array')
+        return self.bizdays(dts[:-1], dts[1:])
+
     def getdate(self, expr, year, month=None):
         '''
         Get dates using other dates (or month or year) as reference.

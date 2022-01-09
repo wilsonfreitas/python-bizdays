@@ -511,21 +511,10 @@ class TestCalendar(unittest.TestCase):
                          asDate('2002-02-04'))
         self.assertEqual(self.cal_ANBIMA.getdate('third tue', 2002, 2),
                          asDate('2002-02-19'))
-        # closest
-        # self.assertEqual(
-        # cal.get_closestweekday_to_nthday(15, 'wed', 2002, 2),
-        # '2002-02-13')
-        # self.assertEqual(
-        # cal.get_closestweekday_to_nthday(50, 'wed', 2002),
-        # '2002-02-20')
-        # before
-        # self.assertEqual(
-        # cal.get_nth_offset_nthday(-1, -6, 2002, 2),
-        # '2002-02-20')
-        # last day before month == offset('first day of month', -1)
-        # self.assertEqual(
-        # cal.get_nth_offset_nthday(1, -1, 2002, 6, adjust='next'),
-        # '2002-05-31')
+
+    def test_Calendar_diff(self):
+        dates = ('2017-05-10', '2017-05-12', '2017-05-17')
+        assert self.cal_ANBIMA.diff(dates) == [2, 3]
 
 
 def test_isseq():
