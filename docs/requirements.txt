@@ -1,7 +1,8 @@
-ipython
 sphinx
 pandas
 lxml
 numpy
 matplotlib
 nbsphinx
+nbconvert
+alabaster
