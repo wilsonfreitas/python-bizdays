@@ -675,8 +675,9 @@ def _checkfile(fname):
 
 
 def _checkurl(name):
+    import requests
     url = f'https://storage.googleapis.com/bizdays-calendars/{name}.cal'
-    res = requests.get(url, verify=False)
+    res = requests.get(url)
     if res.status_code != 200:
         raise Exception(f'Invalid calendar: {name}')
     return {
