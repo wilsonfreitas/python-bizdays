@@ -1055,7 +1055,7 @@ class VectorizedOps(object):
             ns = cycle(ns)
         return (self.cal.offset(dt, n) for dt, n in zip(dates, ns))
 
-    def getdate(self, expr, year, month, adjust):
+    def getdate(self, expr, year, month):
         if not isseq(expr):
             expr = [expr]
         if not isseq(year):
@@ -1072,7 +1072,7 @@ class VectorizedOps(object):
             expr = cycle(expr)
             year = cycle(year)
         return (
-            self.cal.getdate(ex, ye, mo, adjust)
+            self.cal.getdate(ex, ye, mo)
             for ex, ye, mo in zip(expr, year, month)
         )
 
