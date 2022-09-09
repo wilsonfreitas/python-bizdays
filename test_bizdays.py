@@ -570,7 +570,7 @@ class TestVectorizedOperations(unittest.TestCase):
     def test_Vectorized_operations_getdate(self):
         'it should getdate vectorised'
         expr = '15th day'
-        x = list(self.cal.vec.getdate(expr, [2002, 2001], 1, None))
+        x = list(self.cal.vec.getdate(expr, [2002, 2001], 1))
         assert x == asDate(['2002-01-15', '2001-01-15'])
 
     def test_Vectorized_operations_getbizdays(self):

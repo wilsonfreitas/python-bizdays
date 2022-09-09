@@ -33,16 +33,16 @@ def test_bizdays_with_timestamp():
 def test_adjust_with_timestamp():
     dt = pd.to_datetime('2021-12-30')
     assert isinstance(actual.following(dt), pd.Timestamp)
-    assert actual.following(dt) == dt
-    assert actual.preceding(dt) == dt
-    assert actual.modified_following(dt) == dt
-    assert actual.modified_preceding(dt) == dt
+    assert actual.following(dt) == dt.date()
+    assert actual.preceding(dt) == dt.date()
+    assert actual.modified_following(dt) == dt.date()
+    assert actual.modified_preceding(dt) == dt.date()
 
 
 def test_offset_with_timestamp():
     dt = pd.to_datetime('2021-01-01')
     assert isinstance(actual.offset(dt, 5), pd.Timestamp)
-    assert actual.offset(dt, 5) == pd.to_datetime('2021-01-06')
+    assert actual.offset(dt, 5) == pd.to_datetime('2021-01-06').date()
 
 
 def test_isbizday_with_datetimeindex():
@@ -73,10 +73,10 @@ def test_adjust_with_datetimeindex():
     dt = pd.to_datetime(['2021-12-30', '2021-11-30'])
     x = actual.following(dt)
     assert isinstance(x, pd.DatetimeIndex)
-    assert all(actual.following(dt) == dt)
-    assert all(actual.preceding(dt) == dt)
-    assert all(actual.modified_following(dt) == dt)
-    assert all(actual.modified_preceding(dt) == dt)
+    assert all(actual.following(dt) == dt.date)
+    assert all(actual.preceding(dt) == dt.date)
+    assert all(actual.modified_following(dt) == dt.date)
+    assert all(actual.modified_preceding(dt) == dt.date)
 
 
 def test_offset_with_datetimeindex():
@@ -88,10 +88,10 @@ def test_offset_with_datetimeindex():
     assert all(x == dts)
     dt = pd.to_datetime(['2021-01-01', '2021-01-02'])
     dts = pd.to_datetime(['2021-01-06', '2021-01-08'])
-    assert all(actual.offset(dt, [5, 6]) == dts)
+    assert all(actual.offset(dt, [5, 6]) == dts.date)
     dt = pd.to_datetime('2021-01-01')
     dts = pd.to_datetime(['2021-01-06', '2021-01-07'])
-    assert all(actual.offset(dt, [5, 6]) == dts)
+    assert all(actual.offset(dt, [5, 6]) == dts.date)
 
 
 def test_offset_with_datetimeindex_and_nat():
