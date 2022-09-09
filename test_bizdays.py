@@ -622,8 +622,8 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_nonworkday_end_workday(self):
         """
-            it should instanciate the calendar starting on nonworkday
-            and ending on workday
+        it should instanciate the calendar starting on nonworkday
+        and ending on workday
         """
         cix = DateIndex(
             [], startdate="2020-03-29", enddate="2020-04-03", weekdays=(5, 6)
@@ -636,8 +636,8 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_weekend_end_workday(self):
         """
-            it should instanciate the calendar starting on weekend and
-            ending on workday
+        it should instanciate the calendar starting on weekend and
+        ending on workday
         """
         cix = DateIndex(
             [], startdate="2020-03-28", enddate="2020-04-03", weekdays=(5, 6)
@@ -650,8 +650,8 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_workday_end_nonworkday(self):
         """
-            it should instanciate the calendar starting on workday and
-            ending on nonworkday
+        it should instanciate the calendar starting on workday and
+        ending on nonworkday
         """
         cix = DateIndex(
             [], startdate="2020-04-01", enddate="2020-04-04", weekdays=(5, 6)
@@ -664,8 +664,8 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_workday_end_weekend(self):
         """
-            it should instanciate the calendar starting on workday and
-            ending on weekend
+        it should instanciate the calendar starting on workday and
+        ending on weekend
         """
         cix = DateIndex(
             [], startdate="2020-04-01", enddate="2020-04-05", weekdays=(5, 6)
@@ -678,7 +678,7 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_nonworkday_end_nonworkday(self):
         """it should instanciate the calendar starting on nonworkday and
-           ending on nonworkday"""
+        ending on nonworkday"""
         cix = DateIndex(
             [], startdate="2020-03-29", enddate="2020-04-04", weekdays=(5, 6)
         )
@@ -690,7 +690,7 @@ class TestDateIndex(unittest.TestCase):
 
     def test_DateIndex_start_weekend_end_weekend(self):
         """it should instanciate the calendar starting on nonworkday and
-           ending on nonworkday"""
+        ending on nonworkday"""
         cix = DateIndex(
             [], startdate="2020-03-28", enddate="2020-04-05", weekdays=(5, 6)
         )
