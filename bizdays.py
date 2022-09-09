@@ -1,4 +1,3 @@
-
 from io import StringIO
 import os
 import re
@@ -16,33 +15,34 @@ try:
     def isnull(x):
         return pd.isna(x)
 
-    def recseq(gen, typo='DatetimeIndex'):
+    def recseq(gen, typo="DatetimeIndex"):
         g = list(gen)
-        if get_option('mode') == 'pandas':
-            if typo == 'DatetimeIndex':
+        if get_option("mode") == "pandas":
+            if typo == "DatetimeIndex":
                 return pd.DatetimeIndex(g)
-            elif typo == 'array':
+            elif typo == "array":
                 return np.array(g)
         else:
             return g
 
     def retdate(dt):
-        if get_option('mode.datetype') == 'datetime':
+        if get_option("mode.datetype") == "datetime":
             return datetime(dt.year, dt.month, dt.day)
-        elif get_option('mode.datetype') == 'date':
+        elif get_option("mode.datetype") == "date":
             return dt
-        elif get_option('mode.datetype') == 'iso':
+        elif get_option("mode.datetype") == "iso":
             return dt.isoformat()
-        elif get_option('mode') == 'pandas':
+        elif get_option("mode") == "pandas":
             return pd.to_datetime(dt)
         else:
             return dt
 
     def return_none():
-        if get_option('mode') == 'pandas':
+        if get_option("mode") == "pandas":
             return pd.NA
         else:
             return None
+
 
 except ImportError:
 
@@ -53,11 +53,11 @@ except ImportError:
         return list(gen)
 
     def retdate(dt):
-        if get_option('mode.datetype') == 'datetime':
+        if get_option("mode.datetype") == "datetime":
             return datetime(dt.year, dt.month, dt.day)
-        elif get_option('mode.datetype') == 'date':
+        elif get_option("mode.datetype") == "date":
             return dt
-        elif get_option('mode.datetype') == 'iso':
+        elif get_option("mode.datetype") == "iso":
             return dt.isoformat()
         else:
             return dt
@@ -66,20 +66,14 @@ except ImportError:
         return None
 
 
-__all__ = [
-    'get_option',
-    'set_option',
-    'Calendar'
-]
+__all__ = ["get_option", "set_option", "Calendar"]
 
 
-options = {
-    'mode': 'python'
-}
+options = {"mode": "python"}
 
 
 def get_option(name):
-    '''gets option value
+    """gets option value
 
     Parameters
     ----------
@@ -90,12 +84,12 @@ def get_option(name):
     -------
     val : str
         option value
-    '''
+    """
     return options.get(name)
 
 
 def set_option(name, val):
-    '''sets option value
+    """sets option value
 
     Parameters
     ----------
@@ -107,9 +101,9 @@ def set_option(name, val):
     Returns
     -------
         No return
-    '''
-    if name == 'pandas' and not PANDAS_INSTALLED:
-        raise Exception('Cannot set mode pandas: pandas not installed')
+    """
+    if name == "pandas" and not PANDAS_INSTALLED:
+        raise Exception("Cannot set mode pandas: pandas not installed")
     options[name] = val
 
 
@@ -139,7 +133,7 @@ def find_date_pos(col, dt):
     beg = 0
     end = len(col)
     while (end - beg) > 1:
-        mid = int((end + beg)/2)
+        mid = int((end + beg) / 2)
         if dt > col[mid]:
             beg = mid
         elif dt < col[mid]:
@@ -152,7 +146,7 @@ def find_date_pos(col, dt):
 def __daterangecheck(obj, dt):
     dt = Date(dt).date
     if dt > obj.enddate or dt < obj.startdate:
-        raise DateOutOfRange('Given date out of calendar range')
+        raise DateOutOfRange("Given date out of calendar range")
     return dt
 
 
@@ -160,6 +154,7 @@ def daterangecheck(func):
     def handler(self, dt, *args):
         dt = __daterangecheck(self, dt)
         return func(self, dt, *args)
+
     return handler
 
 
@@ -168,25 +163,29 @@ def daterangecheck2(func):
         dt1 = __daterangecheck(self, dt1)
         dt2 = __daterangecheck(self, dt2)
         return func(self, dt1, dt2, *args)
+
     return handler
 
 
-def load_holidays(fname, format='%Y-%m-%d'):
+def load_holidays(fname, format="%Y-%m-%d"):
     if not os.path.exists(fname):
-        raise Exception('Invalid calendar specification: \
-        file not found (%s)' % fname)
+        raise Exception(
+            "Invalid calendar specification: \
+        file not found (%s)"
+            % fname
+        )
     _holidays = []
     with open(fname) as fcal:
         for cal_reg in fcal:
             cal_reg = cal_reg.strip()
-            if cal_reg == '':
+            if cal_reg == "":
                 continue
             _holidays.append(Date(cal_reg, format=format).date)
     return _holidays
 
 
 class DateIndex(object):
-    WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+    WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
     def __init__(self, holidays, startdate, enddate, weekdays):
         self._index = {}
@@ -295,95 +294,110 @@ class DateIndex(object):
         tok = expr.split()
         if len(tok) == 2:
             n = self._getnth(tok[0])
-            if tok[1] == 'day':
+            if tok[1] == "day":
                 return self._getnthday(n, year, month)
-            elif tok[1] == 'bizday':
+            elif tok[1] == "bizday":
                 return self._getnthbizday(n, year, month)
             elif tok[1] in self.WEEKDAYS:
                 return self._getnthweekday(n, tok[1], year, month)
             else:
-                raise ValueError('Invalid day:', tok[1])
+                raise ValueError("Invalid day:", tok[1])
         elif len(tok) == 5:
             n = self._getnth(tok[3])
-            if tok[4] == 'day':
+            if tok[4] == "day":
                 pos = self._getnthdaypos(n, year, month)
-            elif tok[4] == 'bizday':
+            elif tok[4] == "bizday":
                 pos = self._getnthbizdaypos(n, year, month)
             else:
-                raise ValueError('Invalid reference day:', tok[4])
-            m = {'before': -1, 'after': 1}.get(tok[2], 0)
+                raise ValueError("Invalid reference day:", tok[4])
+            m = {"before": -1, "after": 1}.get(tok[2], 0)
             if not m:
-                raise ValueError('Invalid operator:', tok[2])
-            n = self._getnthpos(tok[0])*m
-            if tok[1] == 'day':
+                raise ValueError("Invalid operator:", tok[2])
+            n = self._getnthpos(tok[0]) * m
+            if tok[1] == "day":
                 return self._getnthday_beforeafter(n, pos)
-            elif tok[1] == 'bizday':
+            elif tok[1] == "bizday":
                 return self._getnthbizday_beforeafter(n, pos)
             elif tok[1] in self.WEEKDAYS:
                 return self._getnthweekday_beforeafter(n, tok[1], pos)
             else:
-                raise ValueError('Invalid day:', tok[1])
+                raise ValueError("Invalid day:", tok[1])
 
     def _getnthpos(self, nth):
-        if nth == 'first':
+        if nth == "first":
             return 1
-        elif nth == 'second':
+        elif nth == "second":
             return 2
-        elif nth == 'third':
+        elif nth == "third":
             return 3
-        elif nth == 'last':
+        elif nth == "last":
             return 1
-        elif nth[-2:] in ('th', 'st', 'nd', 'rd'):
+        elif nth[-2:] in ("th", "st", "nd", "rd"):
             return int(nth[:-2])
         else:
-            raise ValueError('invalid nth:', nth)
+            raise ValueError("invalid nth:", nth)
 
     def _getnth(self, nth):
-        if nth == 'first':
+        if nth == "first":
             return 1
-        elif nth == 'second':
+        elif nth == "second":
             return 2
-        elif nth == 'third':
+        elif nth == "third":
             return 3
-        elif nth == 'last':
+        elif nth == "last":
             return -1
-        elif nth[-2:] in ('th', 'st', 'nd', 'rd'):
+        elif nth[-2:] in ("th", "st", "nd", "rd"):
             return int(nth[:-2])
         else:
-            raise ValueError('invalid nth:', nth)
+            raise ValueError("invalid nth:", nth)
 
     def _getnthdaypos(self, n, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            pos = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year]
-                   if d[1] == month]
+            pos = [
+                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                for d in self._years[year]
+                if d[1] == month
+            ]
             return pos[n]
         else:
             return (
                 self._years[year][n][4] - 1,
                 self._years[year][n][5] - 1,
                 self._years[year][n][0],
-                self._years[year][n][6]
+                self._years[year][n][6],
             )
 
     def _getnthbizdaypos(self, n, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year]
-                   if not d[3] and d[1] == month]
+            col = [
+                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                for d in self._years[year]
+                if not d[3] and d[1] == month
+            ]
         else:
-            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year]
-                   if not d[3]]
+            col = [
+                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                for d in self._years[year]
+                if not d[3]
+            ]
         return col[n]
 
     def _getnthweekdaypos(self, n, weekday, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year]
-                   if self.WEEKDAYS[d[2]] == weekday and d[1] == month]
+            col = [
+                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                for d in self._years[year]
+                if self.WEEKDAYS[d[2]] == weekday and d[1] == month
+            ]
         else:
-            col = [(d[4]-1, d[5]-1, d[0], d[6]-1) for d in self._years[year]
-                   if self.WEEKDAYS[d[2]] == weekday]
+            col = [
+                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                for d in self._years[year]
+                if self.WEEKDAYS[d[2]] == weekday
+            ]
         return col[n]
 
     def _getnthday_beforeafter(self, n1, pos):
@@ -416,11 +430,13 @@ class DateIndex(object):
     def _getnthweekday(self, n, weekday, year, month=None):
         n = n - 1 if n > 0 else n
         if month:
-            col = [d[0] for d in self._years[year]
-                   if self.WEEKDAYS[d[2]] == weekday and d[1] == month]
+            col = [
+                d[0]
+                for d in self._years[year]
+                if self.WEEKDAYS[d[2]] == weekday and d[1] == month
+            ]
         else:
-            col = [d[0] for d in self._years[year]
-                   if self.WEEKDAYS[d[2]] == weekday]
+            col = [d[0] for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday]
         return col[n]
 
     def __getitem__(self, dt):
@@ -428,7 +444,7 @@ class DateIndex(object):
 
 
 class Date(object):
-    def __init__(self, d=None, format='%Y-%m-%d'):
+    def __init__(self, d=None, format="%Y-%m-%d"):
         # d = d if d else date.today()
         if isstr(d):
             d = datetime.strptime(d, format).date()
@@ -444,7 +460,7 @@ class Date(object):
             raise ValueError()
         self.date = d
 
-    def format(self, fmts='%Y-%m-%d'):
+    def format(self, fmts="%Y-%m-%d"):
         return datetime.strftime(self.date, fmts)
 
     def __gt__(self, other):
@@ -469,7 +485,7 @@ class Date(object):
 
 
 class Calendar(object):
-    '''
+    """
     Calendar class
 
     Calendar representation where holidays and nonworking weekdays are
@@ -513,18 +529,34 @@ class Calendar(object):
 
     financial : bool
         Defines a financial calendar
-    '''
-    _weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
-                 'Saturday', 'Sunday')
+    """
 
-    def __init__(self, holidays=[], weekdays=[], startdate=None, enddate=None,
-                 name=None, financial=True):
+    _weekdays = (
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    )
+
+    def __init__(
+        self,
+        holidays=[],
+        weekdays=[],
+        startdate=None,
+        enddate=None,
+        name=None,
+        financial=True,
+    ):
         self.financial = financial
         self.name = name
         self._holidays = [Date(d) for d in holidays]
         self._nonwork_weekdays = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower())
-            for wd in weekdays]
+            for wd in weekdays
+        ]
         if len(self._holidays):
             if startdate:
                 self._startdate = Date(startdate)
@@ -538,33 +570,38 @@ class Calendar(object):
             if startdate:
                 self._startdate = Date(startdate)
             else:
-                self._startdate = Date('1970-01-01')
+                self._startdate = Date("1970-01-01")
             if enddate:
                 self._enddate = Date(enddate)
             else:
-                self._enddate = Date('2071-01-01')
-        self._index = DateIndex(self._holidays, self._startdate, self._enddate,
-                                self._nonwork_weekdays)
+                self._enddate = Date("2071-01-01")
+        self._index = DateIndex(
+            self._holidays, self._startdate, self._enddate, self._nonwork_weekdays
+        )
         self.vec = VectorizedOps(self)
 
     def __get_weekdays(self):
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
+
     weekdays = property(__get_weekdays)
 
     def __get_startdate(self):
         return self._startdate.date
+
     startdate = property(__get_startdate)
 
     def __get_enddate(self):
         return self._enddate.date
+
     enddate = property(__get_enddate)
 
     def __get_holidays(self):
         return [d.date for d in self._holidays]
+
     holidays = property(__get_holidays)
 
     def bizdays(self, date_from, date_to):
-        '''
+        """
         Calculate the amount of business days between two dates
 
         Parameters
@@ -580,9 +617,9 @@ class Calendar(object):
         -------
         int, list, numpy.ndarray
             The number of business days between date_from and date_to
-        '''
+        """
         if isseq(date_from) or isseq(date_to):
-            return recseq(self.vec.bizdays(date_from, date_to), 'array')
+            return recseq(self.vec.bizdays(date_from, date_to), "array")
         else:
             if isnull(date_from) or isnull(date_to):
                 return return_none()
@@ -610,12 +647,10 @@ class Calendar(object):
                 elif bdays < 0:
                     return bdays - 1
                 else:
-                    return 0 \
-                        if self._index[d1][2] and self._index[d2][0] \
-                        else 1
+                    return 0 if self._index[d1][2] and self._index[d2][0] else 1
 
     def isbizday(self, dt):
-        '''
+        """
         Checks if the given dates are business days.
 
         Parameters
@@ -630,9 +665,9 @@ class Calendar(object):
         bool, list of bool, array of bool
             Returns True if the given date is a business day and False
             otherwise.
-        '''
+        """
         if isseq(dt):
-            return recseq(self.vec.isbizday(dt), 'array')
+            return recseq(self.vec.isbizday(dt), "array")
         else:
             if isnull(dt):
                 return dt
@@ -643,7 +678,7 @@ class Calendar(object):
         return Date(self._index.following(dt)).date
 
     def adjust_next(self, dt):
-        '''
+        """
         Adjusts the given dates to the next business day
 
         Rolls the given date to the next business day,
@@ -662,7 +697,7 @@ class Calendar(object):
             return the next business day if the given date is
             not a business day.
 
-        '''
+        """
         if isseq(dt):
             return recseq(self.vec.adjust_next(dt))
         else:
@@ -673,7 +708,7 @@ class Calendar(object):
     following = adjust_next
 
     def modified_following(self, dt):
-        '''
+        """
         Adjusts the given dates to the next business day with a small
         difference.
 
@@ -694,7 +729,7 @@ class Calendar(object):
             return the next business day if the given date is
             not a business day.
 
-        '''
+        """
         if isseq(dt):
             return recseq(self.vec.modified_following(dt))
         else:
@@ -707,7 +742,7 @@ class Calendar(object):
         return Date(self._index.preceding(dt)).date
 
     def adjust_previous(self, dt):
-        '''
+        """
         Adjusts the given dates to the previous business day
 
         Rolls the given date to the previous business day,
@@ -726,7 +761,7 @@ class Calendar(object):
             return the previous business day if the given date is
             not a business day.
 
-        '''
+        """
         if isseq(dt):
             return recseq(self.vec.adjust_previous(dt))
         else:
@@ -738,7 +773,7 @@ class Calendar(object):
     preceding = adjust_previous
 
     def modified_preceding(self, dt):
-        '''
+        """
         Adjusts the given dates to the previous business day with a small
         difference.
 
@@ -759,7 +794,7 @@ class Calendar(object):
             return the previous business day if the given date is
             not a business day.
 
-        '''
+        """
         if isseq(dt):
             return recseq(self.vec.modified_preceding(dt))
         else:
@@ -769,7 +804,7 @@ class Calendar(object):
             return retdate(dtx)
 
     def seq(self, date_from, date_to):
-        '''
+        """
         Sequence of business days.
 
         Parameters
@@ -785,23 +820,20 @@ class Calendar(object):
         -------
         list of dates, pandas.DatetimeIndex
             Returns a sequence of dates with business days only.
-        '''
+        """
         _from = Date(date_from).date
         _to = Date(date_to).date
         reverse = False
         if _from > _to:
             _from, _to = _to, _from
             reverse = True
-        _seq = recseq(
-            retdate(dt)
-            for dt in self._index.seq(_from, _to)
-        )
+        _seq = recseq(retdate(dt) for dt in self._index.seq(_from, _to))
         if reverse:
             _seq.reverse()
         return _seq
 
     def offset(self, dt, n):
-        '''
+        """
         Offsets the given dates by n business days.
 
         Parameters
@@ -819,7 +851,7 @@ class Calendar(object):
             Returns the given dates offset by the given amount of n business
             days.
 
-        '''
+        """
         if isseq(dt) or isseq(n):
             return recseq(self.vec.offset(dt, n))
         else:
@@ -830,7 +862,7 @@ class Calendar(object):
             return retdate(self._index.offset(dt, n))
 
     def diff(self, dts):
-        '''
+        """
         Compute the number of business days between dates in a given vector
         of dates.
 
@@ -845,13 +877,13 @@ class Calendar(object):
 
         list of int
             The number of business days between given dates.
-        '''
+        """
         if len(dts) <= 1:
-            return recseq([], 'array')
+            return recseq([], "array")
         return self.bizdays(dts[:-1], dts[1:])
 
     def getdate(self, expr, year, month=None):
-        '''
+        """
         Get dates using other dates (or month or year) as reference.
 
         Imagine you have one date and want the first or last day of this
@@ -881,7 +913,7 @@ class Calendar(object):
             Returns dates according to a reference that can be a month or an
             year.
 
-        '''
+        """
         if any([isseq(expr), isseq(year), isseq(month)]):
             return recseq(self.vec.getdate(expr, year, month))
         else:
@@ -889,7 +921,7 @@ class Calendar(object):
             return retdate(Date(dt).date)
 
     def getbizdays(self, year, month=None):
-        '''
+        """
         Business days in a specific year or month.
 
         Parameters
@@ -906,15 +938,15 @@ class Calendar(object):
         int, list of int
             Returns the number of business days in the given time span.
 
-        '''
+        """
         if any([isseq(year), isseq(month)]):
-            return recseq(self.vec.getbizdays(year, month), 'array')
+            return recseq(self.vec.getbizdays(year, month), "array")
         else:
             return self._index.getbizdays(year, month)
 
     @classmethod
     def load(cls, name=None, filename=None):
-        '''
+        """
         Load calendars from a file.
 
         Parameters
@@ -934,42 +966,40 @@ class Calendar(object):
         Calendar
             A Calendar object.
 
-        '''
+        """
         if filename:
             res = _checkfile(filename)
         elif name:
             res = _checkurl(name)
 
-        w = '|'.join(w.lower() for w in cls._weekdays)
-        wre = '^%s$' % w
+        w = "|".join(w.lower() for w in cls._weekdays)
+        wre = "^%s$" % w
         _holidays = []
         _nonwork_weekdays = []
-        with res['iter'] as fcal:
+        with res["iter"] as fcal:
             for cal_reg in fcal:
                 cal_reg = cal_reg.strip()
-                if cal_reg == '':
+                if cal_reg == "":
                     continue
                 if re.match(wre, cal_reg.lower()):
                     _nonwork_weekdays.append(cal_reg)
-                elif re.match(r'^\d\d\d\d-\d\d-\d\d$', cal_reg):
+                elif re.match(r"^\d\d\d\d-\d\d-\d\d$", cal_reg):
                     _holidays.append(Date(cal_reg))
-        return Calendar(_holidays,
-                        weekdays=_nonwork_weekdays,
-                        name=res['name'])
+        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=res["name"])
 
     def __str__(self):
-        return '''Calendar: {0}
+        return """Calendar: {0}
 Start: {1}
 End: {2}
 Weekdays: {5}
 Holidays: {3}
-Financial: {4}'''.format(
+Financial: {4}""".format(
             self.name,
             self.startdate,
             self.enddate,
             len(self._holidays),
             self.financial,
-            ', '.join(self.weekdays) if self.weekdays else ''
+            ", ".join(self.weekdays) if self.weekdays else "",
         )
 
     __repr__ = __str__
@@ -977,28 +1007,23 @@ Financial: {4}'''.format(
 
 def _checkfile(fname):
     if not os.path.exists(fname):
-        raise Exception(f'Invalid calendar: {fname}')
+        raise Exception(f"Invalid calendar: {fname}")
     name = os.path.split(fname)[-1]
-    if name.endswith('.cal'):
-        name = name.replace('.cal', '')
+    if name.endswith(".cal"):
+        name = name.replace(".cal", "")
     else:
         name = None
-    return {
-        'name': name,
-        'iter': open(fname)
-    }
+    return {"name": name, "iter": open(fname)}
 
 
 def _checkurl(name):
     import requests
-    url = f'https://storage.googleapis.com/bizdays-calendars/{name}.cal'
+
+    url = f"https://storage.googleapis.com/bizdays-calendars/{name}.cal"
     res = requests.get(url)
     if res.status_code != 200:
-        raise Exception(f'Invalid calendar: {name}')
-    return {
-        'name': name,
-        'iter': StringIO(res.text)
-    }
+        raise Exception(f"Invalid calendar: {name}")
+    return {"name": name, "iter": StringIO(res.text)}
 
 
 class VectorizedOps(object):
@@ -1015,14 +1040,16 @@ class VectorizedOps(object):
             dates_to = [dates_to]
         lengths = [len(dates_from), len(dates_to)]
         if max(lengths) % min(lengths) != 0:
-            raise Exception('from length must be multiple of to length and '
-                            'vice-versa')
+            raise Exception(
+                "from length must be multiple of to length and " "vice-versa"
+            )
         if len(dates_from) < len(dates_to):
             dates_from = cycle(dates_from)
         else:
             dates_to = cycle(dates_to)
-        return (self.cal.bizdays(_from, _to)
-                for _from, _to in zip(dates_from, dates_to))
+        return (
+            self.cal.bizdays(_from, _to) for _from, _to in zip(dates_from, dates_to)
+        )
 
     def adjust_next(self, dates):
         if not isseq(dates):
@@ -1071,10 +1098,7 @@ class VectorizedOps(object):
         elif len(month) >= len(expr) and len(month) >= len(year):
             expr = cycle(expr)
             year = cycle(year)
-        return (
-            self.cal.getdate(ex, ye, mo)
-            for ex, ye, mo in zip(expr, year, month)
-        )
+        return (self.cal.getdate(ex, ye, mo) for ex, ye, mo in zip(expr, year, month))
 
     def getbizdays(self, year, month):
         if not isseq(year):
@@ -1085,7 +1109,4 @@ class VectorizedOps(object):
             month = cycle(month)
         else:
             year = cycle(year)
-        return (
-            self.cal.getbizdays(ye, mo)
-            for ye, mo in zip(year, month)
-        )
+        return (self.cal.getbizdays(ye, mo) for ye, mo in zip(year, month))

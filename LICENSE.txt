@@ -1,4 +1,4 @@
-Copyright (c) 2013-2020 Wilson Freitas, <wilson.freitas@gmail.com>
+Copyright (c) 2013-2022 Wilson Freitas, <wilson.freitas@gmail.com>
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated
