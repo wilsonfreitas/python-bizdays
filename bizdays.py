@@ -1022,6 +1022,8 @@ def _checkfile(fname):
 def _checklocalfile(name):
     dir = os.path.dirname(__file__)
     fname = f"{dir}/{name}.cal"
+    if not os.path.exists(fname):
+        raise Exception(f"Invalid calendar: {name}")
     name = os.path.split(fname)[-1]
     if name.endswith(".cal"):
         name = name.replace(".cal", "")
