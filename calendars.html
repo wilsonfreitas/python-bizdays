@@ -358,7 +358,8 @@ div.rendered_html tbody tr:hover {
 <p>The <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be built in three ways:</p>
 <ul class="simple">
 <li><p>using the constructor <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> passing the arguments</p></li>
-<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename)</span></code> passing a file that describes a valid calendar</p></li>
+<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;&lt;calendar</span> <span class="pre">name&gt;&quot;)</span></code> passing the name of a calendar delivered with the package (<code class="docutils literal notranslate"><span class="pre">B3</span></code> or <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>)</p></li>
+<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=&quot;&lt;calendar</span> <span class="pre">filename&gt;&quot;)</span></code> passing a file that describes a valid calendar</p></li>
 </ul>
 <p>The file describing the calendar is a text file with the weekdays and holidays that represents the nonworking days.</p>
 <div class="nbinput docutils container">
@@ -389,8 +390,7 @@ Sunday
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from bizdays import Calendar
 
-cal = Calendar.load(filename=&#39;Test.cal&#39;)
-cal
+Calendar.load(filename=&#39;Test.cal&#39;)
 </pre></div>
 </div>
 </div>
@@ -408,9 +408,31 @@ Holidays: 4
 Financial: True
 </pre></div></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be called with no arguments and it returns a calendar without nonworking days.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;ANBIMA&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Calendar: ANBIMA
+Start: 2000-01-01
+End: 2078-12-25
+Weekdays: Saturday, Sunday
+Holidays: 948
+Financial: True
+</pre></div></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be called with no arguments and it returns a calendar without nonworking days.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar()
@@ -418,7 +440,7 @@ Financial: True
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -433,7 +455,7 @@ Financial: True
 </div>
 <p>Naming the calendar is a good idea.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar(name=&#39;actual&#39;)
@@ -441,7 +463,7 @@ Financial: True
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -460,7 +482,7 @@ Financial: True
 <p>In finance, the amount of business days between two consecutive dates is 1, which indicates one day of compounding interest rates.</p>
 <p>For example.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>cal = Calendar()
@@ -469,7 +491,7 @@ cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -480,7 +502,7 @@ cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
 <p>For this calendar both dates are business days, but the return is one business day.</p>
 <p>This behavior can changed by setting the attribute <code class="docutils literal notranslate"><span class="pre">financial</span></code> to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>cal.financial = False
@@ -489,7 +511,7 @@ cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
