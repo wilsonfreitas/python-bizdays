@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "bizdays"
-version = "1.0.3"
+version = "1.0.4"
 description = "Functions to handle business days calculations"
 authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
 readme = "README.md"
+include = ["ANBIMA.cal", "B3.cal"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.3"

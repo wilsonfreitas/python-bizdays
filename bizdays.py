@@ -43,7 +43,6 @@ try:
         else:
             return None
 
-
 except ImportError:
 
     def isnull(x):
@@ -953,10 +952,14 @@ class Calendar(object):
         ----------
 
         name : str
-            Name of the calendar *in development*.
+            Name of the calendar.
+            The calendar is loaded from a file delivered with the package.
+            The calendars:
 
-            The idea is getting the calendars from a service
-            where they could be uploaded and downloaded.
+            * B3
+            * ANBIMA
+
+            are delivered with the package.
 
         filename : str
             Text file with holidays  and weekdays.
@@ -970,7 +973,7 @@ class Calendar(object):
         if filename:
             res = _checkfile(filename)
         elif name:
-            res = _checkurl(name)
+            res = _checklocalfile(name)
 
         w = "|".join(w.lower() for w in cls._weekdays)
         wre = "^%s$" % w
@@ -1016,14 +1019,15 @@ def _checkfile(fname):
     return {"name": name, "iter": open(fname)}
 
 
-def _checkurl(name):
-    import requests
-
-    url = f"https://storage.googleapis.com/bizdays-calendars/{name}.cal"
-    res = requests.get(url)
-    if res.status_code != 200:
-        raise Exception(f"Invalid calendar: {name}")
-    return {"name": name, "iter": StringIO(res.text)}
+def _checklocalfile(name):
+    dir = os.path.dirname(__file__)
+    fname = f"{dir}/{name}.cal"
+    name = os.path.split(fname)[-1]
+    if name.endswith(".cal"):
+        name = name.replace(".cal", "")
+    else:
+        name = None
+    return {"name": name, "iter": open(fname)}
 
 
 class VectorizedOps(object):
