@@ -4,7 +4,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>API &#8212; bizdays 1.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -14,6 +14,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -208,7 +209,7 @@ defined.</p>
 of dates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dts</strong> (<em>list of date</em>) – Sequence containing the dates to be differenced.</p>
+<dd class="field-odd"><p><strong>dts</strong> (<em>list</em><em> of </em><em>date</em>) – Sequence containing the dates to be differenced.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The number of business days between given dates.</p>
@@ -246,8 +247,8 @@ not a business day.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list of int</em>) – Year</p></li>
-<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list of int</em>) – Month</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list</em><em> of </em><em>int</em>) – Year</p></li>
+<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list</em><em> of </em><em>int</em>) – Month</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -272,11 +273,11 @@ date, a month or an year.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>expr</strong> (<em>str</em><em>, </em><em>list of str</em>) – <p>String specifying the date to be returned.</p>
+<li><p><strong>expr</strong> (<em>str</em><em>, </em><em>list</em><em> of </em><em>str</em>) – <p>String specifying the date to be returned.</p>
 <p>See <a class="reference internal" href="getdate.html"><span class="doc">getdate</span></a> for more information.</p>
 </p></li>
-<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list of int</em>) – Year</p></li>
-<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list of int</em>) – Month</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>list</em><em> of </em><em>int</em>) – Year</p></li>
+<li><p><strong>month</strong> (<em>int</em><em>, </em><em>list</em><em> of </em><em>int</em>) – Month</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -387,7 +388,7 @@ not a business day.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dt</strong> (<em>datetime.date</em><em>, </em><em>datetime.datetime</em><em>, </em><em>pandas.Timestamp</em><em>, </em><em>str</em>) – Dates to be offset</p></li>
-<li><p><strong>n</strong> (<em>int</em><em>, </em><em>list of int</em>) – the amount of business days to offset</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>list</em><em> of </em><em>int</em>) – the amount of business days to offset</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -511,7 +512,7 @@ In pandas mode this option is ignored.</p></li>
       &copy;2022, Wilson Freitas.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
