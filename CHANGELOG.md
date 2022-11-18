@@ -1,4 +1,8 @@
 
+### version 1.0.5 (2022-11-18)
+
+* B3 Calendar updated: 2020-07-09 wasn't a holiday due to decisions made by the municipal government of São Paulo.
+
 ### version 0.1.2 (2013-09-15)
 
 * Calendar's `offset` method implemented
