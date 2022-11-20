@@ -1,4 +1,8 @@
 
+### version 1.0.6 (2022-11-20)
+
+* B3 Calendar updated: 2020-01-25 wasn't a holiday.
+
 ### version 1.0.5 (2022-11-18)
 
 * B3 Calendar updated: 2020-07-09 wasn't a holiday due to decisions made by the municipal government of São Paulo.
