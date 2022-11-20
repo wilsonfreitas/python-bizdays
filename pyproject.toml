@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bizdays"
-version = "1.0.5"
+version = "1.0.6"
 description = "Functions to handle business days calculations"
 authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
 readme = "README.md"
