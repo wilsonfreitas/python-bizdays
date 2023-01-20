@@ -1,3 +1,7 @@
+### version 1.0.8 (2023-01-20)
+
+* B3 Calendar updated: corrected dates
+
 ### version 1.0.7 (2023-01-18)
 
 * B3 Calendar updated: included 2023 holidays
