@@ -53,6 +53,10 @@
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas Integration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Calendars</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Calendars-from-file">Calendars from file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Predefined-Calendars">Predefined Calendars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Calendars-from-pandas_market_calendars">Calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Create-your-own-Calendars">Create your own Calendars</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#Financial-Calendars">Financial Calendars</a></li>
 </ul>
 </li>
@@ -100,9 +104,11 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be built in three ways:</p>
 <ul class="simple">
 <li><p>using the constructor <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> passing the arguments</p></li>
-<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;&lt;calendar</span> <span class="pre">name&gt;&quot;)</span></code> passing the name of a calendar delivered with the package (<code class="docutils literal notranslate"><span class="pre">B3</span></code> or <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>)</p></li>
+<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;&lt;calendar</span> <span class="pre">name&gt;&quot;)</span></code> passing the name of a calendar delivered with the package (<code class="docutils literal notranslate"><span class="pre">B3</span></code>, <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>, <code class="docutils literal notranslate"><span class="pre">Actual</span></code>) or calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendar</span></code> package</p></li>
 <li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=&quot;&lt;calendar</span> <span class="pre">filename&gt;&quot;)</span></code> passing a file that describes a valid calendar</p></li>
 </ul>
+<section id="Calendars-from-file">
+<h2>Calendars from file<a class="headerlink" href="#Calendars-from-file" title="Permalink to this heading">¶</a></h2>
 <p>The file describing the calendar is a text file with the weekdays and holidays that represents the nonworking days.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -150,6 +156,11 @@ Holidays: 4
 Financial: True
 </pre></div></div>
 </div>
+</section>
+<section id="Predefined-Calendars">
+<h2>Predefined Calendars<a class="headerlink" href="#Predefined-Calendars" title="Permalink to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bizdays</span></code> comes with some predefined calendars: <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>, <code class="docutils literal notranslate"><span class="pre">B3</span></code>, <code class="docutils literal notranslate"><span class="pre">Actual</span></code>, that can be directly loaded by its names.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code> is the standard calendar used in the brazilian fixed income markets.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -172,6 +183,261 @@ Holidays: 948
 Financial: True
 </pre></div></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">Actual</span></code> is a calendar with no holiday and nonworking days.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;Actual&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Calendar: Actual
+Start: 1970-01-01
+End: 2071-01-01
+Weekdays:
+Holidays: 0
+Financial: True
+</pre></div></div>
+</div>
+</section>
+<section id="Calendars-from-pandas_market_calendars">
+<h2>Calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code><a class="headerlink" href="#Calendars-from-pandas_market_calendars" title="Permalink to this heading">¶</a></h2>
+<p>The package <code class="docutils literal notranslate"><span class="pre">`pandas_market_calendars</span></code> &lt;<a class="reference external" href="https://github.com/rsheftel/pandas_market_calendars">https://github.com/rsheftel/pandas_market_calendars</a>&gt;`__ comes with many predefined calendars.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pandas_market_calendars as mcal
+
+mcal.get_calendar_names()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;ASX&#39;,
+ &#39;BMF&#39;,
+ &#39;B3&#39;,
+ &#39;BSE&#39;,
+ &#39;NSE&#39;,
+ &#39;CFE&#39;,
+ &#39;CBOE_Futures&#39;,
+ &#39;CBOE_Equity_Options&#39;,
+ &#39;CBOE_Index_Options&#39;,
+ &#39;CME_Equity&#39;,
+ &#39;CBOT_Equity&#39;,
+ &#39;CME_Agriculture&#39;,
+ &#39;CBOT_Agriculture&#39;,
+ &#39;COMEX_Agriculture&#39;,
+ &#39;NYMEX_Agriculture&#39;,
+ &#39;CME_Rate&#39;,
+ &#39;CBOT_Rate&#39;,
+ &#39;CME_InterestRate&#39;,
+ &#39;CBOT_InterestRate&#39;,
+ &#39;CME_Bond&#39;,
+ &#39;CBOT_Bond&#39;,
+ &#39;CMEGlobex_Livestock&#39;,
+ &#39;CMEGlobex_Live_Cattle&#39;,
+ &#39;CMEGlobex_Feeder_Cattle&#39;,
+ &#39;CMEGlobex_Lean_Hog&#39;,
+ &#39;CMEGlobex_Port_Cutout&#39;,
+ &#39;CME Globex Cryptocurrencies&#39;,
+ &#39;CME Globex Crypto&#39;,
+ &#39;CMEGlobex_EnergyAndMetals&#39;,
+ &#39;CMEGlobex_Energy&#39;,
+ &#39;CMEGlobex_CrudeAndRefined&#39;,
+ &#39;CMEGlobex_NYHarbor&#39;,
+ &#39;CMEGlobex_HO&#39;,
+ &#39;HO&#39;,
+ &#39;CMEGlobex_Crude&#39;,
+ &#39;CMEGlobex_CL&#39;,
+ &#39;CL&#39;,
+ &#39;CMEGlobex_Gas&#39;,
+ &#39;CMEGlobex_RB&#39;,
+ &#39;RB&#39;,
+ &#39;CMEGlobex_MicroCrude&#39;,
+ &#39;CMEGlobex_MCL&#39;,
+ &#39;MCL&#39;,
+ &#39;CMEGlobex_NatGas&#39;,
+ &#39;CMEGlobex_NG&#39;,
+ &#39;NG&#39;,
+ &#39;CMEGlobex_Dutch_NatGas&#39;,
+ &#39;CMEGlobex_TTF&#39;,
+ &#39;TTF&#39;,
+ &#39;CMEGlobex_LastDay_NatGas&#39;,
+ &#39;CMEGlobex_NN&#39;,
+ &#39;NN&#39;,
+ &#39;CMEGlobex_CarbonOffset&#39;,
+ &#39;CMEGlobex_CGO&#39;,
+ &#39;CGO&#39;,
+ &#39;C-GEO&#39;,
+ &#39;CMEGlobex_NGO&#39;,
+ &#39;NGO&#39;,
+ &#39;CMEGlobex_GEO&#39;,
+ &#39;GEO&#39;,
+ &#39;CMEGlobex_Metals&#39;,
+ &#39;CMEGlobex_PreciousMetals&#39;,
+ &#39;CMEGlobex_Gold&#39;,
+ &#39;CMEGlobex_GC&#39;,
+ &#39;GC&#39;,
+ &#39;CMEGlobex_SilverCMEGlobex_SI&#39;,
+ &#39;SI&#39;,
+ &#39;CMEGlobex_Platinum&#39;,
+ &#39;CMEGlobex_PL&#39;,
+ &#39;PL&#39;,
+ &#39;CMEGlobex_BaseMetals&#39;,
+ &#39;CMEGlobex_Copper&#39;,
+ &#39;CMEGlobex_HG&#39;,
+ &#39;HG&#39;,
+ &#39;CMEGlobex_Aluminum&#39;,
+ &#39;CMEGlobex_ALI&#39;,
+ &#39;ALI&#39;,
+ &#39;CMEGlobex_QC&#39;,
+ &#39;QC&#39;,
+ &#39;CMEGlobex_FerrousMetals&#39;,
+ &#39;CMEGlobex_HRC&#39;,
+ &#39;HRC&#39;,
+ &#39;CMEGlobex_BUS&#39;,
+ &#39;BUS&#39;,
+ &#39;CMEGlobex_TIO&#39;,
+ &#39;TIO&#39;,
+ &#39;CME Globex Equity&#39;,
+ &#39;CMEGlobex_FX&#39;,
+ &#39;CME_FX&#39;,
+ &#39;CME_Currency&#39;,
+ &#39;CME Globex Fixed Income&#39;,
+ &#39;CME Globex Interest Rate Products&#39;,
+ &#39;EUREX&#39;,
+ &#39;HKEX&#39;,
+ &#39;ICE&#39;,
+ &#39;ICEUS&#39;,
+ &#39;NYFE&#39;,
+ &#39;NYSE&#39;,
+ &#39;stock&#39;,
+ &#39;NASDAQ&#39;,
+ &#39;BATS&#39;,
+ &#39;DJIA&#39;,
+ &#39;DOW&#39;,
+ &#39;IEX&#39;,
+ &#39;Investors_Exchange&#39;,
+ &#39;JPX&#39;,
+ &#39;LSE&#39;,
+ &#39;OSE&#39;,
+ &#39;SIFMAUS&#39;,
+ &#39;SIFMA_US&#39;,
+ &#39;Capital_Markets_US&#39;,
+ &#39;Financial_Markets_US&#39;,
+ &#39;Bond_Markets_US&#39;,
+ &#39;SIFMAUK&#39;,
+ &#39;SIFMA_UK&#39;,
+ &#39;Capital_Markets_UK&#39;,
+ &#39;Financial_Markets_UK&#39;,
+ &#39;Bond_Markets_UK&#39;,
+ &#39;SIFMAJP&#39;,
+ &#39;SIFMA_JP&#39;,
+ &#39;Capital_Markets_JP&#39;,
+ &#39;Financial_Markets_JP&#39;,
+ &#39;Bond_Markets_JP&#39;,
+ &#39;SIX&#39;,
+ &#39;SSE&#39;,
+ &#39;TASE&#39;,
+ &#39;TSX&#39;,
+ &#39;TSXV&#39;,
+ &#39;AIXK&#39;,
+ &#39;ASEX&#39;,
+ &#39;BVMF&#39;,
+ &#39;CMES&#39;,
+ &#39;IEPA&#39;,
+ &#39;XAMS&#39;,
+ &#39;XASX&#39;,
+ &#39;XBKK&#39;,
+ &#39;XBOG&#39;,
+ &#39;XBOM&#39;,
+ &#39;XBRU&#39;,
+ &#39;XBSE&#39;,
+ &#39;XBUD&#39;,
+ &#39;XBUE&#39;,
+ &#39;XCBF&#39;,
+ &#39;XCSE&#39;,
+ &#39;XDUB&#39;,
+ &#39;XFRA&#39;,
+ &#39;XETR&#39;,
+ &#39;XHEL&#39;,
+ &#39;XHKG&#39;,
+ &#39;XICE&#39;,
+ &#39;XIDX&#39;,
+ &#39;XIST&#39;,
+ &#39;XJSE&#39;,
+ &#39;XKAR&#39;,
+ &#39;XKLS&#39;,
+ &#39;XKRX&#39;,
+ &#39;XLIM&#39;,
+ &#39;XLIS&#39;,
+ &#39;XLON&#39;,
+ &#39;XMAD&#39;,
+ &#39;XMEX&#39;,
+ &#39;XMIL&#39;,
+ &#39;XMOS&#39;,
+ &#39;XNYS&#39;,
+ &#39;XNZE&#39;,
+ &#39;XOSL&#39;,
+ &#39;XPAR&#39;,
+ &#39;XPHS&#39;,
+ &#39;XPRA&#39;,
+ &#39;XSAU&#39;,
+ &#39;XSES&#39;,
+ &#39;XSGO&#39;,
+ &#39;XSHG&#39;,
+ &#39;XSTO&#39;,
+ &#39;XSWX&#39;,
+ &#39;XTAE&#39;,
+ &#39;XTAI&#39;,
+ &#39;XTKS&#39;,
+ &#39;XTSE&#39;,
+ &#39;XWAR&#39;,
+ &#39;XWBO&#39;,
+ &#39;us_futures&#39;,
+ &#39;24/7&#39;,
+ &#39;24/5&#39;]
+</pre></div></div>
+</div>
+<p>These calendars can be loaded in bizdays with the prefix <code class="docutils literal notranslate"><span class="pre">PMC/</span></code> in its name. For example, use <code class="docutils literal notranslate"><span class="pre">PMC/NYSE</span></code> to load the NYSE calendar.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;PMC/NYSE&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Calendar: PMC/NYSE
+Start: 1885-01-01
+End: 2200-12-25
+Weekdays: Saturday, Sunday
+Holidays: 3552
+Financial: True
+</pre></div></div>
+</div>
+</section>
+<section id="Create-your-own-Calendars">
+<h2>Create your own Calendars<a class="headerlink" href="#Create-your-own-Calendars" title="Permalink to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be called with no arguments and it returns a calendar without nonworking days.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -218,6 +484,7 @@ Holidays: 0
 Financial: True
 </pre></div></div>
 </div>
+</section>
 <section id="Financial-Calendars">
 <h2>Financial Calendars<a class="headerlink" href="#Financial-Calendars" title="Permalink to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">bizdays</span></code> was designed to be used with financial calculations, for this reason all calendars are financial by default.</p>
