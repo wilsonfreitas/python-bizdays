@@ -1,3 +1,8 @@
+### version 1.0.9 (2023-10-29)
+
+* Actual Calendar created
+* Integration with [pandas_market_calendar](https://github.com/rsheftel/pandas_market_calendars), all calendars from this package can be used.
+
 ### version 1.0.8 (2023-01-20)
 
 * B3 Calendar updated: corrected dates
