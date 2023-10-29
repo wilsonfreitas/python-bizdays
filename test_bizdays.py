@@ -34,9 +34,7 @@ class TestNullValues(unittest.TestCase):
     def test_bizdays(self):
         assert self.actual.bizdays(None, "2013-01-02") is None
         x = [-1, -2, None]
-        assert (
-            self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
-        )
+        assert self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
 
     def test_adjust(self):
         assert self.anbima.preceding(None) is None
@@ -87,15 +85,15 @@ class TestBizdays(unittest.TestCase):
 
     def test_bizdays_default_calendar_sequence(self):
         bizdays = self.cal.bizdays
-        self.assertEqual(bizdays(("2013-01-02", "2013-01-03"), "2013-01-03"), [1, 0])
+        assert bizdays(("2013-01-02", "2013-01-03"), "2013-01-03") == [1, 0]
 
     def test_bizdays_set_of_dates(self):
         bizdays = self.cal.bizdays
         dates_from = list(seqDate(asDate("2013-01-01"), asDate("2013-01-05"), days=1))
         dates_to = [d + timedelta(days=5) for d in dates_from]
-        self.assertEqual(bizdays(dates_from, dates_to), [5, 5, 5, 5, 5])
-        self.assertEqual(bizdays("2013-01-02", dates_to), [4, 5, 6, 7, 8])
-        self.assertEqual(bizdays(dates_from, "2013-01-08"), [7, 6, 5, 4, 3])
+        assert bizdays(dates_from, dates_to) == [5, 5, 5, 5, 5]
+        assert bizdays("2013-01-02", dates_to) == [4, 5, 6, 7, 8]
+        assert bizdays(dates_from, "2013-01-08") == [7, 6, 5, 4, 3]
         with self.assertRaises(Exception):
             bizdays(
                 ("2013-01-08", "2013-01-08", "2013-01-08"), ("2013-01-08", "2013-01-08")
@@ -109,29 +107,18 @@ class TestBizdays(unittest.TestCase):
 
     def test_negative_bizdays(self):
         bizdays = self.cal_nofin.bizdays
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
-        )
+        assert bizdays("2014-07-12", "2013-07-12") == -bizdays("2013-07-12", "2014-07-12")
 
         bizdays = self.cal.bizdays
         hj = datetime.today()
         dx = [hj + timedelta(d) for d in (2, -1, 1, 1)]
-        self.assertEqual(bizdays(hj, dx), [2, -1, 1, 1])
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
-        )
+        assert bizdays(hj, dx) == [2, -1, 1, 1]
+        assert bizdays("2014-07-12", "2013-07-12") == -bizdays("2013-07-12", "2014-07-12")
 
         bizdays = self.cal_ANBIMA.bizdays
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
-        )
-        self.assertEqual(
-            bizdays(
-                ("2013-08-21", "2013-01-31", "2013-01-01"),
-                ("2013-08-24", "2013-01-01", "2014-01-01"),
-            ),
-            [2, -21, 252],
-        )
+        assert bizdays("2014-07-12", "2013-07-12") == -bizdays("2013-07-12", "2014-07-12")
+        assert bizdays(("2013-08-21", "2013-01-31", "2013-01-01"),
+                       ("2013-08-24", "2013-01-01", "2014-01-01")) == [2, -21, 252]
 
     def test_double_index(test):
         cal = Calendar(
@@ -156,47 +143,30 @@ class TestVectorizedOpsInCalendar(unittest.TestCase):
     cal = Calendar(name="actual")
 
     def test_isbizday(self):
-        self.assertEqual(self.cal.isbizday(("2013-01-02", "2013-01-03")), [True, True])
+        assert self.cal.isbizday(("2013-01-02", "2013-01-03")) == [True, True]
 
     def test_bizdays(self):
         bizdays = self.cal.bizdays
-        self.assertEqual(bizdays(("2013-01-02", "2013-01-03"), "2013-01-03"), [1, 0])
+        assert bizdays(("2013-01-02", "2013-01-03"), "2013-01-03") == [1, 0]
 
     def test_adjust(self):
         adjust = self.cal.adjust_next
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.following
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.adjust_previous
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.preceding
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.modified_following
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.modified_preceding
-        self.assertEqual(
-            adjust(("2013-01-02", "2013-01-03")), asDate(["2013-01-02", "2013-01-03"])
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
 
     def test_offset(self):
         offset = self.cal.offset
-        self.assertEqual(
-            offset(("2013-01-02", "2013-01-03"), 1),
-            asDate(["2013-01-03", "2013-01-04"]),
-        )
-        self.assertEqual(
-            offset("2013-01-02", [1, 2]), asDate(["2013-01-03", "2013-01-04"])
-        )
+        assert offset(("2013-01-02", "2013-01-03"), 1) == asDate(["2013-01-03", "2013-01-04"])
+        assert offset("2013-01-02", [1, 2]) == asDate(["2013-01-03", "2013-01-04"])
 
     def test_getdate(self):
         expr = "15th day"
