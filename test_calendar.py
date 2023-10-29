@@ -12,3 +12,9 @@ def test_calendar_load():
 def test_calendar_load_invalid():
     with pytest.raises(Exception):
         cal = Calendar.load("B1")
+
+
+def test_calendar_load_pmc():
+    cal = Calendar.load("PMC/B3")
+    assert cal.name == "PMC/B3"
+    assert len(cal.holidays) > 4000
