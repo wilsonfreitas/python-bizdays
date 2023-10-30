@@ -959,6 +959,8 @@ class Calendar(object):
 
             * B3
             * ANBIMA
+            * Actual
+            * calendars from pandas_market_calendars - use the prefix "PMC/<calendar name>" to name the calendar
 
             are delivered with the package.
 
