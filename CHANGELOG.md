@@ -1,3 +1,8 @@
+### version 1.1.0 (2023-12-12)
+
+* B3 calendar updated with 2024 dates
+* B3 calendar removed date 2023-02-22 (Issue #39)
+
 ### version 1.0.9 (2023-10-29)
 
 * Actual Calendar created
