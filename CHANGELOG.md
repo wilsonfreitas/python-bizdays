@@ -1,4 +1,8 @@
-### version 1.1.0 (2023-12-12)
+### version 1.0.11 (2023-12-29)
+
+* ANBIMA calendar updated with new holiday nov-20th
+
+### version 1.0.10 (2023-12-12)
 
 * B3 calendar updated with 2024 dates
 * B3 calendar removed date 2023-02-22 (Issue #39)
