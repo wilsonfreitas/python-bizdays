@@ -5,9 +5,6 @@ from bizdays import isseq, Date, DateIndex, load_holidays, DateOutOfRange
 from datetime import datetime, timedelta
 
 
-set_option("mode", "python")
-
-
 def asDate(dt):
     if isseq(dt):
         return [Date(d).date for d in dt]
@@ -22,7 +19,12 @@ def seqDate(start, end, **interval):
         start_ = start_ + dt
 
 
-class TestNullValues(unittest.TestCase):
+class BizdaysTest(unittest.TestCase):
+    def setUp(self):
+        set_option("mode", "python")
+
+
+class TestNullValues(BizdaysTest):
     actual = Calendar(name="actual")
     anbima = Calendar.load(filename="ANBIMA.cal")
 
@@ -37,8 +39,6 @@ class TestNullValues(unittest.TestCase):
         assert self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
 
     def test_adjust(self):
-        set_option("mode", "python")
-
         assert self.anbima.preceding(None) is None
         x = asDate(["2012-12-31", "2013-01-03", None])
         assert self.anbima.preceding(("2013-01-01", "2013-01-03", None)) == x
@@ -72,7 +72,7 @@ class TestNullValues(unittest.TestCase):
         assert self.anbima.offset(None, [None, None]) == [None, None]
 
 
-class TestBizdays(unittest.TestCase):
+class TestBizdays(BizdaysTest):
     cal = Calendar(name="actual")
     cal_nofin = Calendar(name="actual", financial=False)
     cal_we = Calendar(name="we", weekdays=["Saturday", "Sunday"])
@@ -141,7 +141,7 @@ class TestBizdays(unittest.TestCase):
         assert bizdays("2013-06-22", "2013-06-23") == 0
 
 
-class TestVectorizedOpsInCalendar(unittest.TestCase):
+class TestVectorizedOpsInCalendar(BizdaysTest):
     cal = Calendar(name="actual")
 
     def test_isbizday(self):
@@ -186,7 +186,7 @@ class TestVectorizedOpsInCalendar(unittest.TestCase):
         assert x == [31, 28]
 
 
-class TestCalendar(unittest.TestCase):
+class TestCalendar(BizdaysTest):
     cal_ANBIMA = Calendar.load(filename="ANBIMA.cal")
 
     def test_Calendar_instanciate_calendar(self):
@@ -531,7 +531,7 @@ def test_isseq():
     assert isseq([])
 
 
-class TestVectorizedOperations(unittest.TestCase):
+class TestVectorizedOperations(BizdaysTest):
     cal = Calendar.load(filename="Test.cal")
 
     def test_Vectorized_operations_isbizday(self):
@@ -580,7 +580,7 @@ class TestVectorizedOperations(unittest.TestCase):
         assert x == [31, 31]
 
 
-class TestDateIndex(unittest.TestCase):
+class TestDateIndex(BizdaysTest):
     def test_DateIndex_start_workday_end_workday(self):
         "it should instanciate the calendar starting and ending on workingdays"
         cix = DateIndex(

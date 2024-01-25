@@ -1,3 +1,4 @@
+import pytest
 from bizdays import *
 import pandas as pd
 import numpy as np
@@ -5,12 +6,12 @@ import numpy as np
 
 actual = Calendar(name="actual")
 
-set_option("mode", "pandas")
+@pytest.fixture(autouse=True)
+def setup_data():
+    set_option("mode", "pandas")
 
 
 def test_isbizday_with_timestamp_and_nat():
-    set_option("mode", "pandas")
-
     assert pd.isna(actual.isbizday(pd.NaT))
 
 
