@@ -304,7 +304,7 @@ class TestCalendar(unittest.TestCase):
         self.assertEqual(cal.bizdays("2013-08-13", "2022-07-01"), 2231)
         self.assertEqual(cal.bizdays("2013-08-13", "2023-01-02"), 2358)
         self.assertEqual(cal.bizdays("2013-08-13", "2024-01-02"), 2607)
-        self.assertEqual(cal.bizdays("2013-08-13", "2025-01-02"), 2861)
+        self.assertEqual(cal.bizdays("2013-08-13", "2025-01-02"), 2860)
 
     def test_Calendar_unordered_holidays(self):
         "it should work with unordered calendars"
@@ -828,7 +828,7 @@ def test_getbizdays():
     assert cal.getbizdays(2024, 12) == 31
 
     cal = Calendar.load(filename="ANBIMA.cal")
-    assert cal.getbizdays(2024) == 254
+    assert cal.getbizdays(2024) == 253
     assert cal.getbizdays(2024, 1) == 22
     assert cal.getbizdays(2024, 2) == 19
     assert cal.getbizdays(2024, 3) == 20
@@ -839,7 +839,7 @@ def test_getbizdays():
     assert cal.getbizdays(2024, 8) == 22
     assert cal.getbizdays(2024, 9) == 21
     assert cal.getbizdays(2024, 10) == 23
-    assert cal.getbizdays(2024, 11) == 20
+    assert cal.getbizdays(2024, 11) == 19
     assert cal.getbizdays(2024, 12) == 21
 
 
