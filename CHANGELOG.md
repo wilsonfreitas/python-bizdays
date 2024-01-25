@@ -1,3 +1,8 @@
+### version 1.0.12 (2024-01-25)
+
+* Tests updated
+* New workflow created for pytest (Github Actions)
+
 ### version 1.0.11 (2023-12-29)
 
 * ANBIMA calendar updated with new holiday nov-20th
