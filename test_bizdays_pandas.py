@@ -9,6 +9,8 @@ set_option("mode", "pandas")
 
 
 def test_isbizday_with_timestamp_and_nat():
+    set_option("mode", "pandas")
+
     assert pd.isna(actual.isbizday(pd.NaT))
 
 

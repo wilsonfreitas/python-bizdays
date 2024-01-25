@@ -37,6 +37,8 @@ class TestNullValues(unittest.TestCase):
         assert self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
 
     def test_adjust(self):
+        set_option("mode", "python")
+
         assert self.anbima.preceding(None) is None
         x = asDate(["2012-12-31", "2013-01-03", None])
         assert self.anbima.preceding(("2013-01-01", "2013-01-03", None)) == x
