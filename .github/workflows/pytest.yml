@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  pytest:
 
     runs-on: ubuntu-latest
 
@@ -29,6 +29,4 @@ jobs:
         poetry install
     - name: Run tests
       run: |
-        poetry run pytest test_calendar.py
-        poetry run pytest test_bizdays.py
-        poetry run pytest test_bizdays_pandas.py
+        poetry run pytest
