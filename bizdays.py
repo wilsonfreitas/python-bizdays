@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, date, timedelta
 from itertools import cycle
-from typing import TextIO
+from typing import TextIO, Dict
 
 PANDAS_INSTALLED = False
 
@@ -990,7 +990,7 @@ class Calendar(object):
                 return cls._load_calendar_from_file(res)
 
     @classmethod
-    def _load_calendar_from_file(cls, res: dict[str, TextIO]) -> "Calendar":
+    def _load_calendar_from_file(cls, res: Dict[str, TextIO]) -> "Calendar":
         w = "|".join(w.lower() for w in cls._weekdays)
         wre = "^%s$" % w
         _holidays = []
@@ -1024,7 +1024,7 @@ Financial: {4}""".format(
     __repr__ = __str__
 
 
-def _checkfile(fname: str) -> dict[str, TextIO]:
+def _checkfile(fname: str) -> Dict[str, TextIO]:
     if not os.path.exists(fname):
         raise Exception(f"Invalid calendar: {fname}")
     name = os.path.split(fname)[-1]
@@ -1035,7 +1035,7 @@ def _checkfile(fname: str) -> dict[str, TextIO]:
     return {"name": name, "iter": open(fname)}
 
 
-def _checklocalfile(name: str) -> dict[str, TextIO]:
+def _checklocalfile(name: str) -> Dict[str, TextIO]:
     dir = os.path.dirname(__file__)
     fname = f"{dir}/{name}.cal"
     if not os.path.exists(fname):
