@@ -7,7 +7,7 @@ readme = "README.md"
 include = ["ANBIMA.cal", "B3.cal", "Actual.cal"]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <= 3.11"
+python = ">=3.8, < 3.12"
 pandas-market-calendars = "4.3.1"
 
 [tool.poetry.group.dev.dependencies]
