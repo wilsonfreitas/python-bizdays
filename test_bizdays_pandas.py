@@ -4,25 +4,27 @@ import pandas as pd
 import numpy as np
 
 
-actual = Calendar(name="actual")
+@pytest.fixture()
+def actual():
+    return Calendar(name="actual")
 
 @pytest.fixture(autouse=True)
 def setup_data():
     set_option("mode", "pandas")
 
 
-def test_isbizday_with_timestamp_and_nat():
+def test_isbizday_with_timestamp_and_nat(actual):
     assert pd.isna(actual.isbizday(pd.NaT))
 
 
-def test_isbizday_with_timestamp():
+def test_isbizday_with_timestamp(actual):
     dt = pd.to_datetime("2021-12-30")
     assert actual.isbizday(dt)
     dt = pd.Timestamp("2021-12-30")
     assert actual.isbizday(dt)
 
 
-def test_bizdays_with_timestamp():
+def test_bizdays_with_timestamp(actual):
     dt1 = pd.to_datetime("2021-12-30")
     dt2 = pd.to_datetime("2021-12-30")
     assert actual.bizdays(dt1, dt2) == 0
@@ -32,7 +34,7 @@ def test_bizdays_with_timestamp():
     assert actual.bizdays(dt2, dt1) == -1
 
 
-def test_adjust_with_timestamp():
+def test_adjust_with_timestamp(actual):
     dt = pd.to_datetime("2021-12-30")
     assert isinstance(actual.following(dt), pd.Timestamp)
     assert actual.following(dt) == pd.Timestamp(dt.date())
@@ -41,20 +43,20 @@ def test_adjust_with_timestamp():
     assert actual.modified_preceding(dt) == pd.Timestamp(dt.date())
 
 
-def test_offset_with_timestamp():
+def test_offset_with_timestamp(actual):
     dt = pd.to_datetime("2021-01-01")
     assert isinstance(actual.offset(dt, 5), pd.Timestamp)
     assert actual.offset(dt, 5) == pd.to_datetime("2021-01-06")
 
 
-def test_isbizday_with_datetimeindex():
+def test_isbizday_with_datetimeindex(actual):
     dt = pd.to_datetime(["2021-12-30", "2021-11-30"])
     x = actual.isbizday(dt)
     assert isinstance(x, np.ndarray)
     assert np.all(x)
 
 
-def test_isbizday_with_datetimeindex_and_nat():
+def test_isbizday_with_datetimeindex_and_nat(actual):
     dt = pd.to_datetime(["2021-12-30", "2021-11-30", None])
     x = actual.isbizday(dt)
     assert isinstance(x, np.ndarray)
@@ -63,7 +65,7 @@ def test_isbizday_with_datetimeindex_and_nat():
     assert [pd.NaT] == [pd.NaT]
 
 
-def test_bizdays_with_datetimeindex():
+def test_bizdays_with_datetimeindex(actual):
     dt1 = pd.to_datetime(["2021-12-30", "2021-11-30"])
     dt2 = pd.to_datetime(["2021-12-30", "2021-11-30"])
     x = actual.bizdays(dt1, dt2)
@@ -71,7 +73,7 @@ def test_bizdays_with_datetimeindex():
     assert np.all(x == np.array([0, 0]))
 
 
-def test_adjust_with_datetimeindex():
+def test_adjust_with_datetimeindex(actual):
     dt = pd.to_datetime(["2021-12-30", "2021-11-30"])
     x = actual.following(dt)
     assert isinstance(x, pd.DatetimeIndex)
@@ -81,7 +83,7 @@ def test_adjust_with_datetimeindex():
     assert all(actual.modified_preceding(dt) == dt.date)
 
 
-def test_offset_with_datetimeindex():
+def test_offset_with_datetimeindex(actual):
     dt = pd.to_datetime(["2021-01-01", "2021-01-02"])
     dts = pd.to_datetime(["2021-01-06", "2021-01-07"])
     x = actual.offset(dt, 5)
@@ -96,11 +98,11 @@ def test_offset_with_datetimeindex():
     assert all(actual.offset(dt, [5, 6]) == dts.date)
 
 
-def test_offset_with_datetimeindex_and_nat():
+def test_offset_with_datetimeindex_and_nat(actual):
     dt = pd.to_datetime(["2021-01-01", "2021-01-02", pd.NaT])
     x = actual.offset(dt, 5)
     assert isinstance(x, type(dt))
 
 
-def test_seq_return_datetimeindex():
+def test_seq_return_datetimeindex(actual):
     actual.seq("2014-01-02", "2014-01-07")
