@@ -1,3 +1,7 @@
+### version 1.0.13 (2024-xx-xx)
+
+* [BUG] bizdays doesn't handle correctly non-business days in edges (Issue #47)
+
 ### version 1.0.12 (2024-01-25)
 
 * Tests updated
