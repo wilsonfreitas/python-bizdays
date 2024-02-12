@@ -1,5 +1,7 @@
 import unittest
 from random import shuffle
+
+import pytest
 from bizdays import *
 from bizdays import isseq, Date, DateIndex, load_holidays, DateOutOfRange
 from datetime import datetime, timedelta
@@ -17,6 +19,11 @@ def seqDate(start, end, **interval):
     while start_ <= end:
         yield start_
         start_ = start_ + dt
+
+
+@pytest.fixture(autouse=True)
+def setup_data():
+    set_option("mode", "python")
 
 
 class BizdaysTest(unittest.TestCase):
@@ -135,10 +142,13 @@ class TestBizdays(BizdaysTest):
 
     def test_bizdays_between_consecutive_nonbizdays(self):
         bizdays = self.cal_we.bizdays
-        assert bizdays("2013-06-23", "2013-06-22") == 0
         assert bizdays("2013-06-22", "2013-06-23") == 0
+        assert bizdays("2013-06-23", "2013-06-22") == 0
+
+    def test_bizdays_between_consecutive_nonbizdays_nonfin(self):
         bizdays = self.cal_we_nofin.bizdays
         assert bizdays("2013-06-22", "2013-06-23") == 0
+        assert bizdays("2013-06-23", "2013-06-22") == 0
 
 
 class TestVectorizedOpsInCalendar(BizdaysTest):
@@ -844,6 +854,15 @@ def test_getbizdays():
     assert cal.getbizdays(2024, 11) == 19
     assert cal.getbizdays(2024, 12) == 21
 
+
+def test_bizdays_consistency_check():
+    hol = ["2024-01-01", "2024-03-29", "2024-04-01", "2024-05-06", "2024-05-27", "2024-08-26", "2024-12-25",
+           "2024-12-26"]
+    cal = Calendar(holidays=hol, weekdays=("monday", "tuesday", "wednesday", "saturday", "sunday"),
+                   startdate="2024-01-01", enddate="2024-12-31", financial=False, name="nursery_calendar")
+    assert cal.isbizday("2024-12-27")
+    assert cal.bizdays("2024-12-23", "2024-12-29") == 1
+    assert cal.bizdays("2024-12-29", "2024-12-23") == -1
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

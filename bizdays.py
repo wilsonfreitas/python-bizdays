@@ -220,7 +220,7 @@ class DateIndex(object):
             is_hol = self._index[dt][2]
             if not is_hol:
                 w -= 1
-            self._index[dt][3] = min(w, max_w)
+            self._index[dt][3] = w
 
         for dt in dts:
             # ----
@@ -631,23 +631,25 @@ class Calendar(object):
                 d1, d2 = date_from, date_to
             t1 = (self._index[d1][0], self._index[d1][3])
             t2 = (self._index[d2][0], self._index[d2][3])
-            if t1 == t2:
-                bdays = 0
-            else:
-                i1 = max(t1)
-                i2 = min(t2)
-                bdays = i2 - i1
-            if date_from > date_to:
+            i1 = t2[0] - t1[0]
+            i2 = t2[1] - t1[1]
+            bdays = min(i1, i2)
+            adj_vec = int(self._index[d1][2] and self._index[d2][2])
+            date_reverse = date_from > date_to
+            if date_reverse:
+                adj_vec = -adj_vec
                 bdays = -bdays
+            bdays -= adj_vec
             if self.financial:
-                return bdays
+                if self._index[d1][2] and self._index[d2][2] and abs(bdays) == 1:
+                    return 0
+                else:
+                    return bdays
             else:
-                if bdays > 0:
-                    return bdays + 1
-                elif bdays < 0:
+                if date_reverse:
                     return bdays - 1
                 else:
-                    return 0 if self._index[d1][2] and self._index[d2][0] else 1
+                    return bdays + 1
 
     def isbizday(self, dt):
         """
