@@ -7,7 +7,7 @@ from typing import TextIO, Dict
 PANDAS_INSTALLED = False
 
 try:
-    import pandas as pd
+    import pandas as pd # type: ignore[import-untyped]
     import numpy as np
 
     PANDAS_INSTALLED = True
@@ -980,7 +980,7 @@ class Calendar(object):
         elif name:
             if name.startswith("PMC/"):
                 try:
-                    import pandas_market_calendars as mcal
+                    import pandas_market_calendars as mcal # type: ignore[import-untyped]
                 except ImportError:
                     raise Exception("pandas_market_calendars must be installed to use PMC calendars")
                 cal = mcal.get_calendar(name[4:])
@@ -1025,18 +1025,18 @@ Financial: {4}""".format(
     __repr__ = __str__
 
 
-def _checkfile(fname: str) -> Dict[str, TextIO]:
+def _checkfile(fname: str) -> dict[str, TextIO|str]:
     if not os.path.exists(fname):
         raise Exception(f"Invalid calendar: {fname}")
-    name = os.path.split(fname)[-1]
+    name: str = os.path.split(fname)[-1]
     if name.endswith(".cal"):
         name = name.replace(".cal", "")
     else:
-        name = None
+        name = "None"
     return {"name": name, "iter": open(fname)}
 
 
-def _checklocalfile(name: str) -> Dict[str, TextIO]:
+def _checklocalfile(name: str) -> dict[str, TextIO|str]:
     dir = os.path.dirname(__file__)
     fname = f"{dir}/{name}.cal"
     if not os.path.exists(fname):
@@ -1045,7 +1045,7 @@ def _checklocalfile(name: str) -> Dict[str, TextIO]:
     if name.endswith(".cal"):
         name = name.replace(".cal", "")
     else:
-        name = None
+        name = "None"
     return {"name": name, "iter": open(fname)}
 
 

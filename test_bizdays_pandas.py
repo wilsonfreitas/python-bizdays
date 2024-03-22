@@ -1,6 +1,6 @@
 import pytest
 from bizdays import *
-import pandas as pd
+import pandas as pd # type: ignore[import-untyped]
 import numpy as np
 
 
