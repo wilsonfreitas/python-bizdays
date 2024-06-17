@@ -1,3 +1,7 @@
+### version 1.0.14 (2024-06-17)
+
+* Support to Python 3.12 (Issue #50)
+
 ### version 1.0.13 (2024-xx-xx)
 
 * [BUG] bizdays doesn't handle correctly non-business days in edges (Issue #47)
