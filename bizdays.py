@@ -1,29 +1,32 @@
+from dataclasses import dataclass
 import os
 import re
 from datetime import datetime, date, timedelta
 from itertools import cycle
-from typing import TextIO, Dict
+from typing import Any, Generator, Sequence, TextIO, Dict, Callable, TypeVar
 
-PANDAS_INSTALLED = False
+
+PANDAS_INSTALLED: bool = False
 
 try:
-    import pandas as pd # type: ignore[import-untyped]
+    import pandas as pd  # type: ignore[import-untyped]
+    from pandas._libs.missing import NAType  # type: ignore[import-untyped]
     import numpy as np
+    import numpy.typing as npt
 
     PANDAS_INSTALLED = True
 
-    def isnull(x):
+    def isnull(x: Any) -> bool | npt.ArrayLike:
         return pd.isna(x)
 
-    def recseq(gen, typo="DatetimeIndex"):
+    def recseq(gen: Generator, typo: str = "DatetimeIndex") -> list | npt.ArrayLike:
         g = list(gen)
         if get_option("mode") == "pandas":
             if typo == "DatetimeIndex":
                 return pd.DatetimeIndex(g)
             elif typo == "array":
                 return np.array(g)
-        else:
-            return g
+        return g
 
     def retdate(dt):
         if get_option("mode.datetype") == "datetime":
@@ -37,7 +40,7 @@ try:
         else:
             return dt
 
-    def return_none():
+    def return_none() -> None | NAType:
         if get_option("mode") == "pandas":
             return pd.NA
         else:
@@ -45,10 +48,10 @@ try:
 
 except ImportError:
 
-    def isnull(x):
+    def isnull(x: Any) -> bool | npt.ArrayLike:
         return x is None
 
-    def recseq(gen, typo=None):
+    def recseq(gen: Generator, typo: str = "DatetimeIndex") -> list | npt.ArrayLike:
         return list(gen)
 
     def retdate(dt):
@@ -61,17 +64,17 @@ except ImportError:
         else:
             return dt
 
-    def return_none():
+    def return_none() -> None | NAType:
         return None
 
 
 __all__ = ["get_option", "set_option", "Calendar"]
 
 
-options = {"mode": "python"}
+options: dict[str, str] = {"mode": "python"}
 
 
-def get_option(name):
+def get_option(name: str) -> str | None:
     """gets option value
 
     Parameters
@@ -87,7 +90,7 @@ def get_option(name):
     return options.get(name)
 
 
-def set_option(name, val):
+def set_option(name: str, val: str):
     """sets option value
 
     Parameters
@@ -106,14 +109,14 @@ def set_option(name, val):
     options[name] = val
 
 
-D1 = timedelta(1)
+D1: timedelta = timedelta(1)
 
 
-def isstr(d):
+def isstr(d: object) -> bool:
     return isinstance(d, str)
 
 
-def isseq(seq):
+def isseq(seq: str | Sequence) -> bool:
     if isstr(seq):
         return False
     try:
@@ -128,11 +131,64 @@ class DateOutOfRange(Exception):
     pass
 
 
-def find_date_pos(col, dt):
-    beg = 0
-    end = len(col)
+class Date:
+    def __init__(self, d: str | date | datetime | None, format: str = "%Y-%m-%d"):
+        # d = d if d else date.today()
+        if isstr(d):
+            d = datetime.strptime(d, format).date()  # type: ignore[arg-type]
+        elif isinstance(d, datetime):
+            d = d.date()
+        elif isinstance(d, Date):
+            d = d.date
+        elif isinstance(d, date):
+            pass
+        elif d is None:
+            pass
+        else:
+            raise ValueError()
+        self.date: date | None = d
+
+    def format(self, fmts: str = "%Y-%m-%d") -> str:
+        if self.date is None:
+            raise ValueError("Date is None - cannot format")
+        return datetime.strftime(self.date, fmts)
+
+    def __gt__(self, other: "Date") -> bool:
+        if self.date is None or other.date is None:
+            raise ValueError("Date is None - cannot format")
+        return self.date > other.date
+
+    def __ge__(self, other: "Date") -> bool:
+        if self.date is None or other.date is None:
+            raise ValueError("Date is None - cannot format")
+        return self.date >= other.date
+
+    def __lt__(self, other: "Date") -> bool:
+        if self.date is None or other.date is None:
+            raise ValueError("Date is None - cannot format")
+        return self.date < other.date
+
+    def __le__(self, other: "Date") -> bool:
+        if self.date is None or other.date is None:
+            raise ValueError("Date is None - cannot format")
+        return self.date <= other.date
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Date):
+            return self.date == other.date
+        raise ValueError("Invalid comparison")
+
+    def __repr__(self) -> str:
+        return self.format()
+
+    __str__ = __repr__
+
+
+def find_date_pos(col: list[date], dt: date) -> int:
+    beg: int = 0
+    end: int = len(col)
     while (end - beg) > 1:
-        mid = int((end + beg) / 2)
+        mid: int = int((end + beg) / 2)
         if dt > col[mid]:
             beg = mid
         elif dt < col[mid]:
@@ -142,38 +198,72 @@ def find_date_pos(col, dt):
     return beg
 
 
-def __daterangecheck(obj, dt):
-    dt = Date(dt).date
+@dataclass
+class DateIndexNode:
+    workday: int
+    currentday: int
+    isholiday: bool
+    revworkday: int = 0
+
+
+@dataclass
+class YearNode:
+    date: date
+    month: int
+    weekday: int
+    isholiday: bool
+    currentday: int
+    workday: int
+    revworkday: int
+
+
+def __daterangecheck(obj: "DateIndex", dt: date) -> date:
+    # dt = Date(dt).date
     if dt > obj.enddate or dt < obj.startdate:
         raise DateOutOfRange("Given date out of calendar range")
     return dt
 
 
-def daterangecheck(func):
-    def handler(self, dt, *args):
-        dt = __daterangecheck(self, dt)
-        return func(self, dt, *args)
+def daterangecheck(func: Callable[["DateIndex", date], date]) -> Callable[["DateIndex", date], date]:
+    def handler(self: "DateIndex", dt: date) -> date:
+        return func(self, __daterangecheck(self, dt))
 
     return handler
 
 
-def daterangecheck2(func):
-    def handler(self, dt1, dt2, *args):
-        dt1 = __daterangecheck(self, dt1)
-        dt2 = __daterangecheck(self, dt2)
-        return func(self, dt1, dt2, *args)
+def daterangecheck_node(
+    func: Callable[["DateIndex", date], DateIndexNode]
+) -> Callable[["DateIndex", date], DateIndexNode]:
+    def handler(self: "DateIndex", dt: date) -> DateIndexNode:
+        return func(self, __daterangecheck(self, dt))
 
     return handler
 
 
-def load_holidays(fname, format="%Y-%m-%d"):
+def daterangecheck_with_n(func: Callable[["DateIndex", date, int], date]) -> Callable[["DateIndex", date, int], date]:
+    def handler(self: "DateIndex", dt: date, n: int) -> date:
+        return func(self, __daterangecheck(self, dt), n)
+
+    return handler
+
+
+def daterangecheck2(
+    func: Callable[["DateIndex", date, date], list[date]]
+) -> Callable[["DateIndex", date, date], list[date]]:
+    def handler(self, dt1, dt2):
+        return func(self, __daterangecheck(self, dt1), __daterangecheck(self, dt2))
+
+    return handler
+
+
+def load_holidays(fname: str, format: str = "%Y-%m-%d") -> list[date | None]:
     if not os.path.exists(fname):
         raise Exception(
             "Invalid calendar specification: \
         file not found (%s)"
             % fname
         )
-    _holidays = []
+    _holidays: list[date | None] = []
     with open(fname) as fcal:
         for cal_reg in fcal:
             cal_reg = cal_reg.strip()
@@ -184,21 +274,21 @@ def load_holidays(fname, format="%Y-%m-%d"):
 
 
 class DateIndex(object):
-    WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+    WEEKDAYS: tuple[str, str, str, str, str, str, str] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
-    def __init__(self, holidays, startdate, enddate, weekdays):
-        self._index = {}
-        self._bizdays = []
-        self._days = []
-        self._years = {}
-        self._weekdays = {}
-        self.startdate = Date(startdate).date
-        self.enddate = Date(enddate).date
-        self.weekdays = weekdays
-        self.holidays = [Date(d).date for d in holidays]
+    def __init__(self, holidays: list[Date], startdate: date, enddate: date, weekdays: list[int]):
+        self._index: dict[date, DateIndexNode] = {}
+        self._bizdays: list[date] = []
+        self._days: list[date] = []
+        self._years: dict[int, list[YearNode]] = {}
+        self._weekdays: dict[int, list[date]] = {}
+        self.weekdays: list[int] = weekdays
+        self.holidays = [d.date for d in holidays]
+        self.startdate: date = startdate
+        self.enddate: date = enddate
 
-        dts = []
-        dt = self.startdate
+        dts: list[date] = []
+        dt: date = self.startdate
         while dt <= self.enddate:
             dts.append(dt)
             dt = dt + D1
@@ -210,24 +300,22 @@ class DateIndex(object):
             if not is_hol:
                 w += 1
                 self._bizdays.append(dt)
-            self._index[dt] = [w, c, is_hol, None]
+            self._index[dt] = DateIndexNode(workday=w, currentday=c, isholiday=is_hol)
             c += 1
 
-        max_w = self._index[self.enddate][0]
+        max_w: int = self._index[self.enddate].workday
         w = max_w + 1
         for dt in reversed(dts):
-            is_hol = self._index[dt][2]
+            is_hol = self._index[dt].isholiday
             if not is_hol:
                 w -= 1
-            self._index[dt][3] = w
+            self._index[dt].revworkday = w
 
         for dt in dts:
             # ----
             ix = self._index[dt]
-            col = self._years.get(dt.year, [])
-            _ = (dt, dt.month, dt.weekday(), ix[2], ix[1], ix[0], ix[3])
-            col.append(_)
-            # col.append((dt, dt.month, dt.weekday(), is_hol, c, w))
+            col: list = self._years.get(dt.year, [])
+            col.append(YearNode(dt, dt.month, dt.weekday(), ix.isholiday, ix.currentday, ix.workday, ix.revworkday))
             self._years[dt.year] = col
             col = self._weekdays.get(dt.weekday(), [])
             col.append(dt)
@@ -235,70 +323,70 @@ class DateIndex(object):
             self._days.append(dt)
             # ----
 
-    @daterangecheck
-    def offset(self, dt, n):
+    @daterangecheck_with_n
+    def offset(self, dt: date, n: int) -> date:
         if n > 0:
-            pos = self._index[dt][0] - 1 + n
+            pos = self._index[dt].workday - 1 + n
         elif n < 0:
-            pos = self._index[dt][3] - 1 + n
+            pos = self._index[dt].revworkday - 1 + n
         else:
             return dt
         return self._bizdays[pos]
 
     @daterangecheck
-    def following(self, dt):
-        if not self._index[dt][2]:
+    def following(self, dt: date) -> date:
+        if not self._index[dt].isholiday:
             return dt
         else:
             return self.following(dt + D1)
 
     @daterangecheck
-    def modified_following(self, dt):
+    def modified_following(self, dt: date) -> date:
         dtx = self.following(dt)
         if dtx.month != dt.month:
             dtx = self.preceding(dt)
         return dtx
 
     @daterangecheck
-    def preceding(self, dt):
-        if not self._index[dt][2]:
+    def preceding(self, dt: date) -> date:
+        if not self._index[dt].isholiday:
             return dt
         else:
             return self.preceding(dt - D1)
 
     @daterangecheck
-    def modified_preceding(self, dt):
+    def modified_preceding(self, dt: date) -> date:
         dtx = self.preceding(dt)
         if dtx.month != dt.month:
             dtx = self.following(dt)
         return dtx
 
     @daterangecheck2
-    def seq(self, dt1, dt2):
-        pos1 = max(self._index[dt1][0], self._index[dt1][3]) - 1
-        pos2 = min(self._index[dt2][0], self._index[dt2][3])
+    def seq(self, dt1: date, dt2: date) -> list[date]:
+        pos1 = max(self._index[dt1].workday, self._index[dt1].revworkday) - 1
+        pos2 = min(self._index[dt2].workday, self._index[dt2].revworkday)
         return self._bizdays[pos1:pos2]
 
-    @daterangecheck
-    def get(self, dt):
+    @daterangecheck_node
+    def get(self, dt: date) -> DateIndexNode:
         return self._index[dt]
 
-    def getbizdays(self, year, month=None):
+    def getbizdays(self, year: int, month: int = 0) -> int:
         if month:
-            return sum(not d[3] for d in self._years[year] if d[1] == month)
+            return sum(not d.isholiday for d in self._years[year] if d.month == month)
         else:
-            return sum(not d[3] for d in self._years[year])
+            return sum(not d.isholiday for d in self._years[year])
 
-    def getdate(self, expr, year, month=None):
+    def getdate(self, expr: str, year: int, month: int = 0) -> date:
         tok = expr.split()
         if len(tok) == 2:
             n = self._getnth(tok[0])
             if tok[1] == "day":
-                return self._getnthday(n, year, month)
+                _dt = self._getnthday(n, year, month)
             elif tok[1] == "bizday":
-                return self._getnthbizday(n, year, month)
+                _dt = self._getnthbizday(n, year, month)
             elif tok[1] in self.WEEKDAYS:
-                return self._getnthweekday(n, tok[1], year, month)
+                _dt = self._getnthweekday(n, tok[1], year, month)
             else:
                 raise ValueError("Invalid day:", tok[1])
         elif len(tok) == 5:
@@ -314,15 +402,16 @@ class DateIndex(object):
                 raise ValueError("Invalid operator:", tok[2])
             n = self._getnthpos(tok[0]) * m
             if tok[1] == "day":
-                return self._getnthday_beforeafter(n, pos)
+                _dt = self._getnthday_beforeafter(n, pos)
             elif tok[1] == "bizday":
-                return self._getnthbizday_beforeafter(n, pos)
+                _dt = self._getnthbizday_beforeafter(n, pos)
             elif tok[1] in self.WEEKDAYS:
-                return self._getnthweekday_beforeafter(n, tok[1], pos)
+                _dt = self._getnthweekday_beforeafter(n, tok[1], pos)
             else:
                 raise ValueError("Invalid day:", tok[1])
+        return _dt
 
-    def _getnthpos(self, nth):
+    def _getnthpos(self, nth: str) -> int:
         if nth == "first":
             return 1
         elif nth == "second":
@@ -336,7 +425,7 @@ class DateIndex(object):
         else:
             raise ValueError("invalid nth:", nth)
 
-    def _getnth(self, nth):
+    def _getnth(self, nth: str) -> int:
         if nth == "first":
             return 1
         elif nth == "second":
@@ -350,140 +439,97 @@ class DateIndex(object):
         else:
             raise ValueError("invalid nth:", nth)
 
-    def _getnthdaypos(self, n, year, month=None):
+    def _getnthdaypos(self, n: int, year: int, month: int = 0) -> tuple[int, int, date, int]:
         n = n - 1 if n > 0 else n
         if month:
             pos = [
-                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                (d.currentday - 1, d.workday - 1, d.date, d.revworkday - 1)
                 for d in self._years[year]
-                if d[1] == month
+                if d.month == month
             ]
             return pos[n]
         else:
             return (
-                self._years[year][n][4] - 1,
-                self._years[year][n][5] - 1,
-                self._years[year][n][0],
-                self._years[year][n][6],
+                self._years[year][n].currentday - 1,
+                self._years[year][n].workday - 1,
+                self._years[year][n].date,
+                self._years[year][n].revworkday,
             )
 
-    def _getnthbizdaypos(self, n, year, month=None):
+    def _getnthbizdaypos(self, n: int, year: int, month: int = 0) -> tuple[int, int, date, int]:
         n = n - 1 if n > 0 else n
         if month:
             col = [
-                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                (d.currentday - 1, d.workday - 1, d.date, d.revworkday - 1)
                 for d in self._years[year]
-                if not d[3] and d[1] == month
+                if not d.isholiday and d.month == month
             ]
         else:
             col = [
-                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                (d.currentday - 1, d.workday - 1, d.date, d.revworkday - 1)
                 for d in self._years[year]
-                if not d[3]
+                if not d.isholiday
             ]
         return col[n]
 
-    def _getnthweekdaypos(self, n, weekday, year, month=None):
+    def _getnthweekdaypos(self, n: int, weekday: int, year: int, month: int = 0) -> tuple[int, int, date, int]:
         n = n - 1 if n > 0 else n
         if month:
             col = [
-                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                (d.currentday - 1, d.workday - 1, d.date, d.revworkday - 1)
                 for d in self._years[year]
-                if self.WEEKDAYS[d[2]] == weekday and d[1] == month
+                if self.WEEKDAYS[d.weekday] == weekday and d.month == month
             ]
         else:
             col = [
-                (d[4] - 1, d[5] - 1, d[0], d[6] - 1)
+                (d.currentday - 1, d.workday - 1, d.date, d.revworkday - 1)
                 for d in self._years[year]
-                if self.WEEKDAYS[d[2]] == weekday
+                if self.WEEKDAYS[d.weekday] == weekday
             ]
         return col[n]
 
-    def _getnthday_beforeafter(self, n1, pos):
-        pos = pos[0] + n1
-        return self._days[pos]
+    def _getnthday_beforeafter(self, n1: int, pos: tuple[int, int, date, int]) -> date:
+        return self._days[pos[0] + n1]
 
-    def _getnthbizday_beforeafter(self, n1, pos):
+    def _getnthbizday_beforeafter(self, n1: int, pos: tuple[int, int, date, int]) -> date:
         if n1 > 0:
-            pos = pos[1] + n1
+            _pos = pos[1] + n1
         else:
-            pos = pos[3] + n1
-        return self._bizdays[pos]
+            _pos = pos[3] + n1
+        return self._bizdays[_pos]
 
-    def _getnthweekday_beforeafter(self, n1, weekday, pos):
-        dt = pos[2]
-        wday = self.WEEKDAYS.index(weekday)
-        pos = find_date_pos(self._weekdays[wday], dt)
+    def _getnthweekday_beforeafter(self, n1: int, weekday: str, pos: tuple[int, int, date, int]) -> date:
+        dt: date = pos[2]
+        wday: int = self.WEEKDAYS.index(weekday)
+        _pos = find_date_pos(self._weekdays[wday], dt)
         if dt.weekday() != wday:
             n1 = n1 + 1 if n1 < 0 else n1
-        return self._weekdays[wday][pos + n1]
+        return self._weekdays[wday][_pos + n1]
 
-    def _getnthday(self, n, year, month=None):
+    def _getnthday(self, n: int, year: int, month: int = 0) -> date:
         pos = self._getnthdaypos(n, year, month)[0]
         return self._days[pos]
 
-    def _getnthbizday(self, n, year, month=None):
+    def _getnthbizday(self, n: int, year: int, month: int = 0) -> date:
         pos = self._getnthbizdaypos(n, year, month)[1]
         return self._bizdays[pos]
 
-    def _getnthweekday(self, n, weekday, year, month=None):
+    def _getnthweekday(self, n: int, weekday: str, year: int, month: int = 0) -> date:
         n = n - 1 if n > 0 else n
         if month:
-            col = [
-                d[0]
-                for d in self._years[year]
-                if self.WEEKDAYS[d[2]] == weekday and d[1] == month
-            ]
+            col = [d.date for d in self._years[year] if self.WEEKDAYS[d.weekday] == weekday and d.month == month]
         else:
-            col = [d[0] for d in self._years[year] if self.WEEKDAYS[d[2]] == weekday]
+            col = [d.date for d in self._years[year] if self.WEEKDAYS[d.weekday] == weekday]
         return col[n]
 
-    def __getitem__(self, dt):
+    def __getitem__(self, dt: date) -> DateIndexNode:
         return self.get(dt)
 
 
-class Date(object):
-    def __init__(self, d=None, format="%Y-%m-%d"):
-        # d = d if d else date.today()
-        if isstr(d):
-            d = datetime.strptime(d, format).date()
-        elif isinstance(d, datetime):
-            d = d.date()
-        elif isinstance(d, Date):
-            d = d.date
-        elif isinstance(d, date):
-            pass
-        elif d is None:
-            pass
-        else:
-            raise ValueError()
-        self.date = d
-
-    def format(self, fmts="%Y-%m-%d"):
-        return datetime.strftime(self.date, fmts)
-
-    def __gt__(self, other):
-        return self.date > other.date
-
-    def __ge__(self, other):
-        return self.date >= other.date
-
-    def __lt__(self, other):
-        return self.date < other.date
-
-    def __le__(self, other):
-        return self.date <= other.date
-
-    def __eq__(self, other):
-        return self.date == other.date
-
-    def __repr__(self):
-        return self.format()
-
-    __str__ = __repr__
+date_types = TypeVar("date_types", str, date, datetime, pd.Timestamp, np.datetime64)
 
 
-class Calendar(object):
+class Calendar:
     """
     Calendar class
 
@@ -530,7 +576,7 @@ class Calendar(object):
         Defines a financial calendar
     """
 
-    _weekdays = (
+    _weekdays: tuple[str, str, str, str, str, str, str] = (
         "Monday",
         "Tuesday",
         "Wednesday",
@@ -542,20 +588,21 @@ class Calendar(object):
 
     def __init__(
         self,
-        holidays=[],
-        weekdays=[],
-        startdate=None,
-        enddate=None,
-        name=None,
-        financial=True,
+        holidays: list[date | datetime | str] = [],
+        weekdays: list[str] = [],
+        startdate: date | datetime | str = "",
+        enddate: date | datetime | str = "",
+        name: str = "",
+        financial: bool = True,
     ):
-        self.financial = financial
-        self.name = name
-        self._holidays = [Date(d) for d in holidays]
-        self._nonwork_weekdays = [
-            [w[:3].lower() for w in self._weekdays].index(wd[:3].lower())
-            for wd in weekdays
+        self.financial: bool = financial
+        self.name: str = name
+        self._holidays: list[Date] = [Date(d) for d in holidays]
+        self._nonwork_weekdays: list[int] = [
+            [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
         ]
+        self._startdate: Date
+        self._enddate: Date
         if len(self._holidays):
             if startdate:
                 self._startdate = Date(startdate)
@@ -574,32 +621,36 @@ class Calendar(object):
                 self._enddate = Date(enddate)
             else:
                 self._enddate = Date("2071-01-01")
-        self._index = DateIndex(
-            self._holidays, self._startdate, self._enddate, self._nonwork_weekdays
+        self._index: DateIndex = DateIndex(
+            self._holidays, self._startdate.date, self._enddate.date, self._nonwork_weekdays
         )
         self.vec = VectorizedOps(self)
 
-    def __get_weekdays(self):
+    def __get_weekdays(self) -> tuple[str, ...]:
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
 
     weekdays = property(__get_weekdays)
 
-    def __get_startdate(self):
+    def __get_startdate(self) -> date:
         return self._startdate.date
 
     startdate = property(__get_startdate)
 
-    def __get_enddate(self):
+    def __get_enddate(self) -> date:
         return self._enddate.date
 
     enddate = property(__get_enddate)
 
-    def __get_holidays(self):
+    def __get_holidays(self) -> list[date]:
         return [d.date for d in self._holidays]
 
     holidays = property(__get_holidays)
 
-    def bizdays(self, date_from, date_to):
+    def bizdays(
+        self,
+        date_from: date_types | list[date_types] | pd.DatetimeIndex | np.ndarray,
+        date_to: date_types | list[date_types] | pd.DatetimeIndex | np.ndarray,
+    ) -> int | list[int] | np.ndarray:
         """
         Calculate the amount of business days between two dates
 
@@ -628,19 +679,19 @@ class Calendar(object):
                 d1, d2 = date_to, date_from
             else:
                 d1, d2 = date_from, date_to
-            t1 = (self._index[d1][0], self._index[d1][3])
-            t2 = (self._index[d2][0], self._index[d2][3])
+            t1 = (self._index[d1].workday, self._index[d1].revworkday)
+            t2 = (self._index[d2].workday, self._index[d2].revworkday)
             i1 = t2[0] - t1[0]
             i2 = t2[1] - t1[1]
             bdays = min(i1, i2)
-            adj_vec = int(self._index[d1][2] and self._index[d2][2])
+            adj_vec = int(self._index[d1].isholiday and self._index[d2].isholiday)
             date_reverse = date_from > date_to
             if date_reverse:
                 adj_vec = -adj_vec
                 bdays = -bdays
             bdays -= adj_vec
             if self.financial:
-                if self._index[d1][2] and self._index[d2][2] and abs(bdays) == 1:
+                if self._index[d1].isholiday and self._index[d2].isholiday and abs(bdays) == 1:
                     return 0
                 else:
                     return bdays
@@ -673,9 +724,11 @@ class Calendar(object):
             if isnull(dt):
                 return dt
             else:
-                return not self._index[dt][2]
+                dt = Date(dt).date
+                return not self._index[dt].isholiday
 
     def __adjust_next(self, dt):
+        dt = Date(dt).date
         return Date(self._index.following(dt)).date
 
     def adjust_next(self, dt):
@@ -736,10 +789,12 @@ class Calendar(object):
         else:
             if isnull(dt):
                 return dt
+            dt = Date(dt).date
             dtx = self._index.modified_following(dt)
             return retdate(dtx)
 
     def __adjust_previous(self, dt):
+        dt = Date(dt).date
         return Date(self._index.preceding(dt)).date
 
     def adjust_previous(self, dt):
@@ -801,6 +856,7 @@ class Calendar(object):
         else:
             if isnull(dt):
                 return dt
+            dt = Date(dt).date
             dtx = self._index.modified_preceding(dt)
             return retdate(dtx)
 
@@ -860,6 +916,7 @@ class Calendar(object):
                 return dt
             elif isnull(n):
                 return n
+            dt = Date(dt).date
             return retdate(self._index.offset(dt, n))
 
     def diff(self, dts):
@@ -980,7 +1037,7 @@ class Calendar(object):
         elif name:
             if name.startswith("PMC/"):
                 try:
-                    import pandas_market_calendars as mcal # type: ignore[import-untyped]
+                    import pandas_market_calendars as mcal  # type: ignore[import-untyped]
                 except ImportError:
                     raise Exception("pandas_market_calendars must be installed to use PMC calendars")
                 cal = mcal.get_calendar(name[4:])
@@ -1025,7 +1082,7 @@ Financial: {4}""".format(
     __repr__ = __str__
 
 
-def _checkfile(fname: str) -> dict[str, TextIO|str]:
+def _checkfile(fname: str) -> dict[str, TextIO | str]:
     if not os.path.exists(fname):
         raise Exception(f"Invalid calendar: {fname}")
     name: str = os.path.split(fname)[-1]
@@ -1036,7 +1093,7 @@ def _checkfile(fname: str) -> dict[str, TextIO|str]:
     return {"name": name, "iter": open(fname)}
 
 
-def _checklocalfile(name: str) -> dict[str, TextIO|str]:
+def _checklocalfile(name: str) -> dict[str, TextIO | str]:
     dir = os.path.dirname(__file__)
     fname = f"{dir}/{name}.cal"
     if not os.path.exists(fname):
@@ -1063,16 +1120,12 @@ class VectorizedOps(object):
             dates_to = [dates_to]
         lengths = [len(dates_from), len(dates_to)]
         if max(lengths) % min(lengths) != 0:
-            raise Exception(
-                "from length must be multiple of to length and " "vice-versa"
-            )
+            raise Exception("from length must be multiple of to length and " "vice-versa")
         if len(dates_from) < len(dates_to):
             dates_from = cycle(dates_from)
         else:
             dates_to = cycle(dates_to)
-        return (
-            self.cal.bizdays(_from, _to) for _from, _to in zip(dates_from, dates_to)
-        )
+        return (self.cal.bizdays(_from, _to) for _from, _to in zip(dates_from, dates_to))
 
     def adjust_next(self, dates):
         if not isseq(dates):
