@@ -1,3 +1,7 @@
+### version 1.0.15 (2024-06-23)
+
+* Organized dependencies (Issue #51)
+
 ### version 1.0.14 (2024-06-17)
 
 * Support to Python 3.12 (Issue #50)
