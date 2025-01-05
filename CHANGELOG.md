@@ -1,3 +1,7 @@
+### version 1.0.16 (2025-01-05)
+
+* Updated B3.cal with 2025's holidays (thanks @victorhugow)
+
 ### version 1.0.15 (2024-06-23)
 
 * Organized dependencies (Issue #51)
