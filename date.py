@@ -4,7 +4,7 @@ from utils import isstr
 
 
 class Date:
-    def __init__(self, d: str | date | datetime | None, format: str = "%Y-%m-%d"):
+    def __init__(self, d: str | date | datetime | None | "Date", format: str = "%Y-%m-%d"):
         # d = d if d else date.today()
         if isstr(d):
             d = datetime.strptime(d, format).date()  # type: ignore[arg-type]
