@@ -197,7 +197,7 @@ def _call_bizdays(dti: DateIndex, date_from: str, date_to: str) -> npt.NDArray[n
     """
     Call the bizdays method of the DateIndex class.
     """
-    return dti.bizdays(np.array([date_from], dtype="datetime64"), np.array([date_to], dtype="datetime64"))
+    return dti.bizdays(np.array([date_from], dtype="datetime64[D]"), np.array([date_to], dtype="datetime64[D]"))
 
 
 def test_dateindex_bizdays():
@@ -318,3 +318,75 @@ def test_dateindex_bizdays_vectorized_reversed():
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
     assert np.array_equal(cal.bizdays(DATES_TO, DATES_FROM), -BDAYS)
+
+
+def test_offset_single_values():
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    cal = DateIndex(
+        holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
+    )
+
+    assert np.array_equal(
+        cal.offset(np.array(["2025-05-19"], dtype="datetime64[D]"), np.array([0])),
+        np.array(["2025-05-19"], dtype="datetime64[D]"),
+    )
+
+    assert np.array_equal(
+        cal.offset(np.array(["2025-05-19"], dtype="datetime64[D]"), np.array([1])),
+        np.array(["2025-05-20"], dtype="datetime64[D]"),
+    )
+
+    assert np.array_equal(
+        cal.offset(np.array(["2025-05-20"], dtype="datetime64[D]"), np.array([-1])),
+        np.array(["2025-05-19"], dtype="datetime64[D]"),
+    )
+
+    # add.bizdays("2012-02-27", -1, "weekends"), as.Date("2012-02-24")
+    assert np.array_equal(
+        cal.offset(np.array(["2012-02-27"], dtype="datetime64[D]"), np.array([-1])),
+        np.array(["2012-02-24"], dtype="datetime64[D]"),
+    )
+
+
+def test_offset_vectorized():
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    cal = DateIndex(
+        holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
+    )
+
+    dates = np.array(
+        [
+            "2013-01-02",
+            "2013-01-02",
+            "2013-01-01",
+            "2013-01-02",
+            "2013-01-02",
+            "2013-01-02",
+            "2013-01-02",
+            "2013-01-01",
+            "2013-01-01",
+            "2013-01-01",
+            "2013-01-01",
+            "2013-01-01",
+        ],
+        dtype="datetime64[D]",
+    )
+    n = np.array([1, 3, 1, 1, 1, 0, -1, 2, 1, 0, -1, -2], dtype=int)
+    expected = np.array(
+        [
+            "2013-01-03",
+            "2013-01-07",
+            "2013-01-02",
+            "2013-01-03",
+            "2013-01-03",
+            "2013-01-02",
+            "2012-12-31",
+            "2013-01-03",
+            "2013-01-02",
+            "2013-01-01",
+            "2012-12-31",
+            "2012-12-28",
+        ],
+        dtype="datetime64[D]",
+    )
+    assert np.array_equal(cal.offset(dates, n), expected)

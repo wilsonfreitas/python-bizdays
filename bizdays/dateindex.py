@@ -32,9 +32,12 @@ class DateIndex(object):
         self._is_bizday = np.logical_not(np.logical_or(_is_holiday, _is_weekday))
         self._n_bizdays = self._n_dates[self._is_bizday]
         self._bizdays = self._dates[self._is_bizday]
-        self._seq_bizdays = np.arange(len(self._n_bizdays))
-        self._fwd_index = np.cumsum(self._is_bizday)
-        self._rev_index = _create_rev_index(self._is_bizday)
+        self._bizdays_index = np.arange(len(self._n_bizdays))
+        self._fwd_index = np.cumsum(self._is_bizday) - 1
+        self._rev_index = _create_rev_index(self._is_bizday) - 1
+        assert self._fwd_index[-1] == self._rev_index[-1]
+        assert self._fwd_index[-1] == self._bizdays_index[-1]
+        assert self._fwd_index[-1] == len(self._n_bizdays) - 1
         # self._rev_index = np.cumsum(self._is_bizday[::-1])[::-1]
 
     def bizdays(
@@ -81,9 +84,15 @@ class DateIndex(object):
             raise ValueError("Date and n must have the same length")
         ref = np.zeros(len(date), dtype=np.int_)
         ix = n > 0
-        d = date.astype("datetime64[D]").astype(int)
-        ref[ix] = self._fwd_index[match(d[ix], self._n_dates[ix])]
-        ref[~ix] = self._rev_index[match(d[~ix], self._n_dates[~ix])]
-        _date = self._bizdays[match(ref + n, self._seq_bizdays)]
+        d = date.astype(int)
+        if len(d[ix]) > 0:
+            ref[ix] = self._fwd_index[match(d[ix], self._n_dates)]
+        if len(d[~ix]) > 0:
+            ref[~ix] = self._rev_index[match(d[~ix], self._n_dates)]
+        _date = self._bizdays[match(ref + n, self._bizdays_index)]
+        # This is to handle the case when n == 0
+        # this is necessary because the offset function
+        # should return the same date when n == 0
+        # even if the date is not a business day
         _date[n == 0] = date[n == 0]
         return _date
