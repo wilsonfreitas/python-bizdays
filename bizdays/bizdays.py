@@ -1,18 +1,17 @@
-from dataclasses import dataclass
 import os
 import re
-from datetime import datetime, date, timedelta
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from itertools import cycle
-from typing import Any, Generator, Sequence, TextIO, Dict, Callable, TypeVar
-
+from typing import Any, Callable, Dict, Generator, Sequence, TextIO, TypeVar
 
 PANDAS_INSTALLED: bool = False
 
 try:
-    import pandas as pd  # type: ignore[import-untyped]
-    from pandas._libs.missing import NAType  # type: ignore[import-untyped]
     import numpy as np
     import numpy.typing as npt
+    import pandas as pd  # type: ignore[import-untyped]
+    from pandas._libs.missing import NAType  # type: ignore[import-untyped]
 
     PANDAS_INSTALLED = True
 
@@ -232,7 +231,7 @@ def daterangecheck(func: Callable[["DateIndex", date], date]) -> Callable[["Date
 
 
 def daterangecheck_node(
-    func: Callable[["DateIndex", date], DateIndexNode]
+    func: Callable[["DateIndex", date], DateIndexNode],
 ) -> Callable[["DateIndex", date], DateIndexNode]:
     def handler(self: "DateIndex", dt: date) -> DateIndexNode:
         return func(self, __daterangecheck(self, dt))
@@ -248,7 +247,7 @@ def daterangecheck_with_n(func: Callable[["DateIndex", date, int], date]) -> Cal
 
 
 def daterangecheck2(
-    func: Callable[["DateIndex", date, date], list[date]]
+    func: Callable[["DateIndex", date, date], list[date]],
 ) -> Callable[["DateIndex", date, date], list[date]]:
     def handler(self, dt1, dt2):
         return func(self, __daterangecheck(self, dt1), __daterangecheck(self, dt2))

@@ -1,5 +1,6 @@
-from bizdays import Calendar
 import pytest
+
+from bizdays.bizdays import Calendar
 
 
 def test_calendar_load():

@@ -1,6 +1,6 @@
 import unittest
 
-from bizdays import Date, DateIndex, load_holidays, set_option
+from bizdays.bizdays import Date, DateIndex, load_holidays, set_option
 
 
 class BizdaysTest(unittest.TestCase):

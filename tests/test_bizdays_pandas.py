@@ -1,12 +1,14 @@
-import pytest
-from bizdays import *
-import pandas as pd # type: ignore[import-untyped]
 import numpy as np
+import pandas as pd  # type: ignore[import-untyped]
+import pytest
+
+from bizdays.bizdays import *
 
 
 @pytest.fixture()
 def actual():
     return Calendar(name="actual")
+
 
 @pytest.fixture(autouse=True)
 def setup_data():

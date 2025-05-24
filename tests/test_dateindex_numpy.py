@@ -3,7 +3,7 @@ import re
 import numpy as np
 import numpy.typing as npt
 
-from dateindex import DateIndex
+from bizdays.dateindex import DateIndex
 
 _weekdays: tuple[str, str, str, str, str, str, str] = (
     "Monday",
@@ -201,7 +201,7 @@ def _call_bizdays(dti: DateIndex, date_from: str, date_to: str) -> npt.NDArray[n
 
 
 def test_dateindex_bizdays():
-    hol, wd = load_calendar_from_file("ANBIMA.cal")
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -253,7 +253,7 @@ def test_dateindex_bizdays():
 
 
 def test_dateindex_bizdays_reversed():
-    hol, wd = load_calendar_from_file("ANBIMA.cal")
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -305,7 +305,7 @@ def test_dateindex_bizdays_reversed():
 
 
 def test_dateindex_bizdays_vectorized():
-    hol, wd = load_calendar_from_file("ANBIMA.cal")
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -313,7 +313,7 @@ def test_dateindex_bizdays_vectorized():
 
 
 def test_dateindex_bizdays_vectorized_reversed():
-    hol, wd = load_calendar_from_file("ANBIMA.cal")
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )

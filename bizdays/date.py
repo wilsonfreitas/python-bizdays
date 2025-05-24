@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from utils import isstr
+from bizdays.utils import isstr
 
 
 class Date:

@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils import isstr, match
+from bizdays.utils import isstr, match
 
 
 def test_match():

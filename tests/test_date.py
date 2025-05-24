@@ -1,7 +1,7 @@
 import unittest
 from datetime import date, datetime
 
-from date import Date
+from bizdays.date import Date
 
 
 class TestDate(unittest.TestCase):
