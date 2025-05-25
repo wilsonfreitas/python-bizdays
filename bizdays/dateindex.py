@@ -40,6 +40,17 @@ class DateIndex(object):
         assert self._fwd_index[-1] == self._bizdays_index[-1]
         assert self._fwd_index[-1] == len(self._n_bizdays) - 1
         # self._rev_index = np.cumsum(self._is_bizday[::-1])[::-1]
+        dtype = [("dates", "i4"), ("year", "i4"), ("month", "i4"), ("is_bizday", "i4"), ("weekday", "i4")]
+        self._dates_table = np.array(
+            [
+                self._n_dates,
+                self._dates.astype("datetime64[Y]").astype(int) + 1970,
+                self._dates.astype("datetime64[M]").astype(int) % 12 + 1,
+                self._is_bizday.astype(int),
+                self._dates.astype("datetime64[D]").astype(int) % 7,
+            ],
+            dtype=dtype,
+        )
 
     def bizdays(
         self, date_from: npt.NDArray[np.datetime64], date_to: npt.NDArray[np.datetime64]
