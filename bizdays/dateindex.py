@@ -106,3 +106,12 @@ class DateIndex(object):
             d[~idx] = d[~idx] + n
             idx = self._is_bizday[[self._n_dates_index[val] for val in d]]
         return self._dates[[self._n_dates_index[val] for val in d]]
+
+    def seq(self, date_from: np.datetime64, date_to: np.datetime64) -> npt.NDArray[np.datetime64]:
+        if date_from < self.startdate or date_from > self.enddate:
+            raise DateOutOfRange("Given date out of calendar range")
+        if date_to < self.startdate or date_to > self.enddate:
+            raise DateOutOfRange("Given date out of calendar range")
+        d_from = date_from.astype(int)
+        d_to = date_to.astype(int)
+        return self._bizdays[(self._n_bizdays >= d_from) & (self._n_bizdays <= d_to)]

@@ -193,6 +193,10 @@ def load_calendar_from_file(filename: str) -> tuple[npt.NDArray[np.datetime64], 
     return np.array(_holidays, dtype="datetime64[D]"), [_weekdays.index(day.title()) for day in _nonwork_weekdays]
 
 
+HOL, WD = load_calendar_from_file("data/ANBIMA.cal")
+CAL = DateIndex(holidays=HOL, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=WD)
+
+
 def _call_bizdays(dti: DateIndex, date_from: str, date_to: str) -> npt.NDArray[np.int_]:
     """
     Call the bizdays method of the DateIndex class.
@@ -421,3 +425,22 @@ def test_adjust_vectorized():
     dates = np.array(["2013-01-01", "2013-01-02"], dtype="datetime64[D]")
     assert np.array_equal(cal.adjust(dates, 1), np.array(["2013-01-02", "2013-01-02"], dtype="datetime64[D]"))
     assert np.array_equal(cal.adjust(dates, -1), np.array(["2012-12-31", "2013-01-02"], dtype="datetime64[D]"))
+
+
+def test_seq():
+    seq = CAL.seq(np.datetime64("2011-01-03"), np.datetime64("2011-01-14"))
+    assert seq[0] == np.datetime64("2011-01-03")
+    assert seq[-1] == np.datetime64("2011-01-14")
+    seq = CAL.seq(np.datetime64("2011-01-03"), np.datetime64("2011-01-03"))
+    assert len(seq) == 1
+    seq = CAL.seq(np.datetime64("2012-01-01"), np.datetime64("2012-01-02"))
+    assert np.array_equal(seq, np.array(["2012-01-02"], dtype="datetime64[D]"))
+
+
+def test_seq2():
+    act = DateIndex(
+        holidays=np.array([]), startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=[]
+    )
+    dts = np.arange(np.datetime64("2013-01-01"), np.datetime64("2013-01-11"))
+    seq = act.seq(np.datetime64("2013-01-01"), np.datetime64("2013-01-10"))
+    assert np.array_equal(seq, dts)
