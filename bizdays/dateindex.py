@@ -27,6 +27,7 @@ class DateIndex(object):
 
         self._dates: npt.NDArray[np.datetime64] = np.arange(self.startdate, self.enddate + np.timedelta64(1, "D"))
         self._n_dates = self._dates.astype("datetime64[D]").astype(int)
+        self._n_dates_index: dict[np.int_, int] = dict(zip(self._n_dates, range(len(self._n_dates))))
         _is_holiday = np.isin(self._n_dates, self._n_holidays)
         _is_weekday = np.isin((self._n_dates + 3) % 7, self.weekdays)
         self._is_bizday = np.logical_not(np.logical_or(_is_holiday, _is_weekday))
@@ -56,8 +57,8 @@ class DateIndex(object):
         # create indexes ----
         d_from = new_from.astype("datetime64[D]").astype(int)
         d_to = new_to.astype("datetime64[D]").astype(int)
-        _m_from = match(d_from, self._n_dates)
-        _m_to = match(d_to, self._n_dates)
+        _m_from = [self._n_dates_index[val] for val in d_from]
+        _m_to = [self._n_dates_index[val] for val in d_to]
         # fwd index dif
         _fwd_dif = self._fwd_index[_m_to] - self._fwd_index[_m_from]
         # rev index dif
@@ -74,8 +75,7 @@ class DateIndex(object):
         if any(date < self.startdate) or any(date > self.enddate):
             raise DateOutOfRange("Given date out of calendar range")
         d = date.astype("datetime64[D]").astype(int)
-        _m = match(d, self._n_dates)
-        return self._is_bizday[_m]
+        return self._is_bizday[[self._n_dates_index[val] for val in d]]
 
     def offset(self, date: npt.NDArray[np.datetime64], n: npt.NDArray[np.int_]) -> npt.NDArray[np.datetime64]:
         if any(date < self.startdate) or any(date > self.enddate):
@@ -86,9 +86,9 @@ class DateIndex(object):
         ix = n > 0
         d = date.astype(int)
         if len(d[ix]) > 0:
-            ref[ix] = self._fwd_index[match(d[ix], self._n_dates)]
+            ref[ix] = self._fwd_index[[self._n_dates_index[val] for val in d[ix]]]
         if len(d[~ix]) > 0:
-            ref[~ix] = self._rev_index[match(d[~ix], self._n_dates)]
+            ref[~ix] = self._rev_index[[self._n_dates_index[val] for val in d[~ix]]]
         _date = self._bizdays[match(ref + n, self._bizdays_index)]
         # This is to handle the case when n == 0
         # this is necessary because the offset function
@@ -96,3 +96,13 @@ class DateIndex(object):
         # even if the date is not a business day
         _date[n == 0] = date[n == 0]
         return _date
+
+    def adjust(self, date: npt.NDArray[np.datetime64], n: int) -> npt.NDArray[np.datetime64]:
+        if any(date < self.startdate) or any(date > self.enddate):
+            raise DateOutOfRange("Given date out of calendar range")
+        d = date.astype(int)
+        idx = self._is_bizday[[self._n_dates_index[val] for val in d]]
+        while not all(idx):
+            d[~idx] = d[~idx] + n
+            idx = self._is_bizday[[self._n_dates_index[val] for val in d]]
+        return self._dates[[self._n_dates_index[val] for val in d]]

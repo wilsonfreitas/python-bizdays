@@ -390,3 +390,34 @@ def test_offset_vectorized():
         dtype="datetime64[D]",
     )
     assert np.array_equal(cal.offset(dates, n), expected)
+
+
+def test_adjust_single_values():
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    cal = DateIndex(
+        holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
+    )
+
+    assert np.array_equal(
+        cal.adjust(np.array(["2025-05-19"], dtype="datetime64[D]"), 1),
+        np.array(["2025-05-19"], dtype="datetime64[D]"),
+    )
+    assert np.array_equal(
+        cal.adjust(np.array(["2025-05-17"], dtype="datetime64[D]"), 1),
+        np.array(["2025-05-19"], dtype="datetime64[D]"),
+    )
+    assert np.array_equal(
+        cal.adjust(np.array(["2025-05-18"], dtype="datetime64[D]"), -1),
+        np.array(["2025-05-16"], dtype="datetime64[D]"),
+    )
+
+
+def test_adjust_vectorized():
+    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    cal = DateIndex(
+        holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
+    )
+
+    dates = np.array(["2013-01-01", "2013-01-02"], dtype="datetime64[D]")
+    assert np.array_equal(cal.adjust(dates, 1), np.array(["2013-01-02", "2013-01-02"], dtype="datetime64[D]"))
+    assert np.array_equal(cal.adjust(dates, -1), np.array(["2012-12-31", "2013-01-02"], dtype="datetime64[D]"))

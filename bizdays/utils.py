@@ -12,4 +12,4 @@ def isstr(d: object) -> bool:
 
 def match(x: npt.NDArray[np.int_], table: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
     pos_dict: dict[np.int_, int] = dict(zip(table, range(len(table))))
-    return np.array([pos_dict.get(val, -1) if val in pos_dict else -1 for val in x])
+    return np.array([pos_dict.get(val, -1) for val in x])
