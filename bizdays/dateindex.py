@@ -5,7 +5,10 @@ from bizdays.utils import DateOutOfRange, match
 
 
 def _create_rev_index(idx: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-    return np.cumsum(idx) + 1 - idx.astype(np.int_)
+    x = np.cumsum(idx) + 1 - idx.astype(np.int_)
+    m = np.sum(idx)
+    x[x > m] = m
+    return x
 
 
 class DateIndex(object):
