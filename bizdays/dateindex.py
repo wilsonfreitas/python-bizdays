@@ -77,11 +77,14 @@ class DateIndex(object):
         _fwd_dif = self._fwd_index[_m_to] - self._fwd_index[_m_from]
         # rev index dif
         _rev_dif = self._rev_index[_m_to] - self._rev_index[_m_from]
-        # bizdays calculations ----
+        # bizdays calculations and adjustments ----
         bdays = np.minimum(_fwd_dif, _rev_dif)
-        adj_vec = ~(self._is_bizday[_m_from] | self._is_bizday[_m_to])
-        adj_vec = adj_vec.astype(int)
+        adj_vec = (~(self._is_bizday[_m_from] | self._is_bizday[_m_to])).astype(int)
         bdays = bdays - adj_vec
+        # adjust for the case when it is a weekend and the index returns bdays = 1
+        _wx = (~self._is_bizday[_m_from]) & (~self._is_bizday[_m_to]) & (np.abs(bdays) == 1)
+        bdays[_wx] = 0
+        # adjuste for the case when date_from > date_to
         bdays[idx] = -bdays[idx]
         return bdays
 
