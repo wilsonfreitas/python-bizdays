@@ -27,8 +27,10 @@ def _checkfile(fname: str) -> tuple[str, TextIO]:
 
 
 def _checklocalfile(name: str) -> tuple[str, TextIO]:
-    dir = os.path.dirname(__file__)
-    fname = f"{dir}/{name}.cal"
+    import importlib.resources
+
+    _fname = importlib.resources.files("bizdays.data").joinpath(f"{name}.cal")
+    fname = str(_fname)
     if not os.path.exists(fname):
         raise Exception(f"Invalid calendar: {name}")
     name = os.path.split(fname)[-1]
@@ -119,11 +121,11 @@ class Calendar:
             if startdate:
                 self._startdate = Date(startdate)
             else:
-                self._startdate = min(self._holidays)
+                self._startdate = Date(min(self._holidays).astype("O"))
             if enddate:
                 self._enddate = Date(enddate)
             else:
-                self._enddate = max(self._holidays)
+                self._enddate = Date(max(self._holidays).astype("O"))
         else:
             if startdate:
                 self._startdate = Date(startdate)
