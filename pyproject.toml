@@ -4,7 +4,11 @@ version = "1.0.13"
 description = "Functions to handle business days calculations"
 authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
 readme = "README.md"
-include = ["data/ANBIMA.cal", "data/B3.cal", "data/Actual.cal"]
+include = [
+    "bizdays/data/ANBIMA.cal",
+    "bizdays/data/B3.cal",
+    "bizdays/data/Actual.cal",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8, < 3.12"
