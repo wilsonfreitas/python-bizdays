@@ -158,7 +158,7 @@ class Calendar:
     enddate = property(__get_enddate)
 
     def __get_holidays(self) -> list[date]:
-        return [d.date for d in self._holidays]
+        return [d.astype("O") for d in self._holidays]
 
     holidays = property(__get_holidays)
 
