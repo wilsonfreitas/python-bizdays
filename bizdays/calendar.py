@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import date, datetime
-from typing import Any, Optional, TextIO, TypeVar
+from typing import Optional, TextIO, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -148,12 +148,12 @@ class Calendar:
     weekdays = property(__get_weekdays)
 
     def __get_startdate(self) -> date:
-        return self._startdate.date
+        return self._startdate.date  # type: ignore
 
     startdate = property(__get_startdate)
 
     def __get_enddate(self) -> date:
-        return self._enddate.date
+        return self._enddate.date  # type: ignore
 
     enddate = property(__get_enddate)
 
