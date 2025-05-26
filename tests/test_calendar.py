@@ -12,7 +12,7 @@ def test_calendar_load():
 
 def test_calendar_load_invalid():
     with pytest.raises(Exception):
-        cal = Calendar.load("B1")
+        Calendar.load("B1")
 
 
 def test_calendar_load_pmc():
