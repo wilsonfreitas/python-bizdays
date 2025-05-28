@@ -5,10 +5,10 @@ from random import shuffle
 import numpy as np
 import pytest
 
-from bizdays.bizdays import DateOutOfRange, set_option
+from bizdays.bizdays import set_option
 from bizdays.calendar import Calendar
 from bizdays.date import Date
-from bizdays.utils import isseq
+from bizdays.utils import DateOutOfRange, isseq
 
 
 def asDate(dt):
@@ -464,11 +464,12 @@ class TestCalendar(BizdaysTest):
     def test_Calendar_seq(self):
         """sequence generator of bizdays"""
         actual = Calendar(name="actual")
-        dts = list(seqDate(asDate("2013-01-01"), asDate("2013-01-10"), days=1))
+        dts = np.arange(np.datetime64("2013-01-01"), np.datetime64("2013-01-11"), dtype="datetime64[D]")
         seq = actual.seq("2013-01-01", "2013-01-10")
-        self.assertSequenceEqual(seq, dts)
+        self.assertTrue(np.array_equal(seq, dts))
         seq = self.cal_ANBIMA.seq("2012-01-01", "2012-01-02")
-        self.assertSequenceEqual(seq, [datetime(2012, 1, 2).date()])
+        exp = np.array([datetime(2012, 1, 2).date()], dtype="datetime64[D]")
+        self.assertTrue(np.array_equal(seq, exp))
 
     def test_Calendar_offset(self):
         """it should offset the given date by n days (forward or backward)"""
