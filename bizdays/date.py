@@ -1,24 +1,28 @@
 from datetime import date, datetime
 
+import numpy as np
+
 from bizdays.utils import isstr
 
 
 class Date:
-    def __init__(self, d: str | date | datetime | None, format: str = "%Y-%m-%d"):
+    def __init__(self, d: str | date | datetime | np.datetime64 | None, format: str = "%Y-%m-%d"):
         # d = d if d else date.today()
         if isstr(d):
-            d = datetime.strptime(d, format).date()  # type: ignore[arg-type]
+            _d = datetime.strptime(d, format).date()  # type: ignore[arg-type]
         elif isinstance(d, datetime):
-            d = d.date()
+            _d = d.date()
         elif isinstance(d, Date):
-            d = d.date
+            _d = d.date
         elif isinstance(d, date):
-            pass
+            _d = d
         elif d is None:
-            pass
+            _d = None
+        elif isinstance(d, np.datetime64):
+            _d = d.astype("datetime64[D]").astype("O")
         else:
             raise ValueError()
-        self.date: date | None = d
+        self.date: date | None = _d
 
     def format(self, fmts: str = "%Y-%m-%d") -> str:
         if self.date is None:
