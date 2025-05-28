@@ -277,8 +277,8 @@ class Calendar:
         single_value = not isseq(dt)
         _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, 1)
-        months_dt = _dt.astype("datetime64[M]") % 12 + 1
-        months_adt = adt.astype("datetime64[M]") % 12 + 1
+        months_dt = _dt.astype("datetime64[M]").astype(int) % 12 + 1
+        months_adt = adt.astype("datetime64[M]").astype(int) % 12 + 1
         idx = months_dt != months_adt
         adt[idx] = self._index.adjust(_dt[idx], -1)
         return adt[0] if single_value else adt
@@ -341,8 +341,8 @@ class Calendar:
         single_value = not isseq(dt)
         _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, -1)
-        months_dt = _dt.astype("datetime64[M]") % 12 + 1
-        months_adt = adt.astype("datetime64[M]") % 12 + 1
+        months_dt = _dt.astype("datetime64[M]").astype(int) % 12 + 1
+        months_adt = adt.astype("datetime64[M]").astype(int) % 12 + 1
         idx = months_dt != months_adt
         adt[idx] = self._index.adjust(_dt[idx], 1)
         return adt[0] if single_value else adt
