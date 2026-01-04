@@ -1,4 +1,9 @@
-### version 1.0.17 (2026-01-03)
+### version 1.0.19 (2026-01-04)
+
+* Restructured package: converted from single module to package directory
+* Calendar files (.cal) are now properly installed with the package
+
+### version 1.0.18 (2026-01-03)
 
 * Updated B3.cal with 2026's holidays
 
