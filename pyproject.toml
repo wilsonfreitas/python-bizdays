@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "bizdays"
-version = "1.0.17"
+version = "1.0.19"
 description = "Functions to handle business days calculations"
 authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
 readme = "README.md"
-include = ["ANBIMA.cal", "B3.cal", "Actual.cal"]
+include = ["bizdays/*.cal"]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
