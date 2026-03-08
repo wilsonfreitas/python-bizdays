@@ -5,9 +5,10 @@ description = "Functions to handle business days calculations"
 authors = [{ name = "wilsonfreitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["pandas-market-calendars>=4,<5", "pandas>=2,<3"]
+dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
 [project.optional-dependencies]
+pmc = ["pandas-market-calendars>=4,<5"]
 dev = ["pytest", "pycodestyle", "ipykernel"]
 docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 

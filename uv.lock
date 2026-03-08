@@ -88,8 +88,10 @@ name = "bizdays"
 version = "1.0.16"
 source = { editable = "." }
 dependencies = [
+    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.3.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
-    { name = "pandas-market-calendars" },
 ]
 
 [package.optional-dependencies]
@@ -111,6 +113,9 @@ docs = [
     { name = "sphinx", version = "7.4.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
+pmc = [
+    { name = "pandas-market-calendars" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -120,13 +125,14 @@ requires-dist = [
     { name = "lxml", marker = "extra == 'docs'" },
     { name = "matplotlib", marker = "extra == 'docs'" },
     { name = "nbsphinx", marker = "extra == 'docs'" },
+    { name = "numpy", specifier = ">=1.24" },
     { name = "pandas", specifier = ">=2,<3" },
-    { name = "pandas-market-calendars", specifier = ">=4,<5" },
+    { name = "pandas-market-calendars", marker = "extra == 'pmc'", specifier = ">=4,<5" },
     { name = "pycodestyle", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "sphinx", marker = "extra == 'docs'" },
 ]
-provides-extras = ["dev", "docs"]
+provides-extras = ["pmc", "dev", "docs"]
 
 [[package]]
 name = "bleach"
