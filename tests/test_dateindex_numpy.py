@@ -1,9 +1,12 @@
 import re
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
 from bizdays.dateindex import DateIndex
+
+_DATA_DIR = Path(__file__).parent.parent / "bizdays" / "data"
 
 _weekdays: tuple[str, str, str, str, str, str, str] = (
     "Monday",
@@ -193,7 +196,7 @@ def load_calendar_from_file(filename: str) -> tuple[npt.NDArray[np.datetime64], 
     return np.array(_holidays, dtype="datetime64[D]"), [_weekdays.index(day.title()) for day in _nonwork_weekdays]
 
 
-HOL, WD = load_calendar_from_file("data/ANBIMA.cal")
+HOL, WD = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
 CAL = DateIndex(holidays=HOL, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=WD)
 
 
@@ -205,7 +208,7 @@ def _call_bizdays(dti: DateIndex, date_from: str, date_to: str) -> npt.NDArray[n
 
 
 def test_dateindex_bizdays():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -257,7 +260,7 @@ def test_dateindex_bizdays():
 
 
 def test_dateindex_bizdays_reversed():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -309,7 +312,7 @@ def test_dateindex_bizdays_reversed():
 
 
 def test_dateindex_bizdays_vectorized():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -317,7 +320,7 @@ def test_dateindex_bizdays_vectorized():
 
 
 def test_dateindex_bizdays_vectorized_reversed():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -325,7 +328,7 @@ def test_dateindex_bizdays_vectorized_reversed():
 
 
 def test_offset_single_values():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -353,7 +356,7 @@ def test_offset_single_values():
 
 
 def test_offset_vectorized():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -397,7 +400,7 @@ def test_offset_vectorized():
 
 
 def test_adjust_single_values():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
@@ -417,7 +420,7 @@ def test_adjust_single_values():
 
 
 def test_adjust_vectorized():
-    hol, wd = load_calendar_from_file("data/ANBIMA.cal")
+    hol, wd = load_calendar_from_file(str(_DATA_DIR / "ANBIMA.cal"))
     cal = DateIndex(
         holidays=hol, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=wd
     )
