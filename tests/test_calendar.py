@@ -37,3 +37,11 @@ def test_public_option_import():
         assert get_option("mode") == "pandas"
     finally:
         set_option("mode", original)
+
+
+def test_calendar_default_args_are_not_shared():
+    """Default holiday/weekday lists must not be shared between Calendar instances."""
+    from bizdays.calendar import Calendar
+    cal1 = Calendar()
+    cal2 = Calendar()
+    assert cal1.holidays is not cal2.holidays

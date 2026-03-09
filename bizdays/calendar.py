@@ -100,13 +100,17 @@ class Calendar:
 
     def __init__(
         self,
-        holidays: date_list_types = [],
-        weekdays: list[str] = [],
+        holidays: date_list_types | None = None,
+        weekdays: list[str] | None = None,
         startdate: date | datetime | str = "",
         enddate: date | datetime | str = "",
         name: str = "",
         financial: bool = True,
     ):
+        if holidays is None:
+            holidays = []
+        if weekdays is None:
+            weekdays = []
         self.financial: bool = financial
         self.name: str = name
         self._holidays: npt.NDArray[np.datetime64] = np.array(

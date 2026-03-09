@@ -587,13 +587,17 @@ class Calendar:
 
     def __init__(
         self,
-        holidays: list[date | datetime | str] = [],
-        weekdays: list[str] = [],
+        holidays: list[date | datetime | str] | None = None,
+        weekdays: list[str] | None = None,
         startdate: date | datetime | str = "",
         enddate: date | datetime | str = "",
         name: str = "",
         financial: bool = True,
     ):
+        if holidays is None:
+            holidays = []
+        if weekdays is None:
+            weekdays = []
         self.financial: bool = financial
         self.name: str = name
         self._holidays: list[Date] = [Date(d) for d in holidays]
