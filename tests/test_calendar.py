@@ -44,4 +44,5 @@ def test_calendar_default_args_are_not_shared():
     from bizdays.calendar import Calendar
     cal1 = Calendar()
     cal2 = Calendar()
-    assert cal1.holidays is not cal2.holidays
+    # The internal _holidays arrays must be distinct objects (not the same list)
+    assert cal1._holidays is not cal2._holidays

@@ -100,7 +100,7 @@ class Calendar:
 
     def __init__(
         self,
-        holidays: date_list_types | None = None,
+        holidays: list[str] | list[date] | list[datetime] | None = None,
         weekdays: list[str] | None = None,
         startdate: date | datetime | str = "",
         enddate: date | datetime | str = "",
