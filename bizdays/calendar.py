@@ -326,7 +326,7 @@ class Calendar:
 
         Rolls the given date to the previous business day,
         unless it happens in the previous month, in this case
-        it returns the previous business day.
+        it returns the following business day.
 
         Parameters
         ----------

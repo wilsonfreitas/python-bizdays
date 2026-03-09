@@ -1,6 +1,9 @@
 import unittest
+from pathlib import Path
 
 from bizdays.bizdays import Date, DateIndex, load_holidays, set_option
+
+_DATA_DIR = Path(__file__).parent.parent / "bizdays" / "data"
 
 
 class BizdaysTest(unittest.TestCase):
@@ -66,7 +69,7 @@ class TestDateIndex(BizdaysTest):
         )
 
     def test_DateIndex_following_preceding(self):
-        holidays = [Date(d) for d in load_holidays("ANBIMA.txt")]
+        holidays = [Date(d) for d in load_holidays(str(_DATA_DIR / "ANBIMA.txt"))]
         di = DateIndex(holidays, startdate=holidays[0].date, enddate=holidays[-1].date, weekdays=(5, 6))
         self.assertEqual(di.following(Date("2011-01-01").date).isoformat(), "2011-01-03")
         self.assertEqual(di.following(Date("2011-01-03").date).isoformat(), "2011-01-03")
@@ -74,13 +77,13 @@ class TestDateIndex(BizdaysTest):
         self.assertEqual(di.preceding(Date("2011-01-07").date).isoformat(), "2011-01-07")
 
     def test_DateIndex_offset(self):
-        holidays = [Date(d) for d in load_holidays("ANBIMA.txt")]
+        holidays = [Date(d) for d in load_holidays(str(_DATA_DIR / "ANBIMA.txt"))]
         di = DateIndex(holidays, startdate=holidays[0].date, enddate=holidays[-1].date, weekdays=(5, 6))
         self.assertEqual(di.offset(Date("2011-01-07").date, 1).isoformat(), "2011-01-10")
         self.assertEqual(di.offset(Date("2011-01-10").date, -1).isoformat(), "2011-01-07")
 
     def test_DateIndex_seq(self):
-        holidays = [Date(d) for d in load_holidays("ANBIMA.txt")]
+        holidays = [Date(d) for d in load_holidays(str(_DATA_DIR / "ANBIMA.txt"))]
         di = DateIndex(holidays, startdate=holidays[0].date, enddate=holidays[-1].date, weekdays=(5, 6))
         seq = di.seq(Date("2011-01-03").date, Date("2011-01-14").date)
         self.assertEqual(seq[0].isoformat(), "2011-01-03")
@@ -89,7 +92,7 @@ class TestDateIndex(BizdaysTest):
         self.assertEqual(len(seq), 1)
 
     def test_DateIndex_getdate(self):
-        holidays = [Date(d) for d in load_holidays("ANBIMA.txt")]
+        holidays = [Date(d) for d in load_holidays(str(_DATA_DIR / "ANBIMA.txt"))]
         di = DateIndex(holidays, startdate=holidays[0].date, enddate=holidays[-1].date, weekdays=(5, 6))
         self.assertEqual(di.getdate("15th day", 2002, 1).isoformat(), "2002-01-15")
         self.assertEqual(di.getdate("first day before 15th day", 2002, 1).isoformat(), "2002-01-14")
@@ -120,7 +123,7 @@ class TestDateIndex(BizdaysTest):
         self.assertEqual(di.getdate("first wed before 15th day", 2002, 5).isoformat(), "2002-05-08")
 
     def test_DateIndex_getdate2(self):
-        holidays = [Date(d) for d in load_holidays("ANBIMA.txt")]
+        holidays = [Date(d) for d in load_holidays(str(_DATA_DIR / "ANBIMA.txt"))]
         di = DateIndex(holidays, startdate=holidays[0].date, enddate=holidays[-1].date, weekdays=(5, 6))
         self.assertEqual(di.getdate("first day", 2002, 1).isoformat(), "2002-01-01")
         self.assertEqual(di.getdate("first bizday before first day", 2002, 1).isoformat(), "2001-12-31")

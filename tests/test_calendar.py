@@ -85,12 +85,12 @@ def test_bizdays_vectorized(anbima):
 
 
 def test_isbizday_true(anbima):
-    assert anbima.isbizday("2013-01-02") == True
+    assert anbima.isbizday("2013-01-02")
 
 
 def test_isbizday_false_holiday(anbima):
     # 2013-01-01 is a holiday in ANBIMA
-    assert anbima.isbizday("2013-01-01") == False
+    assert not anbima.isbizday("2013-01-01")
 
 
 def test_isbizday_vectorized(anbima):
