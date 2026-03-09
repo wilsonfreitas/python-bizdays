@@ -98,6 +98,13 @@ def test_isbizday_vectorized(anbima):
     assert list(result) == [False, True]
 
 
+def test_actual_calendar_all_days_are_bizdays(actual):
+    # The "actual" calendar has no holidays/weekdays — every day is a business day
+    assert actual.isbizday("2013-01-01")   # New Year — holiday in other cals, not here
+    assert actual.isbizday("2013-01-05")   # Saturday — non-working in other cals, not here
+    assert actual.isbizday("2013-01-06")   # Sunday
+
+
 # --- offset tests ---
 
 
