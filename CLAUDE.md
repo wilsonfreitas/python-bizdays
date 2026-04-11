@@ -21,6 +21,15 @@ uv run pytest tests/test_calendar.py::test_Calendar_seq
 
 # Run tests with verbose output
 uv run pytest -v
+
+# Run Ruff checks
+uv run ruff check .
+
+# Run mypy checks
+uv run mypy
+
+# Run all pre-commit checks
+uv run pre-commit run --all-files
 ```
 
 ## Architecture
@@ -50,4 +59,3 @@ Built-in `.cal` files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual*
 ### Key design pattern
 
 All public Calendar methods handle scalar vs. sequence inputs uniformly: detect with `isseq()`, convert to `np.atleast_1d`, apply vectorized numpy ops, then return scalar if input was scalar (`result[0]`) or array otherwise.
-

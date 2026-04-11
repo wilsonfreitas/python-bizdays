@@ -17,7 +17,16 @@ uv run pytest tests/test_calendar.py
 # Run one test
 uv run pytest tests/test_calendar.py::test_calendar_load
 
-# Run style checks
+# Run Ruff checks
+uv run ruff check .
+
+# Run mypy checks
+uv run mypy
+
+# Run all pre-commit checks
+uv run pre-commit run --all-files
+
+# Run legacy style checks
 uv run pycodestyle bizdays tests
 
 # Build the Sphinx docs

@@ -9,7 +9,7 @@ dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
 [project.optional-dependencies]
 pmc = ["pandas-market-calendars>=4,<5"]
-dev = ["pytest", "pycodestyle", "ipykernel"]
+dev = ["pytest", "pycodestyle", "ipykernel", "ruff", "mypy", "pre-commit", "pandas-market-calendars>=4,<5"]
 docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 
 [tool.uv]
@@ -21,3 +21,24 @@ build-backend = "hatchling.build"
 
 [tool.hatchling.build]
 include = ["bizdays/**/*.py", "bizdays/data/*.cal"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+extend-exclude = ["tests/legacy"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E712"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["bizdays"]
+warn_unused_configs = true
+show_error_codes = true
+pretty = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["bizdays.bizdays"]
+ignore_errors = true

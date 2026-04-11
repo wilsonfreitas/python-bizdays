@@ -6,7 +6,7 @@ from bizdays.utils import DateOutOfRange, match
 
 def _create_rev_index(idx: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
     x = np.cumsum(idx) + 1 - idx.astype(np.int_)
-    m = np.sum(idx)
+    m = int(np.sum(idx))
     x[x > m] = m
     return x
 
@@ -129,6 +129,6 @@ class DateIndex(object):
             raise DateOutOfRange("Given date out of calendar range")
         if date_to < self.startdate or date_to > self.enddate:
             raise DateOutOfRange("Given date out of calendar range")
-        d_from = date_from.astype(int)
-        d_to = date_to.astype(int)
+        d_from = int(date_from.astype(int))
+        d_to = int(date_to.astype(int))
         return self._bizdays[(self._n_bizdays >= d_from) & (self._n_bizdays <= d_to)]
