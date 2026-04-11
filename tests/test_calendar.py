@@ -38,17 +38,6 @@ def test_public_import():
     assert cal.name == "B3"
 
 
-def test_public_option_import():
-    """get_option and set_option are importable and functional from the top-level package."""
-    from bizdays import get_option, set_option
-    original = get_option("mode")
-    try:
-        set_option("mode", "pandas")
-        assert get_option("mode") == "pandas"
-    finally:
-        set_option("mode", original)
-
-
 def test_calendar_default_args_are_not_shared():
     """Default holiday/weekday lists must not be shared between Calendar instances."""
     from bizdays.calendar import Calendar

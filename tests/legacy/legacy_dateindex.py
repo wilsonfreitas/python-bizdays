@@ -3,7 +3,7 @@ from pathlib import Path
 
 from bizdays.bizdays import Date, DateIndex, load_holidays, set_option
 
-_DATA_DIR = Path(__file__).parent.parent / "bizdays" / "data"
+_DATA_DIR = Path(__file__).resolve().parents[2] / "bizdays" / "data"
 
 
 class BizdaysTest(unittest.TestCase):
