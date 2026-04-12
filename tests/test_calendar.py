@@ -65,8 +65,8 @@ def test_calendar_load_json_file(tmp_path):
         np.datetime64("2024-01-03").astype(object),
     ]
     assert cal.financial is False
-    assert cal.adjust_from == "following"
-    assert cal.adjust_to == "preceding"
+    assert not hasattr(cal, "adjust_from")
+    assert not hasattr(cal, "adjust_to")
 
 
 def test_calendar_load_pmc():

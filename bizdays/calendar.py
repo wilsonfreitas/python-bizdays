@@ -135,8 +135,6 @@ class Calendar:
         enddate: DateScalar | None = None,
         name: str = "",
         financial: bool = True,
-        adjust_from: str | None = None,
-        adjust_to: str | None = None,
     ) -> None:
         if holidays is None:
             holidays = []
@@ -144,8 +142,6 @@ class Calendar:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
-        self.adjust_from: str | None = adjust_from
-        self.adjust_to: str | None = adjust_to
         self._holidays: DateArray = np.array([Date(d).format() for d in holidays], dtype="datetime64[D]")
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
@@ -666,8 +662,6 @@ class Calendar:
             weekdays=definition.weekdays,
             name=definition.name,
             financial=definition.financial,
-            adjust_from=definition.adjust_from,
-            adjust_to=definition.adjust_to,
         )
 
     def __str__(self) -> str:

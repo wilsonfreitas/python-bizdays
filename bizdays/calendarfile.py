@@ -11,8 +11,6 @@ class CalendarDefinition:
     weekdays: list[str]
     holidays: list[str]
     financial: bool
-    adjust_from: str | None = None
-    adjust_to: str | None = None
 
 
 def _as_string_list(value: Any, field_name: str) -> list[str]:
@@ -45,13 +43,14 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
     if not isinstance(name, str):
         raise ValueError("Invalid calendar JSON: 'name' must be a string")
 
+    _as_optional_string(payload.get("adjust.from"), "adjust.from")
+    _as_optional_string(payload.get("adjust.to"), "adjust.to")
+
     return CalendarDefinition(
         name=name,
         weekdays=_as_string_list(payload.get("weekdays"), "weekdays"),
         holidays=_as_string_list(payload.get("holidays"), "holidays"),
         financial=_as_bool(payload.get("financial", True), "financial"),
-        adjust_from=_as_optional_string(payload.get("adjust.from"), "adjust.from"),
-        adjust_to=_as_optional_string(payload.get("adjust.to"), "adjust.to"),
     )
 
 
