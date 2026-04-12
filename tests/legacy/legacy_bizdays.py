@@ -188,14 +188,6 @@ class TestVectorizedOpsInCalendar(BizdaysTest):
         assert offset(("2013-01-02", "2013-01-03"), 1) == asDate(["2013-01-03", "2013-01-04"])
         assert offset("2013-01-02", [1, 2]) == asDate(["2013-01-03", "2013-01-04"])
 
-    def test_getdate(self):
-        expr = "15th day"
-        x = self.cal.getdate(expr, [2002, 2001], 1)
-        assert x == asDate(["2002-01-15", "2001-01-15"])
-        expr = ["15th day", "16th day"]
-        x = self.cal.getdate(expr, [2002, 2001], 1)
-        assert x == asDate(["2002-01-15", "2001-01-16"])
-
     def test_getbizdays(self):
         actual = Calendar(name="actual")
         x = actual.getbizdays([2002, 2001], 1)
@@ -491,19 +483,6 @@ class TestCalendar(BizdaysTest):
         self.assertEqual(self.cal_ANBIMA.offset("2012-01-01", 0), asDate("2012-01-01"))
         self.assertEqual(self.cal_ANBIMA.offset("2012-01-01", -1), asDate("2011-12-30"))
 
-    def test_Calendar_getdate_getnth_bizday(self):
-        # first
-        self.assertEqual(self.cal_ANBIMA.getdate("first bizday", 2002), asDate("2002-01-02"))
-        self.assertEqual(self.cal_ANBIMA.getdate("first day", 2002, 1), asDate("2002-01-01"))
-        self.assertEqual(self.cal_ANBIMA.getdate("first bizday", 2002, 1), asDate("2002-01-02"))
-        self.assertEqual(self.cal_ANBIMA.getdate("first wed", 2002, 2), asDate("2002-02-06"))
-        # last
-        self.assertEqual(self.cal_ANBIMA.getdate("last day", 2002, 2), asDate("2002-02-28"))
-        self.assertEqual(self.cal_ANBIMA.getdate("last bizday", 2002, 2), asDate("2002-02-28"))
-        # nth
-        self.assertEqual(self.cal_ANBIMA.getdate("second bizday", 2002, 2), asDate("2002-02-04"))
-        self.assertEqual(self.cal_ANBIMA.getdate("third tue", 2002, 2), asDate("2002-02-19"))
-
     def test_Calendar_diff(self):
         dates = ("2017-05-10", "2017-05-12", "2017-05-17")
         assert self.cal_ANBIMA.diff(dates) == [2, 3]
@@ -549,12 +528,6 @@ class TestVectorizedOperations(BizdaysTest):
             tuple(d.isoformat() for d in self.cal.vec.offset(dates, 1)),
             ("2002-01-02", "2002-01-03", "2002-01-04"),
         )
-
-    def test_Vectorized_operations_getdate(self):
-        "it should getdate vectorised"
-        expr = "15th day"
-        x = list(self.cal.vec.getdate(expr, [2002, 2001], 1))
-        assert x == asDate(["2002-01-15", "2001-01-15"])
 
     def test_Vectorized_operations_getbizdays(self):
         "it should getbizdays vectorised"

@@ -148,7 +148,7 @@ cal.offset('2014-01-02', 5)
 
 
 ```python
-cal.getdate('15th day', 2002, 5)
+cal.getdate('15th day', '2002-05')
 ```
 
 
@@ -160,7 +160,7 @@ cal.getdate('15th day', 2002, 5)
 
 
 ```python
-cal.getdate('15th bizday', 2002, 5)
+cal.getdate('15th bizday', '2002-05')
 ```
 
 
@@ -172,7 +172,7 @@ cal.getdate('15th bizday', 2002, 5)
 
 
 ```python
-cal.getdate('last wed', 2002, 5)
+cal.getdate('last wed', '2002-05')
 ```
 
 
@@ -184,7 +184,7 @@ cal.getdate('last wed', 2002, 5)
 
 
 ```python
-cal.getdate('first fri before last day ', 2002, 5)
+cal.getdate('first fri before last day ', '2002-05')
 ```
 
 
@@ -234,12 +234,14 @@ cal.bizdays('2012-12-31', '2013-01-03')
 
 ### getdate
 
-You specify dates by its position or related to other dates, for example:
+`getdate(expr, ref)` resolves expressions against a month reference (`YYYY-MM`),
+a year reference (`YYYY` or `int`), or a date reference (`YYYY-MM-DD`) for
+relative weekday lookups.
 
 
 
 ```python
-cal.getdate('15th day', 2002, 5)
+cal.getdate('15th day', '2002-05')
 ```
 
 
@@ -249,7 +251,7 @@ cal.getdate('15th day', 2002, 5)
 
 
 
-it returns the 15th day of 2002 may. You can also reffer to the whole year.
+it returns the 15th day of 2002 may. You can also refer to the whole year.
 
 
 ```python
@@ -301,7 +303,7 @@ cal.getdate('last mon', 2006)
 
 
 
-For postion use: `first`, `second`, `third`, `1st`, `2nd`, `3rd`, `[n]th`, and `last`.
+For position use: `first`, `second`, `third`, `1st`, `2nd`, `3rd`, `[n]th`, and `last`.
 
 #### Using date postions as a reference
 
@@ -310,7 +312,7 @@ You can find before and after other date positions (using date positions as a re
 
 
 ```python
-cal.getdate('last mon before 30th day', 2006, 7)
+cal.getdate('last mon before 30th day', '2006-07')
 ```
 
 
@@ -329,6 +331,32 @@ cal.getdate('second bizday after 15th day', 2006)
 
 
     datetime.date(2006, 1, 17)
+
+
+
+Date references support relative weekday expressions as well.
+
+```python
+cal.getdate('next wed', '2021-02-10')
+```
+
+
+
+
+    numpy.datetime64('2021-02-17')
+
+
+
+
+```python
+cal.getdate('second fri', '2026-04-20')
+```
+
+
+
+
+    numpy.datetime64('2026-05-01')
+
 
 
 
@@ -787,4 +815,3 @@ cal.getdate('last fri', [2021, 2022], [12, 1])
 
 
     DatetimeIndex(['2021-12-31', '2022-01-28'], dtype='datetime64[ns]', freq=None)
-

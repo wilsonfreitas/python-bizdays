@@ -16,6 +16,10 @@ DateArray: TypeAlias = npt.NDArray[np.datetime64]
 DateSequence: TypeAlias = list[DateScalar] | tuple[DateScalar, ...]
 DateVector: TypeAlias = DateSequence | pd.DatetimeIndex | DateArray
 DateInput: TypeAlias = DateScalar | DateVector
+GetDateRefScalar: TypeAlias = int | DateScalar
+GetDateRefSequence: TypeAlias = list[GetDateRefScalar] | tuple[GetDateRefScalar, ...]
+GetDateRefVector: TypeAlias = GetDateRefSequence | pd.Index | npt.NDArray[np.object_]
+GetDateRefInput: TypeAlias = GetDateRefScalar | GetDateRefVector
 IntArray: TypeAlias = npt.NDArray[np.int_]
 IntSequence: TypeAlias = list[int] | tuple[int, ...]
 IntVector: TypeAlias = IntSequence | IntArray
@@ -530,43 +534,48 @@ class Calendar:
             return np.array([], dtype=np.int_)
         return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.int_)
 
-    # def getdate(self, expr, year, month=None):
-    #     """
-    #     Get dates using other dates (or month or year) as reference.
+    def getdate(
+        self,
+        expr: str | Sequence[str] | npt.NDArray[np.object_],
+        ref: GetDateRefInput,
+    ) -> np.datetime64 | DateArray:
+        """
+        Get dates using a month, year, or date reference.
 
-    #     Imagine you have one date and want the first or last day of this
-    #     date's month. For example, you have the date 2018-02-01 and want
-    #     the last day of its month. You have to check whether or not its year
-    #     is a leap year, and this sounds a tough task. getdate helps with
-    #     returning specific dates according to a reference than can be another
-    #     date, a month or an year.
+        Parameters
+        ----------
 
-    #     Parameters
-    #     ----------
+        expr : str, list of str
+            String specifying the date to be returned.
 
-    #     expr : str, list of str
-    #         String specifying the date to be returned.
+        ref : int, str, datetime.date, datetime.datetime, numpy.datetime64
+            Reference used to resolve the expression.
 
-    #         See :doc:`getdate` for more information.
+            - `YYYY-MM` strings refer to a month
+            - `YYYY` strings and integers refer to a year
+            - date-like values such as `YYYY-MM-DD` refer to a date
 
-    #     year : int, list of int
-    #         Year
+        Returns
+        -------
+        numpy.datetime64, numpy.ndarray
+            Returns dates according to the given reference.
+        """
+        single_value = not (isseq(expr) or isseq(ref))
+        _expr = np.atleast_1d(np.asarray(expr, dtype=object))
+        _ref = np.atleast_1d(np.asarray(ref, dtype=object))
+        _expr, _ref = recycle_arrays(_expr, _ref)
 
-    #     month : int, list of int
-    #         Month
+        missing = np.array([pd.isna(expr_value) or pd.isna(ref_value) for expr_value, ref_value in zip(_expr, _ref)])
+        dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
+        valid = ~missing
 
-    #     Returns
-    #     -------
-    #     date, list of dates, pandas.DatetimeIndex
-    #         Returns dates according to a reference that can be a month or an
-    #         year.
+        for idx in np.flatnonzero(valid):
+            expr_value = _expr[idx]
+            if not isinstance(expr_value, str):
+                raise ValueError("getdate expressions must be strings or missing")
+            dates[idx] = self._index.getdate(expr_value, _ref[idx])
 
-    #     """
-    #     if any([isseq(expr), isseq(year), isseq(month)]):
-    #         return recseq(self.vec.getdate(expr, year, month))
-    #     else:
-    #         dt = self._index.getdate(expr, year, month)
-    #         return retdate(Date(dt).date)
+        return _finalize_date_result(dates, single_value)
 
     # def getbizdays(self, year, month=None):
     #     """
