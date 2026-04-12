@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 
 from bizdays.calendar import Calendar
@@ -88,6 +89,27 @@ def test_bizdays_scalar_returns_numpy_int(actual):
     assert isinstance(result, np.int_)
 
 
+def test_bizdays_scalar_none_returns_masked(actual):
+    result = actual.bizdays(None, "2024-01-05")
+    assert np.ma.is_masked(result)
+
+
+def test_bizdays_vectorized_missing_inputs_return_masked_array(actual):
+    result = actual.bizdays(["2024-01-01", None, np.datetime64("NaT")], "2024-01-05")
+    assert isinstance(result, np.ma.MaskedArray)
+    assert result.dtype == np.int_
+    assert result.data.tolist() == [4, 0, 0]
+    assert result.mask.tolist() == [False, True, True]
+
+
+def test_bizdays_tuple_with_none_returns_masked_array(actual):
+    result = actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01")
+    assert isinstance(result, np.ma.MaskedArray)
+    assert result.dtype == np.int_
+    assert result.data.tolist() == [-1, -2, 0]
+    assert result.mask.tolist() == [False, False, True]
+
+
 # --- isbizday tests ---
 
 
@@ -108,6 +130,38 @@ def test_isbizday_vectorized(anbima):
 def test_isbizday_scalar_returns_numpy_bool(actual):
     result = actual.isbizday("2024-01-02")
     assert isinstance(result, np.bool_)
+
+
+def test_isbizday_scalar_none_returns_masked(actual):
+    result = actual.isbizday(None)
+    assert np.ma.is_masked(result)
+
+
+def test_isbizday_vectorized_missing_inputs_return_masked_array(actual):
+    result = actual.isbizday(["2024-01-02", None, np.datetime64("NaT")])
+    assert isinstance(result, np.ma.MaskedArray)
+    assert result.dtype == np.bool_
+    assert result.data.tolist() == [True, False, False]
+    assert result.mask.tolist() == [False, True, True]
+
+
+def test_isbizday_with_datetimeindex_and_nat(actual):
+    dt = pd.to_datetime(["2021-12-30", "2021-11-30", None])
+    result = actual.isbizday(dt)
+    assert isinstance(result, np.ndarray)
+    assert isinstance(result, np.ma.MaskedArray)
+    assert result.dtype == np.bool_
+    assert result[0]
+    assert result[1]
+    assert np.ma.is_masked(result[2])
+
+
+def test_isbizday_tuple_with_none_returns_masked_array(actual):
+    result = actual.isbizday(("2013-01-02", "2013-01-03", None))
+    assert isinstance(result, np.ma.MaskedArray)
+    assert result.dtype == np.bool_
+    assert result.data.tolist() == [True, True, False]
+    assert result.mask.tolist() == [False, False, True]
 
 
 def test_actual_calendar_all_days_are_bizdays(actual):
@@ -145,6 +199,50 @@ def test_offset_vectorized(anbima):
 def test_offset_scalar_returns_numpy_datetime64(actual):
     result = actual.offset("2024-01-05", 1)
     assert isinstance(result, np.datetime64)
+
+
+def test_offset_scalar_none_returns_nat(actual):
+    result = actual.offset(None, 1)
+    assert np.isnat(result)
+
+
+def test_offset_scalar_missing_n_returns_nat(actual):
+    result = actual.offset("2024-01-05", None)
+    assert np.isnat(result)
+
+
+def test_offset_all_scalar_missing_combinations_return_nat(anbima):
+    assert np.isnat(anbima.offset(None, 1))
+    assert np.isnat(anbima.offset("2013-01-02", None))
+    assert np.isnat(anbima.offset(None, None))
+
+
+def test_offset_vectorized_missing_inputs_return_nat(actual):
+    result = actual.offset(["2024-01-05", None], [1, np.nan])
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert str(result[0]) == "2024-01-06"
+    assert np.isnat(result[1])
+
+
+def test_offset_missing_vectors_return_nat(anbima):
+    result = anbima.offset([None, None], 1)
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert np.isnat(result).tolist() == [True, True]
+
+    result = anbima.offset("2013-01-02", [None, None])
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert np.isnat(result).tolist() == [True, True]
+
+    result = anbima.offset(None, [None, None])
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert np.isnat(result).tolist() == [True, True]
+
+
+def test_offset_scalar_date_and_vector_n_returns_array(actual):
+    result = actual.offset("2024-01-05", [1, 2])
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert result.tolist() == [np.datetime64("2024-01-06"), np.datetime64("2024-01-07")]
 
 
 # --- seq tests ---
@@ -189,6 +287,60 @@ def test_adjust_previous_on_bizday(anbima):
 def test_adjust_next_scalar_returns_numpy_datetime64(actual):
     result = actual.adjust_next("2024-01-06")
     assert isinstance(result, np.datetime64)
+
+
+@pytest.mark.parametrize(
+    ("method_name", "dt", "expected"),
+    [
+        ("adjust_next", "2013-01-01", "2013-01-02"),
+        ("following", "2013-01-01", "2013-01-02"),
+        ("adjust_previous", "2013-01-01", "2012-12-31"),
+        ("preceding", "2013-01-01", "2012-12-31"),
+        ("modified_following", "2022-04-30", "2022-04-29"),
+        ("modified_preceding", "2015-03-01", "2015-03-02"),
+    ],
+)
+def test_date_adjust_methods_preserve_nat_for_missing_inputs(anbima, method_name, dt, expected):
+    method = getattr(anbima, method_name)
+    assert np.isnat(method(None))
+
+    result = method([dt, np.datetime64("NaT")])
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert str(result[0]) == expected
+    assert np.isnat(result[1])
+
+
+@pytest.mark.parametrize(
+    ("method_name", "values", "expected"),
+    [
+        ("preceding", ("2013-01-01", "2013-01-03", None), ["2012-12-31", "2013-01-03", "NaT"]),
+        (
+            "modified_preceding",
+            ("2013-01-01", "2013-01-03", None),
+            ["2013-01-02", "2013-01-03", "NaT"],
+        ),
+        ("following", ("2013-01-01", "2013-01-03", None), ["2013-01-02", "2013-01-03", "NaT"]),
+        (
+            "modified_following",
+            ("2022-04-30", "2013-01-03", None),
+            ["2022-04-29", "2013-01-03", "NaT"],
+        ),
+    ],
+)
+def test_adjust_methods_with_none_values_return_nat(anbima, method_name, values, expected):
+    result = getattr(anbima, method_name)(values)
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert result.astype(str).tolist() == expected
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    ["preceding", "modified_preceding", "following", "modified_following"],
+)
+def test_adjust_methods_all_none_return_nat(anbima, method_name):
+    result = getattr(anbima, method_name)([None, None])
+    assert result.dtype == np.dtype("datetime64[D]")
+    assert np.isnat(result).tolist() == [True, True]
 
 
 # --- modified_following / modified_preceding tests ---
