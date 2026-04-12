@@ -20,7 +20,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatchling.build]
-include = ["bizdays/**/*.py", "bizdays/data/*.cal"]
+include = ["bizdays/**/*.py", "bizdays/data/*.json"]
 
 [tool.ruff]
 target-version = "py39"

@@ -207,9 +207,9 @@ python-bizdays/
 ├── pyproject.toml        # Configuração do projeto
 ├── uv.lock              # Lock file (gerado por uv sync)
 ├── .venv/               # Ambiente virtual (gerado automaticamente)
-├── ANBIMA.cal           # Arquivos de calendário
-├── B3.cal
-├── Actual.cal
+├── ANBIMA.json          # Arquivos de calendário
+├── B3.json
+├── Actual.json
 └── README.md
 ```
 

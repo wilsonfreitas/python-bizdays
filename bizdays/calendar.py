@@ -1,13 +1,12 @@
 from collections.abc import Sequence
-import os
-import re
 from datetime import date, datetime
-from typing import TextIO, TypeAlias, overload
+from typing import TypeAlias, overload
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
+from bizdays.calendarfile import CalendarDefinition, load_calendar_definition, load_packaged_calendar_definition
 from bizdays.date import Date
 from bizdays.dateindex import DateIndex
 from bizdays.utils import isseq, recycle_arrays
@@ -69,32 +68,6 @@ def _finalize_masked_bool_result(
         masked = np.ma.masked_array(result, mask=missing)
         return masked[0] if single_value else masked
     return result[0] if single_value else result
-
-
-def _checkfile(fname: str) -> tuple[str, TextIO]:
-    if not os.path.exists(fname):
-        raise Exception(f"Invalid calendar: {fname}")
-    name: str = os.path.split(fname)[-1]
-    if name.endswith(".cal"):
-        name = name.replace(".cal", "")
-    else:
-        name = "None"
-    return (name, open(fname))
-
-
-def _checklocalfile(name: str) -> tuple[str, TextIO]:
-    import importlib.resources
-
-    _fname = importlib.resources.files("bizdays.data").joinpath(f"{name}.cal")
-    fname = str(_fname)
-    if not os.path.exists(fname):
-        raise Exception(f"Invalid calendar: {name}")
-    name = os.path.split(fname)[-1]
-    if name.endswith(".cal"):
-        name = name.replace(".cal", "")
-    else:
-        name = "None"
-    return (name, open(fname))
 
 
 class Calendar:
@@ -162,6 +135,8 @@ class Calendar:
         enddate: DateScalar | None = None,
         name: str = "",
         financial: bool = True,
+        adjust_from: str | None = None,
+        adjust_to: str | None = None,
     ) -> None:
         if holidays is None:
             holidays = []
@@ -169,6 +144,8 @@ class Calendar:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
+        self.adjust_from: str | None = adjust_from
+        self.adjust_to: str | None = adjust_to
         self._holidays: DateArray = np.array([Date(d).format() for d in holidays], dtype="datetime64[D]")
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
@@ -653,7 +630,7 @@ class Calendar:
             are delivered with the package.
 
         filename : str
-            Text file with holidays  and weekdays.
+            JSON calendar file using the R-bizdays-style schema.
 
         Returns
         -------
@@ -665,8 +642,8 @@ class Calendar:
             raise ValueError("Provide exactly one of 'name' or 'filename'")
 
         if filename is not None:
-            res = _checkfile(filename)
-            _cal = cls._load_calendar_from_file(res)
+            definition = load_calendar_definition(filename)
+            _cal = cls._load_calendar_definition(definition)
         else:
             assert name is not None
             if name.startswith("PMC/"):
@@ -678,26 +655,20 @@ class Calendar:
                 hol = cal.holidays()
                 _cal = cls([d.item() for d in hol.holidays], weekdays=["Saturday", "Sunday"], name=name)
             else:
-                res = _checklocalfile(name)
-                _cal = cls._load_calendar_from_file(res)
+                definition = load_packaged_calendar_definition(name)
+                _cal = cls._load_calendar_definition(definition)
         return _cal
 
     @classmethod
-    def _load_calendar_from_file(cls, res: tuple[str, TextIO]) -> "Calendar":
-        w = "|".join(w.lower() for w in cls._weekdays)
-        wre = "^%s$" % w
-        _holidays: list[str] = []
-        _nonwork_weekdays: list[str] = []
-        with res[1] as fcal:
-            for cal_reg in fcal:
-                cal_reg = cal_reg.strip()
-                if cal_reg == "":
-                    continue
-                if re.match(wre, cal_reg.lower()):
-                    _nonwork_weekdays.append(cal_reg)
-                elif re.match(r"^\d\d\d\d-\d\d-\d\d$", cal_reg):
-                    _holidays.append(Date(cal_reg).format())
-        return cls(_holidays, weekdays=_nonwork_weekdays, name=res[0])
+    def _load_calendar_definition(cls, definition: CalendarDefinition) -> "Calendar":
+        return cls(
+            definition.holidays,
+            weekdays=definition.weekdays,
+            name=definition.name,
+            financial=definition.financial,
+            adjust_from=definition.adjust_from,
+            adjust_to=definition.adjust_to,
+        )
 
     def __str__(self) -> str:
         return """Calendar: {0}

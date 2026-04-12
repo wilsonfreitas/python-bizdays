@@ -37,7 +37,7 @@ class BizdaysTest(unittest.TestCase):
 
 class TestNullValues(BizdaysTest):
     actual = Calendar(name="actual")
-    anbima = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+    anbima = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_isbizdays(self):
         assert self.actual.isbizday(None) is None
@@ -88,7 +88,7 @@ class TestBizdays(BizdaysTest):
     cal_nofin = Calendar(name="actual", financial=False)
     cal_we = Calendar(name="we", weekdays=["Saturday", "Sunday"])
     cal_we_nofin = Calendar(name="we", weekdays=["Saturday", "Sunday"], financial=False)
-    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_bizdays_default_calendar(self):
         bizdays = self.cal.bizdays
@@ -205,7 +205,7 @@ class TestVectorizedOpsInCalendar(BizdaysTest):
 
 
 class TestCalendar(BizdaysTest):
-    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_Calendar_instanciate_calendar(self):
         "it should instanciate the calendar"
@@ -270,14 +270,14 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_load(self):
         "it should load  the calendar from a file"
-        cal = Calendar.load(filename="bizdays/data/Test.cal")
+        cal = Calendar.load(filename="bizdays/data/Test.json")
         self.assertEqual(cal.startdate.isoformat(), "2001-01-01")
         self.assertEqual(cal.enddate.isoformat(), "2013-01-01")
         self.assertEqual(cal.isbizday("2001-01-02"), True)
 
     def test_Calendar_bizdays(self):
         "it should create a business Calendar: Brazil's ANBIMA"
-        cal = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+        cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
         self.assertEqual(cal.bizdays("2013-07-12", "2014-07-12"), 251)
         self.assertEqual(cal.bizdays("2013-08-21", "2013-08-24"), 2)
         self.assertEqual(cal.bizdays("2013-01-01", "2013-01-31"), 21)
@@ -326,7 +326,7 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_unordered_holidays(self):
         "it should work with unordered calendars"
-        ca1 = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+        ca1 = Calendar.load(filename="bizdays/data/ANBIMA.json")
         _hol = ca1._holidays.copy()
         shuffle(_hol)
         cal = Calendar(holidays=_hol, weekdays=("sun", "sat"))
@@ -517,7 +517,7 @@ def test_isseq():
 
 
 class TestVectorizedOperations(BizdaysTest):
-    cal = Calendar.load(filename="bizdays/data/Test.cal")
+    cal = Calendar.load(filename="bizdays/data/Test.json")
 
     def test_Vectorized_operations_isbizday(self):
         "it should check in a vector of dates which are bizdays"
@@ -566,7 +566,7 @@ class TestVectorizedOperations(BizdaysTest):
 def test_calendar_load():
     cal = Calendar.load(name="ANBIMA")
     assert cal.name == "ANBIMA"
-    cal = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+    cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
     assert cal.name == "ANBIMA"
 
 
@@ -600,7 +600,7 @@ def test_getbizdays():
     assert cal.getbizdays(2024, 11) == 30
     assert cal.getbizdays(2024, 12) == 31
 
-    cal = Calendar.load(filename="bizdays/data/ANBIMA.cal")
+    cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
     assert cal.getbizdays(2024) == 253
     assert cal.getbizdays(2024, 1) == 22
     assert cal.getbizdays(2024, 2) == 19

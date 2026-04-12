@@ -1,0 +1,6 @@
+{
+  "name": "Actual",
+  "financial": true,
+  "adjust.from": "following",
+  "adjust.to": "preceding"
+}

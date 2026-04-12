@@ -1,9 +1,10 @@
 import os
-import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from itertools import cycle
-from typing import Any, Callable, Dict, Generator, Sequence, TextIO, TypeVar
+from typing import Any, Callable, Generator, Sequence, TypeVar
+
+from bizdays.calendarfile import CalendarDefinition, load_calendar_definition, load_packaged_calendar_definition
 
 PANDAS_INSTALLED: bool = False
 
@@ -593,6 +594,8 @@ class Calendar:
         enddate: date | datetime | str = "",
         name: str = "",
         financial: bool = True,
+        adjust_from: str | None = None,
+        adjust_to: str | None = None,
     ):
         if holidays is None:
             holidays = []
@@ -600,6 +603,8 @@ class Calendar:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
+        self.adjust_from: str | None = adjust_from
+        self.adjust_to: str | None = adjust_to
         self._holidays: list[Date] = [Date(d) for d in holidays]
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
@@ -1026,7 +1031,7 @@ class Calendar:
             are delivered with the package.
 
         filename : str
-            Text file with holidays  and weekdays.
+            JSON calendar file using the R-bizdays-style schema.
 
         Returns
         -------
@@ -1034,10 +1039,14 @@ class Calendar:
             A Calendar object.
 
         """
-        if filename:
-            res = _checkfile(filename)
-            return cls._load_calendar_from_file(res)
-        elif name:
+        if (name is None) == (filename is None):
+            raise ValueError("Provide exactly one of 'name' or 'filename'")
+
+        if filename is not None:
+            definition = load_calendar_definition(filename)
+            return cls._load_calendar_definition(definition)
+        else:
+            assert name is not None
             if name.startswith("PMC/"):
                 try:
                     import pandas_market_calendars as mcal  # type: ignore[import-untyped]
@@ -1047,25 +1056,19 @@ class Calendar:
                 hol = cal.holidays()
                 return Calendar((d.item() for d in hol.holidays), weekdays=("Saturday", "Sunday"), name=name)
             else:
-                res = _checklocalfile(name)
-                return cls._load_calendar_from_file(res)
+                definition = load_packaged_calendar_definition(name)
+                return cls._load_calendar_definition(definition)
 
     @classmethod
-    def _load_calendar_from_file(cls, res: Dict[str, TextIO]) -> "Calendar":
-        w = "|".join(w.lower() for w in cls._weekdays)
-        wre = "^%s$" % w
-        _holidays = []
-        _nonwork_weekdays = []
-        with res["iter"] as fcal:
-            for cal_reg in fcal:
-                cal_reg = cal_reg.strip()
-                if cal_reg == "":
-                    continue
-                if re.match(wre, cal_reg.lower()):
-                    _nonwork_weekdays.append(cal_reg)
-                elif re.match(r"^\d\d\d\d-\d\d-\d\d$", cal_reg):
-                    _holidays.append(Date(cal_reg))
-        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=res["name"])
+    def _load_calendar_definition(cls, definition: CalendarDefinition) -> "Calendar":
+        return Calendar(
+            definition.holidays,
+            weekdays=definition.weekdays,
+            name=definition.name,
+            financial=definition.financial,
+            adjust_from=definition.adjust_from,
+            adjust_to=definition.adjust_to,
+        )
 
     def __str__(self):
         return """Calendar: {0}
@@ -1083,30 +1086,6 @@ Financial: {4}""".format(
         )
 
     __repr__ = __str__
-
-
-def _checkfile(fname: str) -> dict[str, TextIO | str]:
-    if not os.path.exists(fname):
-        raise Exception(f"Invalid calendar: {fname}")
-    name: str = os.path.split(fname)[-1]
-    if name.endswith(".cal"):
-        name = name.replace(".cal", "")
-    else:
-        name = "None"
-    return {"name": name, "iter": open(fname)}
-
-
-def _checklocalfile(name: str) -> dict[str, TextIO | str]:
-    dir = os.path.dirname(__file__)
-    fname = f"{dir}/{name}.cal"
-    if not os.path.exists(fname):
-        raise Exception(f"Invalid calendar: {name}")
-    name = os.path.split(fname)[-1]
-    if name.endswith(".cal"):
-        name = name.replace(".cal", "")
-    else:
-        name = "None"
-    return {"name": name, "iter": open(fname)}
 
 
 class VectorizedOps(object):

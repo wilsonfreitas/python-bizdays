@@ -54,7 +54,7 @@ uv run pre-commit run --all-files
 
 ### Calendar data files
 
-Built-in `.cal` files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual** calendars. External calendars can be loaded via `Calendar.load("PMC/<name>")` using `pandas_market_calendars`.
+Built-in JSON files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual** calendars, using the R-bizdays-style schema. External calendars can be loaded via `Calendar.load("PMC/<name>")` using `pandas_market_calendars`.
 
 ### Key design pattern
 

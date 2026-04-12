@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -36,7 +38,35 @@ def test_calendar_load_requires_exactly_one_source():
     with pytest.raises(ValueError, match="exactly one"):
         Calendar.load()
     with pytest.raises(ValueError, match="exactly one"):
-        Calendar.load(name="B3", filename="bizdays/data/ANBIMA.cal")
+        Calendar.load(name="B3", filename="bizdays/data/ANBIMA.json")
+
+
+def test_calendar_load_json_file(tmp_path):
+    filename = tmp_path / "custom.json"
+    filename.write_text(
+        json.dumps(
+            {
+                "name": "Custom",
+                "weekdays": ["saturday", "sunday"],
+                "holidays": ["2024-01-01", "2024-01-03"],
+                "financial": False,
+                "adjust.from": "following",
+                "adjust.to": "preceding",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cal = Calendar.load(filename=str(filename))
+    assert cal.name == "Custom"
+    assert cal.weekdays == ("Saturday", "Sunday")
+    assert cal.holidays == [
+        np.datetime64("2024-01-01").astype(object),
+        np.datetime64("2024-01-03").astype(object),
+    ]
+    assert cal.financial is False
+    assert cal.adjust_from == "following"
+    assert cal.adjust_to == "preceding"
 
 
 def test_calendar_load_pmc():
