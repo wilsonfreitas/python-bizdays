@@ -1,7 +1,8 @@
+from collections.abc import Sequence
 import os
 import re
 from datetime import date, datetime
-from typing import Optional, TextIO, TypeVar
+from typing import TextIO, TypeAlias, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -11,8 +12,16 @@ from bizdays.date import Date
 from bizdays.dateindex import DateIndex
 from bizdays.utils import isseq, recycle_arrays
 
-date_types = TypeVar("date_types", str, date, datetime, pd.Timestamp, np.datetime64)
-date_list_types = TypeVar("date_list_types", list[str], list[date], list[datetime])
+DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
+DateArray: TypeAlias = npt.NDArray[np.datetime64]
+DateSequence: TypeAlias = list[DateScalar] | tuple[DateScalar, ...]
+DateVector: TypeAlias = DateSequence | pd.DatetimeIndex | DateArray
+DateInput: TypeAlias = DateScalar | DateVector
+IntArray: TypeAlias = npt.NDArray[np.int_]
+IntSequence: TypeAlias = list[int] | tuple[int, ...]
+IntVector: TypeAlias = IntSequence | IntArray
+IntInput: TypeAlias = int | IntVector
+BoolArray: TypeAlias = npt.NDArray[np.bool_]
 
 
 def _checkfile(fname: str) -> tuple[str, TextIO]:
@@ -100,42 +109,40 @@ class Calendar:
 
     def __init__(
         self,
-        holidays: list[str] | list[date] | list[datetime] | None = None,
-        weekdays: list[str] | None = None,
-        startdate: date | datetime | str = "",
-        enddate: date | datetime | str = "",
+        holidays: Sequence[DateScalar] | None = None,
+        weekdays: Sequence[str] | None = None,
+        startdate: DateScalar | None = None,
+        enddate: DateScalar | None = None,
         name: str = "",
         financial: bool = True,
-    ):
+    ) -> None:
         if holidays is None:
             holidays = []
         if weekdays is None:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
-        self._holidays: npt.NDArray[np.datetime64] = np.array(
-            [Date(d).format() for d in holidays], dtype="datetime64[D]"
-        )
+        self._holidays: DateArray = np.array([Date(d).format() for d in holidays], dtype="datetime64[D]")
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
         ]
         self._startdate: Date
         self._enddate: Date
         if len(self._holidays):
-            if startdate:
+            if startdate is not None:
                 self._startdate = Date(startdate)
             else:
                 self._startdate = Date(min(self._holidays).astype("O"))
-            if enddate:
+            if enddate is not None:
                 self._enddate = Date(enddate)
             else:
                 self._enddate = Date(max(self._holidays).astype("O"))
         else:
-            if startdate:
+            if startdate is not None:
                 self._startdate = Date(startdate)
             else:
                 self._startdate = Date("1970-01-01")
-            if enddate:
+            if enddate is not None:
                 self._enddate = Date(enddate)
             else:
                 self._enddate = Date("2071-01-01")
@@ -166,11 +173,16 @@ class Calendar:
 
     holidays = property(__get_holidays)
 
-    def bizdays(
-        self,
-        date_from: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64],
-        date_to: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64],
-    ) -> int | npt.NDArray[np.int_]:
+    @overload
+    def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.int_: ...
+
+    @overload
+    def bizdays(self, date_from: DateVector, date_to: DateInput) -> IntArray: ...
+
+    @overload
+    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> IntArray: ...
+
+    def bizdays(self, date_from: DateInput, date_to: DateInput) -> np.int_ | IntArray:
         """
         Calculate the amount of business days between two dates
 
@@ -185,12 +197,12 @@ class Calendar:
 
         Returns
         -------
-        int, list, numpy.ndarray
-            The number of business days between date_from and date_to
+        numpy.int_, numpy.ndarray
+            The number of business days between date_from and date_to.
         """
         single_value = not (isseq(date_from) or isseq(date_to))
-        _date_from: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(date_from, dtype="datetime64[D]"))
-        _date_to: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(date_to, dtype="datetime64[D]"))
+        _date_from: DateArray = np.atleast_1d(np.asarray(date_from, dtype="datetime64[D]"))
+        _date_to: DateArray = np.atleast_1d(np.asarray(date_to, dtype="datetime64[D]"))
         _date_from, _date_to = recycle_arrays(_date_from, _date_to)
         bdays = self._index.bizdays(_date_from, _date_to)
         if not self.financial:
@@ -199,9 +211,13 @@ class Calendar:
             bdays = bdays + adjust
         return bdays[0] if single_value else bdays
 
-    def isbizday(
-        self, dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]
-    ) -> bool | npt.NDArray[np.bool_]:
+    @overload
+    def isbizday(self, dt: DateScalar) -> np.bool_: ...
+
+    @overload
+    def isbizday(self, dt: DateVector) -> BoolArray: ...
+
+    def isbizday(self, dt: DateInput) -> np.bool_ | BoolArray:
         """
         Checks if the given dates are business days.
 
@@ -214,18 +230,21 @@ class Calendar:
         Returns
         -------
 
-        bool, list of bool, array of bool
-            Returns True if the given date is a business day and False
-            otherwise.
+        numpy.bool_, numpy.ndarray
+            Returns True if the given date is a business day and False otherwise.
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         is_bizday = self._index.is_bizday(_dt)
         return is_bizday[0] if single_value else is_bizday
 
-    def adjust_next(
-        self, dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]
-    ) -> date_types | npt.NDArray[np.datetime64]:
+    @overload
+    def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
+
+    @overload
+    def adjust_next(self, dt: DateVector) -> DateArray: ...
+
+    def adjust_next(self, dt: DateInput) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the next business day
 
@@ -241,21 +260,31 @@ class Calendar:
         Returns
         -------
 
-        datetime.date, datetime.datetime, pandas.Timestamp, str
-            return the next business day if the given date is
-            not a business day.
+        numpy.datetime64, numpy.ndarray
+            Returns the next business day if the given date is not a business day.
 
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, 1)
         return adt[0] if single_value else adt
 
-    following = adjust_next
+    @overload
+    def following(self, dt: DateScalar) -> np.datetime64: ...
 
-    def modified_following(
-        self, dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]
-    ) -> date_types | npt.NDArray[np.datetime64]:
+    @overload
+    def following(self, dt: DateVector) -> DateArray: ...
+
+    def following(self, dt: DateInput) -> np.datetime64 | DateArray:
+        return self.adjust_next(dt)
+
+    @overload
+    def modified_following(self, dt: DateScalar) -> np.datetime64: ...
+
+    @overload
+    def modified_following(self, dt: DateVector) -> DateArray: ...
+
+    def modified_following(self, dt: DateInput) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the next business day with a small
         difference.
@@ -273,13 +302,12 @@ class Calendar:
         Returns
         -------
 
-        datetime.date, datetime.datetime, pandas.Timestamp, str
-            return the next business day if the given date is
-            not a business day.
+        numpy.datetime64, numpy.ndarray
+            Returns the next business day unless that would cross into the next month.
 
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, 1)
         months_dt = _dt.astype("datetime64[M]").astype(int) % 12 + 1
         months_adt = adt.astype("datetime64[M]").astype(int) % 12 + 1
@@ -287,9 +315,13 @@ class Calendar:
         adt[idx] = self._index.adjust(_dt[idx], -1)
         return adt[0] if single_value else adt
 
-    def adjust_previous(
-        self, dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]
-    ) -> date_types | npt.NDArray[np.datetime64]:
+    @overload
+    def adjust_previous(self, dt: DateScalar) -> np.datetime64: ...
+
+    @overload
+    def adjust_previous(self, dt: DateVector) -> DateArray: ...
+
+    def adjust_previous(self, dt: DateInput) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the previous business day
 
@@ -305,21 +337,31 @@ class Calendar:
         Returns
         -------
 
-        datetime.date, datetime.datetime, pandas.Timestamp, str
-            return the previous business day if the given date is
-            not a business day.
+        numpy.datetime64, numpy.ndarray
+            Returns the previous business day if the given date is not a business day.
 
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, -1)
         return adt[0] if single_value else adt
 
-    preceding = adjust_previous
+    @overload
+    def preceding(self, dt: DateScalar) -> np.datetime64: ...
 
-    def modified_preceding(
-        self, dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]
-    ) -> date_types | npt.NDArray[np.datetime64]:
+    @overload
+    def preceding(self, dt: DateVector) -> DateArray: ...
+
+    def preceding(self, dt: DateInput) -> np.datetime64 | DateArray:
+        return self.adjust_previous(dt)
+
+    @overload
+    def modified_preceding(self, dt: DateScalar) -> np.datetime64: ...
+
+    @overload
+    def modified_preceding(self, dt: DateVector) -> DateArray: ...
+
+    def modified_preceding(self, dt: DateInput) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the previous business day with a small
         difference.
@@ -337,13 +379,12 @@ class Calendar:
         Returns
         -------
 
-        datetime.date, datetime.datetime, pandas.Timestamp, str
-            return the previous business day if the given date is
-            not a business day.
+        numpy.datetime64, numpy.ndarray
+            Returns the previous business day unless that would cross into the previous month.
 
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
         adt = self._index.adjust(_dt, -1)
         months_dt = _dt.astype("datetime64[M]").astype(int) % 12 + 1
         months_adt = adt.astype("datetime64[M]").astype(int) % 12 + 1
@@ -351,7 +392,7 @@ class Calendar:
         adt[idx] = self._index.adjust(_dt[idx], 1)
         return adt[0] if single_value else adt
 
-    def seq(self, date_from: date_types, date_to: date_types) -> npt.NDArray[np.datetime64]:
+    def seq(self, date_from: DateScalar, date_to: DateScalar) -> DateArray:
         """
         Sequence of business days.
 
@@ -366,8 +407,8 @@ class Calendar:
 
         Returns
         -------
-        list of dates, pandas.DatetimeIndex
-            Returns a sequence of dates with business days only.
+        numpy.ndarray
+            Returns a NumPy array containing business days only.
         """
         _from: np.datetime64 = np.datetime64(date_from)
         _to: np.datetime64 = np.datetime64(date_to)
@@ -378,11 +419,16 @@ class Calendar:
         _seq = self._index.seq(_from, _to)
         return _seq[::-1] if reverse else _seq
 
-    def offset(
-        self,
-        dt: date_types | list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64],
-        n: int | list[int] | npt.NDArray[np.int_],
-    ) -> date_types | npt.NDArray[np.datetime64]:
+    @overload
+    def offset(self, dt: DateScalar, n: int) -> np.datetime64: ...
+
+    @overload
+    def offset(self, dt: DateVector, n: IntInput) -> DateArray: ...
+
+    @overload
+    def offset(self, dt: DateScalar, n: IntVector) -> DateArray: ...
+
+    def offset(self, dt: DateInput, n: IntInput) -> np.datetime64 | DateArray:
         """
         Offsets the given dates by n business days.
 
@@ -397,19 +443,18 @@ class Calendar:
 
         Returns
         -------
-        date, list of dates, pandas.DatetimeIndex
-            Returns the given dates offset by the given amount of n business
-            days.
+        numpy.datetime64, numpy.ndarray
+            Returns the given dates offset by the given amount of business days.
 
         """
         single_value = not isseq(dt)
-        _dt: npt.NDArray[np.datetime64] = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
-        _n: npt.NDArray[np.int_] = np.atleast_1d(np.asarray(n, dtype=np.int_))
+        _dt: DateArray = np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+        _n: IntArray = np.atleast_1d(np.asarray(n, dtype=np.int_))
         _dt, _n = recycle_arrays(_dt, _n)
         dts = self._index.offset(_dt, _n)
         return dts[0] if single_value else dts
 
-    def diff(self, dts: list[date_types] | pd.DatetimeIndex | npt.NDArray[np.datetime64]) -> npt.NDArray[np.int_]:
+    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> IntArray:
         """
         Compute the number of business days between dates in a given vector
         of dates.
@@ -423,13 +468,13 @@ class Calendar:
         Returns
         -------
 
-        list of int
-            The number of business days between given dates.
+        numpy.ndarray
+            The number of business days between consecutive dates.
         """
-        _dts: npt.NDArray[np.datetime64] = np.asarray(dts, dtype="datetime64[D]")
+        _dts: DateArray = np.asarray(dts, dtype="datetime64[D]")
         if len(_dts) <= 1:
             return np.array([], dtype=np.int_)
-        return self.bizdays(_dts[:-1], _dts[1:])  # type: ignore
+        return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.int_)
 
     # def getdate(self, expr, year, month=None):
     #     """
@@ -493,8 +538,21 @@ class Calendar:
     #     else:
     #         return self._index.getbizdays(year, month)
 
+    @overload
     @classmethod
-    def load(cls, name: Optional[str] = None, filename: Optional[str] = None) -> "Calendar":
+    def load(cls, *, name: str) -> "Calendar": ...
+
+    @overload
+    @classmethod
+    def load(cls, *, filename: str) -> "Calendar": ...
+
+    @classmethod
+    def load(
+        cls,
+        *,
+        name: str | None = None,
+        filename: str | None = None,
+    ) -> "Calendar":
         """
         Load calendars from a file.
 
@@ -522,10 +580,14 @@ class Calendar:
             A Calendar object.
 
         """
-        if filename:
+        if (name is None) == (filename is None):
+            raise ValueError("Provide exactly one of 'name' or 'filename'")
+
+        if filename is not None:
             res = _checkfile(filename)
             _cal = cls._load_calendar_from_file(res)
-        elif name:
+        else:
+            assert name is not None
             if name.startswith("PMC/"):
                 try:
                     import pandas_market_calendars as mcal  # type: ignore[import-untyped]
@@ -533,12 +595,10 @@ class Calendar:
                     raise Exception("pandas_market_calendars must be installed to use PMC calendars")
                 cal = mcal.get_calendar(name[4:])  # type: ignore
                 hol = cal.holidays()
-                _cal = Calendar([d.item() for d in hol.holidays], weekdays=["Saturday", "Sunday"], name=name)  # type: ignore
+                _cal = cls([d.item() for d in hol.holidays], weekdays=["Saturday", "Sunday"], name=name)
             else:
                 res = _checklocalfile(name)
                 _cal = cls._load_calendar_from_file(res)
-        else:
-            raise Exception("You must provide a calendar name or a filename")
         return _cal
 
     @classmethod
@@ -556,9 +616,9 @@ class Calendar:
                     _nonwork_weekdays.append(cal_reg)
                 elif re.match(r"^\d\d\d\d-\d\d-\d\d$", cal_reg):
                     _holidays.append(Date(cal_reg).format())
-        return Calendar(_holidays, weekdays=_nonwork_weekdays, name=res[0])
+        return cls(_holidays, weekdays=_nonwork_weekdays, name=res[0])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return """Calendar: {0}
 Start: {1}
 End: {2}

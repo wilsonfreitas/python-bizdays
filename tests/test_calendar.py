@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from bizdays.calendar import Calendar
@@ -5,7 +6,7 @@ from bizdays.calendar import Calendar
 
 @pytest.fixture(scope="module")
 def anbima():
-    return Calendar.load("ANBIMA")
+    return Calendar.load(name="ANBIMA")
 
 
 @pytest.fixture(scope="module")
@@ -14,19 +15,31 @@ def actual():
 
 
 def test_calendar_load():
-    cal = Calendar.load("B3")
+    cal = Calendar.load(name="B3")
     assert cal.name == "B3"
-    cal = Calendar.load("ANBIMA")
+    cal = Calendar.load(name="ANBIMA")
     assert cal.name == "ANBIMA"
 
 
 def test_calendar_load_invalid():
     with pytest.raises(Exception):
-        Calendar.load("B1")
+        Calendar.load(name="B1")
+
+
+def test_calendar_load_requires_keyword_arguments():
+    with pytest.raises(TypeError):
+        Calendar.load("B3")
+
+
+def test_calendar_load_requires_exactly_one_source():
+    with pytest.raises(ValueError, match="exactly one"):
+        Calendar.load()
+    with pytest.raises(ValueError, match="exactly one"):
+        Calendar.load(name="B3", filename="bizdays/data/ANBIMA.cal")
 
 
 def test_calendar_load_pmc():
-    cal = Calendar.load("PMC/B3")
+    cal = Calendar.load(name="PMC/B3")
     assert cal.name == "PMC/B3"
     assert len(cal.holidays) > 4000
 
@@ -34,7 +47,7 @@ def test_calendar_load_pmc():
 def test_public_import():
     """Calendar is importable from the top-level package."""
     from bizdays import Calendar
-    cal = Calendar.load("B3")
+    cal = Calendar.load(name="B3")
     assert cal.name == "B3"
 
 
@@ -70,6 +83,11 @@ def test_bizdays_vectorized(anbima):
     assert list(result) == [21, 39]
 
 
+def test_bizdays_scalar_returns_numpy_int(actual):
+    result = actual.bizdays("2024-01-01", "2024-01-05")
+    assert isinstance(result, np.int_)
+
+
 # --- isbizday tests ---
 
 
@@ -85,6 +103,11 @@ def test_isbizday_false_holiday(anbima):
 def test_isbizday_vectorized(anbima):
     result = anbima.isbizday(["2013-01-01", "2013-01-02"])
     assert list(result) == [False, True]
+
+
+def test_isbizday_scalar_returns_numpy_bool(actual):
+    result = actual.isbizday("2024-01-02")
+    assert isinstance(result, np.bool_)
 
 
 def test_actual_calendar_all_days_are_bizdays(actual):
@@ -117,6 +140,11 @@ def test_offset_vectorized(anbima):
     result = anbima.offset(["2013-01-02", "2013-01-03"], [1, 1])
     assert str(result[0]) == "2013-01-03"
     assert str(result[1]) == "2013-01-04"
+
+
+def test_offset_scalar_returns_numpy_datetime64(actual):
+    result = actual.offset("2024-01-05", 1)
+    assert isinstance(result, np.datetime64)
 
 
 # --- seq tests ---
@@ -156,6 +184,11 @@ def test_adjust_previous_on_holiday(anbima):
 def test_adjust_previous_on_bizday(anbima):
     result = anbima.adjust_previous("2013-01-02")
     assert str(result) == "2013-01-02"
+
+
+def test_adjust_next_scalar_returns_numpy_datetime64(actual):
+    result = actual.adjust_next("2024-01-06")
+    assert isinstance(result, np.datetime64)
 
 
 # --- modified_following / modified_preceding tests ---

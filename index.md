@@ -15,7 +15,7 @@ Business days calculations are done defining a `Calendar` object.
 
 ```python
 from bizdays import Calendar
-cal = Calendar.load('ANBIMA')
+cal = Calendar.load(name='ANBIMA')
 cal
 ```
 
@@ -636,7 +636,7 @@ The Calendar's methods: `isbizday`, `bizdays`, `adjust_previous`, `adjust_next`,
 
 
 ```python
-cal = Calendar.load('ANBIMA')
+cal = Calendar.load(name='ANBIMA')
 dates = ('2002-01-01', '2002-01-02', '2002-01-03')
 cal.following(dates)
 ```
@@ -787,5 +787,4 @@ cal.getdate('last fri', [2021, 2022], [12, 1])
 
 
     DatetimeIndex(['2021-12-31', '2022-01-28'], dtype='datetime64[ns]', freq=None)
-
 
