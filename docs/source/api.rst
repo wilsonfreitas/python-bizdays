@@ -216,6 +216,86 @@ references:
 - year references such as ``2006`` or ``"2006"``
 - date references such as ``"2021-02-10"`` for relative weekday expressions
 
+The ``expr`` grammar accepted by the current parser has three forms.
+
+Simple expressions
+""""""""""""""""""
+
+Format:
+
+.. code-block:: text
+
+   <ordinal> <target>
+
+Examples:
+
+.. code-block:: text
+
+   first day
+   15th day
+   last bizday
+   third tue
+
+Composite expressions
+"""""""""""""""""""""
+
+Format:
+
+.. code-block:: text
+
+   <ordinal> <target> <before|after> <ordinal> <target>
+
+Examples:
+
+.. code-block:: text
+
+   first day before 15th day
+   second bizday after 15th day
+   1st bizday before 2nd fri
+   last mon before 30th day
+
+Date-relative expressions
+"""""""""""""""""""""""""
+
+Format:
+
+.. code-block:: text
+
+   <next|previous> <weekday>
+
+Examples:
+
+.. code-block:: text
+
+   next wed
+   previous mon
+
+Valid ``ordinal`` tokens:
+
+- named ordinals: ``first``, ``second``, ``third``, ``last``
+- numeric ordinals: ``1st``, ``2nd``, ``3rd``, ``4th``, ``15th``, and so on
+
+Valid ``target`` tokens:
+
+- ``day``
+- ``bizday``
+- weekday names matched by their first three letters, such as ``mon``, ``tue``,
+  ``wed``, ``thu``, ``fri``, ``sat``, ``sun``
+
+Reference-specific rules:
+
+- month refs (``YYYY-MM``) support simple and composite expressions
+- year refs (``YYYY`` or ``int``) support simple and composite expressions
+- date refs (``YYYY-MM-DD`` and date-like values) support only weekday-based
+  expressions, especially ``next <weekday>`` and ``previous <weekday>``
+
+Parser notes:
+
+- ``next`` and ``previous`` require a weekday target, not ``day`` or ``bizday``
+- composite expressions only accept the operators ``before`` and ``after``
+- expressions are whitespace-tokenized, so the supported forms are strictly the
+  2-token, 5-token, and ``next|previous`` 2-token patterns above
+
 Examples:
 
 .. code-block:: python
