@@ -1,6 +1,6 @@
 [project]
 name = "bizdays"
-version = "1.0.16"
+version = "1.0.20"
 description = "Functions to handle business days calculations"
 authors = [{ name = "wilsonfreitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
@@ -9,7 +9,15 @@ dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
 [project.optional-dependencies]
 pmc = ["pandas-market-calendars>=4,<5"]
-dev = ["pytest", "pycodestyle", "ipykernel", "ruff", "mypy", "pre-commit", "pandas-market-calendars>=4,<5"]
+dev = [
+    "pytest",
+    "pycodestyle",
+    "ipykernel",
+    "ruff",
+    "mypy",
+    "pre-commit",
+    "pandas-market-calendars>=4,<5",
+]
 docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 
 [tool.uv]
