@@ -1,12 +1,18 @@
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import TypeAlias, overload
+from importlib import import_module
+from typing import TypedDict, TypeAlias, overload
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from bizdays.calendarfile import CalendarDefinition, load_calendar_definition, load_packaged_calendar_definition
+from bizdays.calendarfile import (
+    CalendarDefinition,
+    get_packaged_calendar_names,
+    load_calendar_definition,
+    load_packaged_calendar_definition,
+)
 from bizdays.date import Date
 from bizdays.dateindex import DateIndex
 from bizdays.utils import isseq, recycle_arrays
@@ -27,6 +33,17 @@ IntInput: TypeAlias = int | IntVector
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
 MaskedIntResult: TypeAlias = np.int_ | IntArray | np.ma.MaskedArray
 MaskedBoolResult: TypeAlias = np.bool_ | BoolArray | np.ma.MaskedArray
+
+
+class CalendarIntegrationListing(TypedDict):
+    available: bool
+    prefix: str
+    calendars: list[str]
+
+
+class CalendarListing(TypedDict):
+    packaged: list[str]
+    pandas_market_calendars: CalendarIntegrationListing
 
 
 def _normalize_date_input(dt: DateInput) -> DateArray:
@@ -72,6 +89,40 @@ def _finalize_masked_bool_result(
         masked = np.ma.masked_array(result, mask=missing)
         return masked[0] if single_value else masked
     return result[0] if single_value else result
+
+
+def _list_pandas_market_calendars() -> CalendarIntegrationListing:
+    prefix = "PMC/"
+    try:
+        mcal = import_module("pandas_market_calendars")
+    except ImportError:
+        return {
+            "available": False,
+            "prefix": prefix,
+            "calendars": [],
+        }
+
+    calendars = [str(name) for name in dict.fromkeys(mcal.get_calendar_names())]
+    return {
+        "available": True,
+        "prefix": prefix,
+        "calendars": calendars,
+    }
+
+
+def list_calendars() -> CalendarListing:
+    """
+    List the packaged calendars and supported optional calendar integrations.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the packaged calendars and integration metadata.
+    """
+    return {
+        "packaged": get_packaged_calendar_names(),
+        "pandas_market_calendars": _list_pandas_market_calendars(),
+    }
 
 
 class Calendar:
@@ -624,15 +675,15 @@ class Calendar:
 
         name : str
             Name of the calendar.
-            The calendar is loaded from a file delivered with the package.
-            The calendars:
+            Packaged calendars delivered with the package are:
 
             * B3
             * ANBIMA
             * Actual
-            * calendars from pandas_market_calendars - use the prefix "PMC/<calendar name>" to name the calendar
 
-            are delivered with the package.
+            Calendars from pandas_market_calendars can also be loaded with the
+            prefix "PMC/<calendar name>" when that optional dependency is
+            installed.
 
         filename : str
             JSON calendar file using the R-bizdays-style schema.

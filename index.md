@@ -36,6 +36,14 @@ cal.getdate("15th day", "2002-05")
 - `B3`
 - `Actual`
 
+You can discover them programmatically with `list_calendars()`:
+
+```python
+from bizdays import list_calendars
+
+list_calendars()
+```
+
 Use `Calendar.load(name="...")` for packaged calendars and
 `Calendar.load(filename="...")` for your own JSON calendar files.
 

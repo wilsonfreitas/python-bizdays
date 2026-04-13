@@ -8,6 +8,22 @@ return NumPy scalars, vectorized calls return ``numpy.ndarray`` values, missing
 date-like results use ``NaT``, and missing numeric or boolean results use masked
 arrays.
 
+Calendar discovery
+------------------
+
+.. autofunction:: list_calendars
+
+Example:
+
+.. code-block:: python
+
+   from bizdays import list_calendars
+
+   info = list_calendars()
+   info["packaged"]
+   info["pandas_market_calendars"]["available"]
+   info["pandas_market_calendars"]["calendars"]
+
 Calendar construction
 ---------------------
 

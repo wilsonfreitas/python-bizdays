@@ -4,6 +4,8 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
+PACKAGED_CALENDARS: tuple[str, str, str] = ("ANBIMA", "B3", "Actual")
+
 
 @dataclass(frozen=True)
 class CalendarDefinition:
@@ -68,3 +70,7 @@ def load_packaged_calendar_definition(name: str) -> CalendarDefinition:
         raise Exception(f"Invalid calendar: {name}")
     with resource.open("r", encoding="utf-8") as calendar_file:
         return _parse_calendar_payload(json.load(calendar_file), name)
+
+
+def get_packaged_calendar_names() -> list[str]:
+    return list(PACKAGED_CALENDARS)

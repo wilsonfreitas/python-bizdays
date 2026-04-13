@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import bizdays.calendar as calendar_module
+from bizdays import list_calendars
 from bizdays.calendar import Calendar
 
 
@@ -80,6 +82,48 @@ def test_public_import():
     from bizdays import Calendar
     cal = Calendar.load(name="B3")
     assert cal.name == "B3"
+
+
+def test_list_calendars_packaged_names():
+    result = list_calendars()
+    assert result["packaged"] == ["ANBIMA", "B3", "Actual"]
+
+
+def test_list_calendars_reports_pmc_metadata():
+    result = list_calendars()
+    pmc = result["pandas_market_calendars"]
+    assert pmc["prefix"] == "PMC/"
+    assert isinstance(pmc["available"], bool)
+    assert isinstance(pmc["calendars"], list)
+
+
+def test_list_calendars_reports_available_pmc_names():
+    result = list_calendars()
+    pmc = result["pandas_market_calendars"]
+    assert pmc["available"] is True
+    assert "B3" in pmc["calendars"]
+
+
+def test_list_calendars_reports_unavailable_pmc(monkeypatch):
+    monkeypatch.setattr(
+        calendar_module,
+        "_list_pandas_market_calendars",
+        lambda: {
+            "available": False,
+            "prefix": "PMC/",
+            "calendars": [],
+        },
+    )
+
+    result = calendar_module.list_calendars()
+    assert result == {
+        "packaged": ["ANBIMA", "B3", "Actual"],
+        "pandas_market_calendars": {
+            "available": False,
+            "prefix": "PMC/",
+            "calendars": [],
+        },
+    }
 
 
 def test_calendar_default_args_are_not_shared():
