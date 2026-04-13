@@ -5,6 +5,7 @@ from itertools import cycle
 from typing import Any, Callable, Generator, Sequence, TypeVar
 
 from bizdays.calendarfile import CalendarDefinition, load_calendar_definition, load_packaged_calendar_definition
+from bizdays.external import load_exchange_calendar, load_pandas_market_calendar
 
 PANDAS_INSTALLED: bool = False
 
@@ -1016,15 +1017,18 @@ class Calendar:
 
         name : str
             Name of the calendar.
-            The calendar is loaded from a file delivered with the package.
-            The calendars:
+            Packaged calendars delivered with the package are:
 
             * B3
             * ANBIMA
             * Actual
-            * calendars from pandas_market_calendars - use the prefix "PMC/<calendar name>" to name the calendar
 
-            are delivered with the package.
+            Calendars from pandas_market_calendars can also be loaded with the
+            prefix "PMC/<calendar name>" when that optional dependency is
+            installed.
+
+            Calendars from exchange_calendars can also be loaded with the prefix
+            "XCAL/<calendar name>" when that optional dependency is installed.
 
         filename : str
             JSON calendar file using the R-bizdays-style schema.
@@ -1045,12 +1049,28 @@ class Calendar:
             assert name is not None
             if name.startswith("PMC/"):
                 try:
-                    import pandas_market_calendars as mcal  # type: ignore[import-untyped]
+                    data = load_pandas_market_calendar(name[4:])
                 except ImportError:
                     raise Exception("pandas_market_calendars must be installed to use PMC calendars")
-                cal = mcal.get_calendar(name[4:])
-                hol = cal.holidays()
-                return Calendar((d.item() for d in hol.holidays), weekdays=("Saturday", "Sunday"), name=name)
+                return Calendar(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"] or "",
+                    enddate=data["enddate"] or "",
+                    name=name,
+                )
+            elif name.startswith("XCAL/"):
+                try:
+                    data = load_exchange_calendar(name[5:])
+                except ImportError:
+                    raise Exception("exchange_calendars must be installed to use XCAL calendars")
+                return Calendar(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"] or "",
+                    enddate=data["enddate"] or "",
+                    name=name,
+                )
             else:
                 definition = load_packaged_calendar_definition(name)
                 return cls._load_calendar_definition(definition)

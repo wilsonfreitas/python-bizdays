@@ -96,6 +96,8 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "exchange-calendars", version = "4.5.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "exchange-calendars", version = "4.11.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ipykernel", version = "6.31.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "ipykernel", version = "7.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "mypy", version = "1.19.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -122,10 +124,16 @@ docs = [
 pmc = [
     { name = "pandas-market-calendars" },
 ]
+xcal = [
+    { name = "exchange-calendars", version = "4.5.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "exchange-calendars", version = "4.11.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "alabaster", marker = "extra == 'docs'" },
+    { name = "exchange-calendars", marker = "extra == 'dev'", specifier = ">=4,<5" },
+    { name = "exchange-calendars", marker = "extra == 'xcal'", specifier = ">=4,<5" },
     { name = "ipykernel", marker = "extra == 'dev'" },
     { name = "ipywidgets", marker = "extra == 'docs'" },
     { name = "lxml", marker = "extra == 'docs'" },
@@ -142,7 +150,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sphinx", marker = "extra == 'docs'" },
 ]
-provides-extras = ["pmc", "dev", "docs"]
+provides-extras = ["pmc", "xcal", "dev", "docs"]
 
 [[package]]
 name = "bleach"

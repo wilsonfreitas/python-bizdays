@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from datetime import date, datetime
-from importlib import import_module
 from typing import TypedDict, TypeAlias, overload
 
 import numpy as np
@@ -15,6 +14,12 @@ from bizdays.calendarfile import (
 )
 from bizdays.date import Date
 from bizdays.dateindex import DateIndex
+from bizdays.external import (
+    load_exchange_calendar,
+    load_pandas_market_calendar,
+    list_exchange_calendar_names,
+    list_pandas_market_calendar_names,
+)
 from bizdays.utils import isseq, recycle_arrays
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
@@ -44,6 +49,7 @@ class CalendarIntegrationListing(TypedDict):
 class CalendarListing(TypedDict):
     packaged: list[str]
     pandas_market_calendars: CalendarIntegrationListing
+    exchange_calendars: CalendarIntegrationListing
 
 
 def _normalize_date_input(dt: DateInput) -> DateArray:
@@ -94,7 +100,24 @@ def _finalize_masked_bool_result(
 def _list_pandas_market_calendars() -> CalendarIntegrationListing:
     prefix = "PMC/"
     try:
-        mcal = import_module("pandas_market_calendars")
+        calendars = list_pandas_market_calendar_names()
+    except ImportError:
+        return {
+            "available": False,
+            "prefix": prefix,
+            "calendars": [],
+        }
+    return {
+        "available": True,
+        "prefix": prefix,
+        "calendars": calendars,
+    }
+
+
+def _list_exchange_calendars() -> CalendarIntegrationListing:
+    prefix = "XCAL/"
+    try:
+        calendars = list_exchange_calendar_names()
     except ImportError:
         return {
             "available": False,
@@ -102,7 +125,6 @@ def _list_pandas_market_calendars() -> CalendarIntegrationListing:
             "calendars": [],
         }
 
-    calendars = [str(name) for name in dict.fromkeys(mcal.get_calendar_names())]
     return {
         "available": True,
         "prefix": prefix,
@@ -122,6 +144,7 @@ def list_calendars() -> CalendarListing:
     return {
         "packaged": get_packaged_calendar_names(),
         "pandas_market_calendars": _list_pandas_market_calendars(),
+        "exchange_calendars": _list_exchange_calendars(),
     }
 
 
@@ -685,6 +708,9 @@ class Calendar:
             prefix "PMC/<calendar name>" when that optional dependency is
             installed.
 
+            Calendars from exchange_calendars can also be loaded with the prefix
+            "XCAL/<calendar name>" when that optional dependency is installed.
+
         filename : str
             JSON calendar file using the R-bizdays-style schema.
 
@@ -704,12 +730,28 @@ class Calendar:
             assert name is not None
             if name.startswith("PMC/"):
                 try:
-                    import pandas_market_calendars as mcal  # type: ignore[import-untyped]
+                    data = load_pandas_market_calendar(name[4:])
                 except ImportError:
                     raise Exception("pandas_market_calendars must be installed to use PMC calendars")
-                cal = mcal.get_calendar(name[4:])  # type: ignore
-                hol = cal.holidays()
-                _cal = cls([d.item() for d in hol.holidays], weekdays=["Saturday", "Sunday"], name=name)
+                _cal = cls(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"],
+                    enddate=data["enddate"],
+                    name=name,
+                )
+            elif name.startswith("XCAL/"):
+                try:
+                    data = load_exchange_calendar(name[5:])
+                except ImportError:
+                    raise Exception("exchange_calendars must be installed to use XCAL calendars")
+                _cal = cls(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"],
+                    enddate=data["enddate"],
+                    name=name,
+                )
             else:
                 definition = load_packaged_calendar_definition(name)
                 _cal = cls._load_calendar_definition(definition)

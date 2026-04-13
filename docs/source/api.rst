@@ -23,6 +23,8 @@ Example:
    info["packaged"]
    info["pandas_market_calendars"]["available"]
    info["pandas_market_calendars"]["calendars"]
+   info["exchange_calendars"]["available"]
+   info["exchange_calendars"]["calendars"]
 
 Calendar construction
 ---------------------
@@ -80,6 +82,10 @@ Packaged calendars shipped with the project:
 
 Optional integration with ``pandas_market_calendars`` remains available through
 the ``PMC/`` prefix, for example ``Calendar.load(name="PMC/NYSE")`` when the
+optional dependency is installed.
+
+Optional integration with ``exchange_calendars`` is available through the
+``XCAL/`` prefix, for example ``Calendar.load(name="XCAL/XNYS")`` when the
 optional dependency is installed.
 
 Core business-day calculations

@@ -77,6 +77,14 @@ def test_calendar_load_pmc():
     assert len(cal.holidays) > 4000
 
 
+def test_calendar_load_xcal():
+    cal = Calendar.load(name="XCAL/XNYS")
+    assert cal.name == "XCAL/XNYS"
+    assert cal.isbizday("2024-01-02")
+    assert not cal.isbizday("2024-01-01")
+    assert not cal.isbizday("2024-01-06")
+
+
 def test_public_import():
     """Calendar is importable from the top-level package."""
     from bizdays import Calendar
@@ -97,11 +105,26 @@ def test_list_calendars_reports_pmc_metadata():
     assert isinstance(pmc["calendars"], list)
 
 
+def test_list_calendars_reports_exchange_metadata():
+    result = list_calendars()
+    xcal = result["exchange_calendars"]
+    assert xcal["prefix"] == "XCAL/"
+    assert isinstance(xcal["available"], bool)
+    assert isinstance(xcal["calendars"], list)
+
+
 def test_list_calendars_reports_available_pmc_names():
     result = list_calendars()
     pmc = result["pandas_market_calendars"]
     assert pmc["available"] is True
     assert "B3" in pmc["calendars"]
+
+
+def test_list_calendars_reports_available_xcal_names():
+    result = list_calendars()
+    xcal = result["exchange_calendars"]
+    assert xcal["available"] is True
+    assert "XNYS" in xcal["calendars"]
 
 
 def test_list_calendars_reports_unavailable_pmc(monkeypatch):
@@ -116,14 +139,44 @@ def test_list_calendars_reports_unavailable_pmc(monkeypatch):
     )
 
     result = calendar_module.list_calendars()
-    assert result == {
-        "packaged": ["ANBIMA", "B3", "Actual"],
-        "pandas_market_calendars": {
+    assert result["pandas_market_calendars"] == {
+        "available": False,
+        "prefix": "PMC/",
+        "calendars": [],
+    }
+
+
+def test_list_calendars_reports_unavailable_xcal(monkeypatch):
+    monkeypatch.setattr(
+        calendar_module,
+        "_list_exchange_calendars",
+        lambda: {
             "available": False,
-            "prefix": "PMC/",
+            "prefix": "XCAL/",
             "calendars": [],
         },
+    )
+
+    result = calendar_module.list_calendars()
+    assert result["exchange_calendars"] == {
+        "available": False,
+        "prefix": "XCAL/",
+        "calendars": [],
     }
+
+
+def test_calendar_load_xcal_requires_optional_dependency(monkeypatch):
+    def raise_import_error(name):
+        raise ImportError
+
+    monkeypatch.setattr(
+        calendar_module,
+        "load_exchange_calendar",
+        raise_import_error,
+    )
+
+    with pytest.raises(Exception, match="exchange_calendars"):
+        Calendar.load(name="XCAL/XNYS")
 
 
 def test_calendar_default_args_are_not_shared():
