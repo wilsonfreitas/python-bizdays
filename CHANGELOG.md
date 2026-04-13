@@ -1,3 +1,33 @@
+### version 1.0.20 (2026-04-12)
+
+* NumPy-backed `Calendar.getdate(expr, ref)` implemented for month (`YYYY-MM`), year (`YYYY` / `int`), and date references.
+* Added direct parser and resolver support for relative weekday expressions such as `next wed`, `previous mon`, and ordinal weekday lookups from date references.
+* Fixed weekday-anchor expressions such as `1st bizday before 2nd fri` in the new API (Issue #31).
+* Bundled calendars migrated from `.cal` files to JSON definitions.
+* Active `getdate` coverage added in `tests/test_getdate.py`, including migrated legacy expectations and direct `DateIndex.getdate(...)` checks.
+* API and index documentation updated for the new `getdate(expr, ref)` signature.
+
+### version 1.0.19 (2026-01-04)
+
+* Restructured package: converted from single module to package directory
+* Calendar files (.cal) are now properly installed with the package
+
+### version 1.0.18 (2026-01-03)
+
+* Updated B3.cal with 2026's holidays
+
+### version 1.0.16 (2025-01-05)
+
+* Updated B3.cal with 2025's holidays (thanks @victorhugow)
+
+### version 1.0.15 (2024-06-23)
+
+* Organized dependencies (Issue #51)
+
+### version 1.0.14 (2024-06-17)
+
+* Support to Python 3.12 (Issue #50)
+
 ### version 1.0.13 (2024-xx-xx)
 
 * [BUG] bizdays doesn't handle correctly non-business days in edges (Issue #47)
