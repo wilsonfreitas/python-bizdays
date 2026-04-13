@@ -4,27 +4,90 @@
 
 # [python-bizdays](http://wilsonfreitas.github.io/python-bizdays/)
 
-In several countries and markets, the accountability of the price of a financial
-instrument, mainly bonds and derivatives, involves the use of different rules to
-compute the way the days go by.
-In Brazil, several financial instruments pay interest according to the business
-days along their life cycle.
-So, having a way to compute the number of business days between 2 dates is
-fairly useful to price financial instruments.
-**bizdays** was created to make it easier.
+`bizdays` provides business-day calculations around the current NumPy-backed
+`Calendar` API. The top-level `bizdays.Calendar` accepts scalar dates, Python
+sequences, NumPy arrays, and pandas date-like inputs while returning NumPy
+scalars or arrays.
 
-**bizdays** computes business days between two dates based on the definition of
-nonworking days (usually holidays and weekends).
-It also computes other collateral effects like adjust dates for the next or
-previous business day, check whether a date is a business day, create sequences
-of business days, and much more.
+## Install
 
-Several financial libraries compute the holidays, giving no option to users set
-it by their own.
-Furtherly, the financial calendar is usually a small feature of a huge library,
-as quantlib, for example, and some users, including myself, don't want to put a
-hand in such a huge library only to use the financial calendar.
+```bash
+pip install bizdays
+```
 
-**bizdays** is a pure Python module without strong dependencies,
-what makes it appropriated for small projects.
+Install the optional `pandas_market_calendars` integration with:
 
+```bash
+pip install "bizdays[pmc]"
+```
+
+## Quickstart
+
+```python
+from bizdays import Calendar
+
+cal = Calendar.load(name="ANBIMA")
+
+cal.bizdays("2014-01-13", "2015-01-13")
+cal.following("2015-12-25")
+cal.seq("2014-01-02", "2014-01-07")
+cal.getdate("15th day", "2002-05")
+```
+
+## Calendars that come with the package
+
+- `ANBIMA`
+- `B3`
+- `Actual`
+
+Use `Calendar.load(name="...")` for packaged calendars and
+`Calendar.load(filename="...")` for custom JSON calendar files.
+
+## Create a calendar from scratch
+
+```python
+from bizdays import Calendar
+
+custom = Calendar(
+    holidays=["2024-01-01", "2024-12-25"],
+    weekdays=["Saturday", "Sunday"],
+    startdate="2024-01-01",
+    enddate="2024-12-31",
+    name="Example",
+)
+```
+
+## JSON calendar layout
+
+`Calendar.load(filename="...")` expects a JSON object with these fields:
+
+- `name`: string
+- `weekdays`: list of weekday names
+- `holidays`: list of ISO date strings
+- `financial`: boolean
+- `adjust.from` and `adjust.to`: optional strings accepted for schema compatibility
+
+Example:
+
+```json
+{
+  "name": "Custom",
+  "weekdays": ["saturday", "sunday"],
+  "holidays": ["2024-01-01", "2024-12-25"],
+  "financial": true
+}
+```
+
+## API notes
+
+- packaged calendars: `ANBIMA`, `B3`, and `Actual`
+- `PMC/...` calendar names require the optional `bizdays[pmc]` extra
+- top-level `Calendar` methods return NumPy-native values such as
+  `numpy.datetime64`, `numpy.int_`, `numpy.ndarray`, and masked arrays
+- pandas timestamps, indexes, and series can be passed directly to the public API
+
+## Migration
+
+See the [migration guide](docs/source/migration.rst) for updates from older
+examples that used positional `Calendar.load(...)`, `.cal` packaged files, or
+older return-type expectations.

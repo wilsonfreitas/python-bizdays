@@ -1,21 +1,32 @@
 name: Sphinx build
 
-on: push
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: uv sync --extra dev --extra docs
     - name: Build HTML
-      uses: wilsonfreitas/sphinx-action@master
+      run: make -C docs html
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: html-docs
         path: docs/build/html/
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/build/html

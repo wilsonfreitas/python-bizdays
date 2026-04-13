@@ -221,8 +221,8 @@ class Calendar:
 
         Returns
         -------
-        numpy.int_, numpy.ndarray
-            The number of business days between date_from and date_to.
+        numpy scalar or numpy.ndarray
+            The number of business days between ``date_from`` and ``date_to``.
         """
         single_value = not (isseq(date_from) or isseq(date_to))
         _date_from = _normalize_date_input(date_from)
@@ -258,8 +258,8 @@ class Calendar:
         Returns
         -------
 
-        numpy.bool_, numpy.ndarray
-            Returns True if the given date is a business day and False otherwise.
+        numpy scalar or numpy.ndarray
+            Returns ``True`` if the given date is a business day and ``False`` otherwise.
         """
         single_value = not isseq(dt)
         _dt = _normalize_date_input(dt)
@@ -292,7 +292,7 @@ class Calendar:
         Returns
         -------
 
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns the next business day if the given date is not a business day.
 
         """
@@ -338,7 +338,7 @@ class Calendar:
         Returns
         -------
 
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns the next business day unless that would cross into the next month.
 
         """
@@ -379,7 +379,7 @@ class Calendar:
         Returns
         -------
 
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns the previous business day if the given date is not a business day.
 
         """
@@ -425,7 +425,7 @@ class Calendar:
         Returns
         -------
 
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns the previous business day unless that would cross into the previous month.
 
         """
@@ -495,7 +495,7 @@ class Calendar:
 
         Returns
         -------
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns the given dates offset by the given amount of business days.
 
         """
@@ -557,7 +557,7 @@ class Calendar:
 
         Returns
         -------
-        numpy.datetime64, numpy.ndarray
+        numpy.datetime64 or numpy.ndarray
             Returns dates according to the given reference.
         """
         single_value = not (isseq(expr) or isseq(ref))

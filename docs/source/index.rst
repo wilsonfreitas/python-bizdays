@@ -1,42 +1,41 @@
-Welcome to bizdays's documentation!
-===================================
+bizdays documentation
+=====================
 
-In several countries and markets, the accountability of the price of a financial
-instrument, mainly bonds and derivatives, involves the use of different rules to
-compute the way the days go by.
-In Brazil, several financial instruments pay interest according to the business
-days along their life cycle.
-So, having a way to compute the number of business days between 2 dates is
-fairly useful to price financial instruments.
-**bizdays** was created to make it easier.
+``bizdays`` provides business-day calculations around a NumPy-backed
+``Calendar`` API. The top-level ``bizdays.Calendar`` accepts scalar dates,
+Python sequences, NumPy arrays, and pandas date-like inputs, while returning
+NumPy scalars or arrays for consistent vectorized behavior.
 
-**bizdays** computes business days between two dates based on the definition of
-nonworking days (usually holidays and weekends).
-It also computes other collateral effects like adjust dates for the next or
-previous business day, check whether a date is a business day, create sequences
-of business days, and much more.
+This documentation is intentionally focused on the current public API:
 
-Several financial libraries compute the holidays, giving no option to users set
-it by their own.
-Furtherly, the financial calendar is usually a small feature of a huge library,
-as quantlib, for example, and some users, including myself, don't want to put a
-hand in such a huge library only to use the financial calendar.
-
-**bizdays** is a pure Python module without strong dependencies,
-what makes it appropriated for small projects.
+- build calendars directly with :class:`bizdays.Calendar`
+- load packaged calendars with ``Calendar.load(name=...)``
+- load custom JSON calendar files with ``Calendar.load(filename=...)``
+- work with Python, NumPy, and pandas date-like inputs using the same API
 
 Install
 -------
-
-**bizdays** is avalilable at PyPI, so it is pip instalable:
 
 .. code-block:: shell
 
    pip install bizdays
 
+Use ``pip install "bizdays[pmc]"`` when you want to load
+``pandas_market_calendars`` calendars through the ``PMC/`` prefix.
 
-Check out the :doc:`quick` section for further information.
+The notebooks under ``docs/source/`` are the canonical documentation examples
+and are executed during the Sphinx build.
 
+Documentation map
+-----------------
+
+- :doc:`quick` introduces the core workflow.
+- :doc:`calendars` shows packaged calendars, constructor-based calendars, and
+  JSON calendar files.
+- :doc:`pandas` focuses on pandas inputs and NumPy-backed outputs.
+- :doc:`getdate` documents date-expression lookups.
+- :doc:`api` is the method-by-method reference.
+- :doc:`migration` is the only page that discusses older documentation patterns.
 
 Contents
 --------
@@ -48,6 +47,7 @@ Contents
    pandas
    calendars
    getdate
+   migration
    api
 
 
@@ -56,4 +56,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-

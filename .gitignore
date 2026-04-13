@@ -17,4 +17,3 @@ _build
 .vscode
 __pycache__
 .ipynb_checkpoints/*
-docs/source/*.ipynb
