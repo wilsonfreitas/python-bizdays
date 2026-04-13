@@ -5,7 +5,11 @@ from itertools import cycle
 from typing import Any, Callable, Generator, Sequence, TypeVar
 
 from bizdays.calendarfile import CalendarDefinition, load_calendar_definition, load_packaged_calendar_definition
-from bizdays.external import load_exchange_calendar, load_pandas_market_calendar
+from bizdays.external import (
+    load_exchange_calendar,
+    load_pandas_market_calendar,
+    load_workalendar_calendar,
+)
 
 PANDAS_INSTALLED: bool = False
 
@@ -1030,6 +1034,9 @@ class Calendar:
             Calendars from exchange_calendars can also be loaded with the prefix
             "XCAL/<calendar name>" when that optional dependency is installed.
 
+            Calendars from workalendar can also be loaded with the prefix
+            "WORK/<calendar code>" when that optional dependency is installed.
+
         filename : str
             JSON calendar file using the R-bizdays-style schema.
 
@@ -1064,6 +1071,18 @@ class Calendar:
                     data = load_exchange_calendar(name[5:])
                 except ImportError:
                     raise Exception("exchange_calendars must be installed to use XCAL calendars")
+                return Calendar(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"] or "",
+                    enddate=data["enddate"] or "",
+                    name=name,
+                )
+            elif name.startswith("WORK/"):
+                try:
+                    data = load_workalendar_calendar(name[5:])
+                except ImportError:
+                    raise Exception("workalendar must be installed to use WORK calendars")
                 return Calendar(
                     data["holidays"],
                     weekdays=data["weekdays"],

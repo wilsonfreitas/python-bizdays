@@ -109,6 +109,7 @@ dev = [
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pytest", version = "9.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ruff" },
+    { name = "workalendar" },
 ]
 docs = [
     { name = "alabaster", version = "0.7.16", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -123,6 +124,9 @@ docs = [
 ]
 pmc = [
     { name = "pandas-market-calendars" },
+]
+work = [
+    { name = "workalendar" },
 ]
 xcal = [
     { name = "exchange-calendars", version = "4.5.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -149,8 +153,10 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sphinx", marker = "extra == 'docs'" },
+    { name = "workalendar", marker = "extra == 'dev'", specifier = ">=17,<18" },
+    { name = "workalendar", marker = "extra == 'work'", specifier = ">=17,<18" },
 ]
-provides-extras = ["pmc", "xcal", "dev", "docs"]
+provides-extras = ["pmc", "xcal", "work", "dev", "docs"]
 
 [[package]]
 name = "bleach"
@@ -678,6 +684,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/59/ebfb8c677c75605cc27f7122c90313fd2f375ff3c8d19a1694bda74aaa63/contourpy-1.3.3-pp311-pypy311_pp73-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:70f9aad7de812d6541d29d2bbf8feb22ff7e1c299523db288004e3157ff4674e", size = 302202, upload-time = "2025-07-26T12:02:55.947Z" },
     { url = "https://files.pythonhosted.org/packages/3c/37/21972a15834d90bfbfb009b9d004779bd5a07a0ec0234e5ba8f64d5736f4/contourpy-1.3.3-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5ed3657edf08512fc3fe81b510e35c2012fbd3081d2e26160f27ca28affec989", size = 329207, upload-time = "2025-07-26T12:02:57.468Z" },
     { url = "https://files.pythonhosted.org/packages/0c/58/bd257695f39d05594ca4ad60df5bcb7e32247f9951fd09a9b8edb82d1daa/contourpy-1.3.3-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:3d1a3799d62d45c18bafd41c5fa05120b96a28079f2393af559b843d1a966a77", size = 225315, upload-time = "2025-07-26T12:02:58.801Z" },
+]
+
+[[package]]
+name = "convertdate"
+version = "2.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pymeeus" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/8d/540bf9cdbcd59352ecf7a1925197881465a6c24fd6171765dc11bbeed19e/convertdate-2.4.1.tar.gz", hash = "sha256:ace904a9d0230742732471748160b99d6ae881c2d0dc9a2463c7a37340c56c91", size = 52505, upload-time = "2026-02-08T00:37:53.812Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/53/63d707d9de41aab3c51faa4f0e9234c36ee8c63f56c90c3ae23a01976e81/convertdate-2.4.1-py3-none-any.whl", hash = "sha256:0622acf8bc600956b937e8dd7cee36ba035669b62d2db224bf130af1fc84f754", size = 48440, upload-time = "2026-02-08T00:37:52.405Z" },
 ]
 
 [[package]]
@@ -1624,6 +1642,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1c/22/b7f76808250cb18ff6444c81f94bd5bc9832c41c4f6764a373fc54db64a1/librt-0.9.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:2d03fa4fd277a7974c1978c92c374c57f44edeee163d147b477b143446ad1bf6", size = 243144, upload-time = "2026-04-09T16:06:22.294Z" },
     { url = "https://files.pythonhosted.org/packages/8e/0d/64aa7ecc4368d45d1330682b6a6f48e8234389a6b1d41eb6d40f8d099e6d/librt-0.9.0-cp39-cp39-win32.whl", hash = "sha256:d9da80e5b04acce03ced8ba6479a71c2a2edf535c2acc0d09c80d2f80f3bad15", size = 55461, upload-time = "2026-04-09T16:06:23.86Z" },
     { url = "https://files.pythonhosted.org/packages/d7/1a/63732c1062b744669ff1aff62e788fd66a3f6635ae0e66061291ddc63b5c/librt-0.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:54d412e47c21b85865676ed0724e37a89e9593c2eee1e7367adf85bfad56ffb1", size = 62726, upload-time = "2026-04-09T16:06:24.995Z" },
+]
+
+[[package]]
+name = "lunardate"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/85/71/62fadf243502618cf2a7af5b81936a99684147c655729934f014758c3b39/lunardate-0.2.2.tar.gz", hash = "sha256:8ff8c01721bef7710f0712a302b1cb7d0b8b3ffc72a63a9a056cd01e58e5485a", size = 17686, upload-time = "2023-12-07T13:13:21.09Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/07/232401bb1c6bc699c5e641ad375e2582cdde90b19b18e6618ec51796b737/lunardate-0.2.2-py3-none-any.whl", hash = "sha256:cf1916337e50470a82df12d885ff47a456e89c91a3ad4e5fdf1575e063a7ed55", size = 18081, upload-time = "2023-12-07T13:13:19.333Z" },
 ]
 
 [[package]]
@@ -2978,6 +3005,12 @@ wheels = [
 ]
 
 [[package]]
+name = "pymeeus"
+version = "0.5.12"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/76/599896b37e60f43078afd8354b3802eb7ca257a7e7f6253cc21c4c672877/PyMeeus-0.5.12.tar.gz", hash = "sha256:548f7186bd8b96cbc069cf649a8e8e377dce49ac74486709849fe63a99cad684", size = 5752712, upload-time = "2022-12-11T11:37:48.504Z" }
+
+[[package]]
 name = "pyparsing"
 version = "3.2.5"
 source = { registry = "https://pypi.org/simple" }
@@ -3948,6 +3981,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bd/f4/c67440c7fb409a71b7404b7aefcd7569a9c0d6bd071299bf4198ae7a5d95/widgetsnbextension-4.0.15.tar.gz", hash = "sha256:de8610639996f1567952d763a5a41af8af37f2575a41f9852a38f947eb82a3b9", size = 1097402, upload-time = "2025-11-01T21:15:55.178Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/0e/fa3b193432cfc60c93b42f3be03365f5f909d2b3ea410295cf36df739e31/widgetsnbextension-4.0.15-py3-none-any.whl", hash = "sha256:8156704e4346a571d9ce73b84bee86a29906c9abfd7223b7228a28899ccf3366", size = 2196503, upload-time = "2025-11-01T21:15:53.565Z" },
+]
+
+[[package]]
+name = "workalendar"
+version = "17.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "convertdate" },
+    { name = "lunardate" },
+    { name = "pyluach" },
+    { name = "python-dateutil" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a7/16/e2d59c5a3b2d01519778dc1820daab70054022d88ff8291df602b2620481/workalendar-17.0.0.tar.gz", hash = "sha256:b82d6024aed452505b01baf06dbe8d6309a3135ff1d39dee07c31b21ece853b4", size = 153468, upload-time = "2023-01-01T22:33:06.471Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/23/2fd9e240ae95be5653d57cc39d5377278eb376b4b3f30e27526d831b1668/workalendar-17.0.0-py3-none-any.whl", hash = "sha256:8fe1d6758f9a1af05d59cb81480afb912246ec7fa46e246b909897127cdbb1b0", size = 210652, upload-time = "2023-01-01T22:33:03.869Z" },
 ]
 
 [[package]]

@@ -25,6 +25,8 @@ Example:
    info["pandas_market_calendars"]["calendars"]
    info["exchange_calendars"]["available"]
    info["exchange_calendars"]["calendars"]
+   info["workalendar"]["available"]
+   info["workalendar"]["calendars"]
 
 Calendar construction
 ---------------------
@@ -87,6 +89,10 @@ optional dependency is installed.
 Optional integration with ``exchange_calendars`` is available through the
 ``XCAL/`` prefix, for example ``Calendar.load(name="XCAL/XNYS")`` when the
 optional dependency is installed.
+
+Optional integration with ``workalendar`` is available through the ``WORK/``
+prefix, for example ``Calendar.load(name="WORK/FR")`` when the optional
+dependency is installed. The ``WORK/`` names use workalendar registry codes.
 
 Core business-day calculations
 ------------------------------

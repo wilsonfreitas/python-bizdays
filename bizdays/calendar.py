@@ -17,8 +17,10 @@ from bizdays.dateindex import DateIndex
 from bizdays.external import (
     load_exchange_calendar,
     load_pandas_market_calendar,
+    load_workalendar_calendar,
     list_exchange_calendar_names,
     list_pandas_market_calendar_names,
+    list_workalendar_calendar_names,
 )
 from bizdays.utils import isseq, recycle_arrays
 
@@ -50,6 +52,7 @@ class CalendarListing(TypedDict):
     packaged: list[str]
     pandas_market_calendars: CalendarIntegrationListing
     exchange_calendars: CalendarIntegrationListing
+    workalendar: CalendarIntegrationListing
 
 
 def _normalize_date_input(dt: DateInput) -> DateArray:
@@ -132,6 +135,24 @@ def _list_exchange_calendars() -> CalendarIntegrationListing:
     }
 
 
+def _list_workalendar_calendars() -> CalendarIntegrationListing:
+    prefix = "WORK/"
+    try:
+        calendars = list_workalendar_calendar_names()
+    except ImportError:
+        return {
+            "available": False,
+            "prefix": prefix,
+            "calendars": [],
+        }
+
+    return {
+        "available": True,
+        "prefix": prefix,
+        "calendars": calendars,
+    }
+
+
 def list_calendars() -> CalendarListing:
     """
     List the packaged calendars and supported optional calendar integrations.
@@ -145,6 +166,7 @@ def list_calendars() -> CalendarListing:
         "packaged": get_packaged_calendar_names(),
         "pandas_market_calendars": _list_pandas_market_calendars(),
         "exchange_calendars": _list_exchange_calendars(),
+        "workalendar": _list_workalendar_calendars(),
     }
 
 
@@ -711,6 +733,9 @@ class Calendar:
             Calendars from exchange_calendars can also be loaded with the prefix
             "XCAL/<calendar name>" when that optional dependency is installed.
 
+            Calendars from workalendar can also be loaded with the prefix
+            "WORK/<calendar code>" when that optional dependency is installed.
+
         filename : str
             JSON calendar file using the R-bizdays-style schema.
 
@@ -745,6 +770,18 @@ class Calendar:
                     data = load_exchange_calendar(name[5:])
                 except ImportError:
                     raise Exception("exchange_calendars must be installed to use XCAL calendars")
+                _cal = cls(
+                    data["holidays"],
+                    weekdays=data["weekdays"],
+                    startdate=data["startdate"],
+                    enddate=data["enddate"],
+                    name=name,
+                )
+            elif name.startswith("WORK/"):
+                try:
+                    data = load_workalendar_calendar(name[5:])
+                except ImportError:
+                    raise Exception("workalendar must be installed to use WORK calendars")
                 _cal = cls(
                     data["holidays"],
                     weekdays=data["weekdays"],

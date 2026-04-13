@@ -10,6 +10,7 @@ dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 [project.optional-dependencies]
 pmc = ["pandas-market-calendars>=4,<5"]
 xcal = ["exchange-calendars>=4,<5"]
+work = ["workalendar>=17,<18"]
 dev = [
     "pytest",
     "pycodestyle",
@@ -19,6 +20,7 @@ dev = [
     "pre-commit",
     "pandas-market-calendars>=4,<5",
     "exchange-calendars>=4,<5",
+    "workalendar>=17,<18",
 ]
 docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 

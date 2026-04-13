@@ -20,6 +20,7 @@ Install the optional integrations with:
 ```bash
 pip install "bizdays[pmc]"
 pip install "bizdays[xcal]"
+pip install "bizdays[work]"
 ```
 
 ## Quickstart
@@ -56,6 +57,7 @@ External providers are also available through prefixed names:
 
 - `Calendar.load(name="PMC/<calendar>")` for `pandas_market_calendars`
 - `Calendar.load(name="XCAL/<calendar>")` for `exchange_calendars`
+- `Calendar.load(name="WORK/<code>")` for `workalendar`
 
 ## Create a calendar from scratch
 
@@ -97,6 +99,7 @@ Example:
 - packaged calendars: `ANBIMA`, `B3`, and `Actual`
 - `PMC/...` names require the optional `bizdays[pmc]` extra
 - `XCAL/...` names require the optional `bizdays[xcal]` extra
+- `WORK/...` names require the optional `bizdays[work]` extra
 - top-level `Calendar` methods return NumPy-native values such as
   `numpy.datetime64`, `numpy.int_`, `numpy.ndarray`, and masked arrays
 - pandas timestamps, indexes, and series can be passed directly to the public API

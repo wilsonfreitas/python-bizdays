@@ -85,6 +85,14 @@ def test_calendar_load_xcal():
     assert not cal.isbizday("2024-01-06")
 
 
+def test_calendar_load_work():
+    cal = Calendar.load(name="WORK/FR")
+    assert cal.name == "WORK/FR"
+    assert not cal.isbizday("2024-01-01")
+    assert cal.isbizday("2024-01-02")
+    assert not cal.isbizday("2024-01-07")
+
+
 def test_public_import():
     """Calendar is importable from the top-level package."""
     from bizdays import Calendar
@@ -113,6 +121,14 @@ def test_list_calendars_reports_exchange_metadata():
     assert isinstance(xcal["calendars"], list)
 
 
+def test_list_calendars_reports_workalendar_metadata():
+    result = list_calendars()
+    work = result["workalendar"]
+    assert work["prefix"] == "WORK/"
+    assert isinstance(work["available"], bool)
+    assert isinstance(work["calendars"], list)
+
+
 def test_list_calendars_reports_available_pmc_names():
     result = list_calendars()
     pmc = result["pandas_market_calendars"]
@@ -125,6 +141,13 @@ def test_list_calendars_reports_available_xcal_names():
     xcal = result["exchange_calendars"]
     assert xcal["available"] is True
     assert "XNYS" in xcal["calendars"]
+
+
+def test_list_calendars_reports_available_workalendar_names():
+    result = list_calendars()
+    work = result["workalendar"]
+    assert work["available"] is True
+    assert "FR" in work["calendars"]
 
 
 def test_list_calendars_reports_unavailable_pmc(monkeypatch):
@@ -177,6 +200,39 @@ def test_calendar_load_xcal_requires_optional_dependency(monkeypatch):
 
     with pytest.raises(Exception, match="exchange_calendars"):
         Calendar.load(name="XCAL/XNYS")
+
+
+def test_list_calendars_reports_unavailable_workalendar(monkeypatch):
+    monkeypatch.setattr(
+        calendar_module,
+        "_list_workalendar_calendars",
+        lambda: {
+            "available": False,
+            "prefix": "WORK/",
+            "calendars": [],
+        },
+    )
+
+    result = calendar_module.list_calendars()
+    assert result["workalendar"] == {
+        "available": False,
+        "prefix": "WORK/",
+        "calendars": [],
+    }
+
+
+def test_calendar_load_work_requires_optional_dependency(monkeypatch):
+    def raise_import_error(name):
+        raise ImportError
+
+    monkeypatch.setattr(
+        calendar_module,
+        "load_workalendar_calendar",
+        raise_import_error,
+    )
+
+    with pytest.raises(Exception, match="workalendar"):
+        Calendar.load(name="WORK/FR")
 
 
 def test_calendar_default_args_are_not_shared():
