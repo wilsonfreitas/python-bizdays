@@ -11,7 +11,6 @@ bizdays.egg-info/*
 bizdays.egg-info
 venv
 _templates
-_static
 _build
 .pytest_cache
 .vscode
