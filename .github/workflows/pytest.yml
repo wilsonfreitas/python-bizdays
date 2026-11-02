@@ -4,7 +4,8 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
+    branches: [ master, feature/typing ]
 
 jobs:
   quality:
@@ -27,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4

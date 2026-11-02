@@ -4,7 +4,7 @@ version = "1.0.20"
 description = "Functions to handle business days calculations"
 authors = [{ name = "wilsonfreitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
 [project.optional-dependencies]
@@ -35,7 +35,7 @@ build-backend = "hatchling.build"
 include = ["bizdays/**/*.py", "bizdays/data/*.json"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 120
 extend-exclude = ["tests/legacy"]
 
@@ -44,7 +44,7 @@ select = ["E4", "E7", "E9", "F"]
 ignore = ["E712"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.10"
 files = ["bizdays"]
 warn_unused_configs = true
 show_error_codes = true
