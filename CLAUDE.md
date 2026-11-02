@@ -38,9 +38,9 @@ uv run pre-commit run --all-files
 
 ### Dual Calendar Implementation
 
-- **`bizdays/bizdays.py`** — Legacy implementation using pure Python `datetime.date` objects and a dict-based `DateIndex`. Also defines `VectorizedOps` for sequence operations via iteration, and `get_option`/`set_option` for runtime mode switching (python vs pandas). This is the `Calendar` exported as the public API from `bizdays/__init__.py` (currently empty — public imports must be traced through the module files directly).
+- **`bizdays/bizdays.py`** — Legacy implementation using pure Python `datetime.date` objects and a dict-based `DateIndex`. Also defines `VectorizedOps` for sequence operations via iteration, and `get_option`/`set_option` for runtime mode switching (python vs pandas); these options do not affect the NumPy `Calendar`. It is not the public `Calendar`: `bizdays/__init__.py` only re-exports `get_option`/`set_option` from it.
 
-- **`bizdays/calendar.py`** — New numpy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `recycle_arrays()`.
+- **`bizdays/calendar.py`** — New numpy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `recycle_arrays()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
 
 ### Supporting modules
 
@@ -50,11 +50,13 @@ uv run pre-commit run --all-files
 
 - **`bizdays/date.py`** — `Date` wrapper supporting `str`, `datetime.date`, `datetime.datetime`, `np.datetime64`, and `None`.
 
+- **`bizdays/getdate_parser.py`** — Parser for `getdate` expressions such as `"last bizday"` or `"1st bizday before 2nd fri"`; `DateIndex.getdate` resolves them.
+
 - **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `match()`, `recycle_arrays()`, `DateOutOfRange`.
 
 ### Calendar data files
 
-Built-in JSON files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual** calendars, using the R-bizdays-style schema. External calendars can be loaded via `Calendar.load("PMC/<name>")` using `pandas_market_calendars`.
+Built-in JSON files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual** calendars, using the R-bizdays-style schema (parsed by `bizdays/calendarfile.py`). `Calendar.load()` is keyword-only: `name=` for built-in calendars, `filename=` for a custom JSON file. External calendars use name prefixes, each behind an optional extra, with adapters in `bizdays/external.py`: `name="PMC/<name>"` (`pandas_market_calendars`, extra `pmc`), `name="XCAL/<name>"` (`exchange_calendars`, extra `xcal`) and `name="WORK/<code>"` (`workalendar`, extra `work`).
 
 ### Key design pattern
 
