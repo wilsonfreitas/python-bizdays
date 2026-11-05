@@ -430,7 +430,9 @@ class Calendar:
             The number of business days between ``date_from`` and ``date_to``,
             as ``float64``. A missing input gives ``NaN``. When no business day
             lies between the two dates the count is 0, unlike R bizdays, which
-            returns -1 or +1.
+            returns -1 or +1. With ``financial=False`` the count is the number
+            of business days in the closed interval [``date_from``, ``date_to``],
+            both ends included, negative when ``date_from > date_to``.
         """
         _date_from, vec_from = to_dates(date_from, "date_from")
         _date_to, vec_to = to_dates(date_to, "date_to")
@@ -438,14 +440,8 @@ class Calendar:
         raw = {"date_from": _date_from, "date_to": _date_to}
         _date_from, _date_to = broadcast_pair(_date_from, _date_to, "date_from", "date_to")
 
-        def count(d_from: DateArray, d_to: DateArray) -> npt.NDArray[np.int64]:
-            counts = self._index.bizdays(d_from, d_to)
-            if not self.financial:
-                counts = counts + np.where(d_from > d_to, -1, 1)
-            return counts
-
         bdays = self._apply(
-            count,
+            lambda d_from, d_to: self._index.bizdays(d_from, d_to, self.financial),
             np.full(_date_from.shape, np.nan),
             np.isnat(_date_from) | np.isnat(_date_to),
             {"date_from": _date_from, "date_to": _date_to},

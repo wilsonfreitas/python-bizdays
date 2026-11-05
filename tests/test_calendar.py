@@ -356,6 +356,75 @@ def test_bizdays_vector_without_missing_is_float64(anbima):
     assert result.tolist() == [21.0]
 
 
+# financial=False counts the business days in the closed interval [from, to] (values checked with R bizdays)
+@pytest.mark.parametrize(
+    "date_from, date_to, expected",
+    [
+        ("2013-06-22", "2013-06-23", 0),  # Sat -> Sun
+        ("2013-06-23", "2013-06-22", 0),  # Sun -> Sat
+        ("2013-06-22", "2013-06-22", 0),  # Sat -> same Sat
+        ("2013-06-23", "2013-06-23", 0),  # Sun -> same Sun
+        ("2013-06-22", "2013-06-29", 5),  # Sat -> next Sat
+        ("2013-06-29", "2013-06-22", -5),
+        ("2013-06-24", "2013-06-25", 2),  # Mon -> Tue
+        ("2013-06-24", "2013-06-24", 1),  # Mon -> same Mon
+        ("2013-06-25", "2013-06-24", -2),  # Tue -> Mon
+        ("2018-03-02", "2018-03-05", 2),  # Fri -> Mon
+    ],
+)
+def test_bizdays_nonfinancial_closed_interval(date_from, date_to, expected):
+    cal = Calendar(weekdays=["Saturday", "Sunday"], financial=False)
+    assert cal.bizdays(date_from, date_to) == expected
+
+
+def test_bizdays_nonfinancial_vectorized():
+    cal = Calendar(weekdays=["Saturday", "Sunday"], financial=False)
+    result = cal.bizdays(["2013-06-22", "2013-06-24", None, "2013-06-25"], ["2013-06-23", "2013-06-25", "2013-06-25", "2013-06-24"])
+    np.testing.assert_array_equal(result, [0.0, 2.0, np.nan, -2.0])
+
+
+def test_bizdays_nonfinancial_anbima(anbima):
+    cal = Calendar(holidays=anbima.holidays, weekdays=["Saturday", "Sunday"], financial=False)
+    result = cal.bizdays(
+        ["2013-01-01", "2013-02-08", "2013-02-15", "2013-12-31", "2013-12-24", "2013-01-01"],
+        ["2013-01-02", "2013-02-15", "2013-02-08", "2014-01-01", "2013-12-26", "2014-01-01"],
+    )
+    np.testing.assert_array_equal(result, [1, 4, -4, 1, 2, 253])
+    assert anbima.bizdays("2013-01-01", "2014-01-01") == 252
+
+
+def test_bizdays_nonfinancial_r_consistency():
+    # R test-bizdays.R "it should check consistency in bizdays" (nursery calendar)
+    hol = ["2024-01-01", "2024-03-29", "2024-04-01", "2024-05-06", "2024-05-27", "2024-08-26", "2024-12-25", "2024-12-26"]
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Saturday", "Sunday"]
+    cal = Calendar(hol, weekdays, startdate="2024-01-01", enddate="2024-12-31", financial=False)
+    assert cal.bizdays("2024-12-23", "2024-12-29") == 1
+    assert cal.bizdays("2024-12-29", "2024-12-23") == -1
+    # R: one single day and reversed sign on a non-financial actual calendar
+    actual = Calendar(name="actual-no-fin", financial=False)
+    assert actual.bizdays("2021-12-30", "2021-12-30") == 1
+    assert -actual.bizdays("2014-07-12", "2013-07-12") == actual.bizdays("2013-07-12", "2014-07-12")
+
+
+def test_bizdays_nonfinancial_r_usa2017_ends():
+    # R test-calendar.R "it should create non financial calendars": non-business ends do not count
+    hd = ["2017-01-02", "2017-01-16", "2017-02-20", "2017-05-29", "2017-07-04", "2017-09-04", "2017-10-09"]
+    hd += ["2017-11-10", "2017-11-23", "2017-12-25"]
+    cal = Calendar(hd, ["Saturday", "Sunday"], startdate="2017-01-01", enddate="2017-12-31", financial=False)
+    assert cal.bizdays("2017-09-04", "2017-09-08") == cal.bizdays("2017-09-04", "2017-09-09") == 4
+    assert cal.bizdays("2017-09-04", "2017-09-08") == cal.bizdays("2017-09-05", "2017-09-08")
+    assert cal.bizdays("2017-09-05", "2017-09-09") == cal.bizdays("2017-09-05", "2017-09-08")
+
+
+def test_diff_nonfinancial_is_pairwise_bizdays():
+    cal = Calendar(weekdays=["Saturday", "Sunday"], financial=False)
+    dts = ["2013-06-22", "2013-06-23", "2013-06-24", "2013-06-25", "2013-06-29"]
+    result = cal.diff(dts)
+    np.testing.assert_array_equal(result, cal.bizdays(dts[:-1], dts[1:]))
+    np.testing.assert_array_equal(result, [0, 1, 2, 4])  # not additive: sum 7 != bizdays(first, last) == 5
+    assert cal.bizdays(dts[0], dts[-1]) == 5
+
+
 def test_isbizday_vector_is_always_masked_array(anbima):
     r = anbima.isbizday(["2013-01-01", "2013-01-02"])
     assert isinstance(r, np.ma.MaskedArray)
