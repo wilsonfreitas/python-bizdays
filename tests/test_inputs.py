@@ -1,5 +1,5 @@
 import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
@@ -205,3 +205,67 @@ def test_r_negative_bizdays_with_missing(anbima):
 def test_r_invalid_date_string(anbima):
     with pytest.raises(ValueError):
         anbima.bizdays("2013-31-02", "2013-01-03")
+
+
+# --- seq and diff ---
+
+
+def test_seq_missing_endpoint_raises(anbima):
+    for a, b in [(None, "2024-01-10"), ("2024-01-02", None), (pd.NA, "2024-01-10")]:
+        with pytest.raises(ValueError, match="missing"):
+            anbima.seq(a, b)
+
+
+def test_seq_rejects_vectors(anbima):
+    with pytest.raises(ValueError, match="single dates"):
+        anbima.seq(["2024-01-02"], "2024-01-05")
+    with pytest.raises(ValueError, match="single dates"):
+        anbima.seq(["2024-01-02", "2024-01-03"], "2024-01-05")
+    with pytest.raises(ValueError, match="single dates"):
+        anbima.seq("2024-01-02", np.array(["2024-01-05"], dtype="datetime64[D]"))
+
+
+def test_seq_time_part_and_time_zone(anbima):
+    calls = [
+        (np.datetime64("2024-01-02"), np.datetime64("2024-01-05T10:00")),
+        (date(2024, 1, 2), datetime(2024, 1, 5, 10)),
+        (pd.Timestamp("2024-01-02 23:30", tz="America/Sao_Paulo"), "2024-01-05"),
+    ]
+    for a, b in calls:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = anbima.seq(a, b)
+        assert result.dtype == np.dtype("datetime64[D]")
+        assert result.astype(str).tolist() == ["2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"]
+
+
+def test_seq_rejects_numbers(actual):
+    with pytest.raises(ValueError, match="numbers are not dates"):
+        actual.seq(5, 10)
+
+
+def test_diff_missing_gives_nan(anbima):
+    np.testing.assert_array_equal(anbima.diff(["2024-01-02", None, "2024-01-10"]), [np.nan, np.nan])
+    np.testing.assert_array_equal(anbima.diff(pd.Series(["2024-01-02", "2024-01-05", None])), [3, np.nan])
+
+
+def test_diff_checks_range(anbima):
+    with pytest.raises(DateOutOfRange):
+        anbima.diff(["1900-01-01"])
+
+
+def test_diff_scalar_and_empty(anbima):
+    for x in ["2024-01-02", []]:
+        result = anbima.diff(x)
+        assert result.dtype == np.float64
+        assert result.shape == (0,)
+
+
+def test_diff_time_zone(anbima):
+    s = pd.Series(pd.to_datetime(["2024-01-02 23:30", "2024-01-05 23:30"]).tz_localize("America/Sao_Paulo"))
+    assert anbima.diff(s).tolist() == [3.0]
+
+
+def test_diff_rejects_2d(anbima):
+    with pytest.raises(ValueError, match="must be 1-D"):
+        anbima.diff([["2024-01-02", "2024-01-10"]])

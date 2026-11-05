@@ -541,8 +541,13 @@ class Calendar:
         numpy.ndarray
             Returns a NumPy array containing business days only.
         """
-        _from: np.datetime64 = np.datetime64(date_from)
-        _to: np.datetime64 = np.datetime64(date_to)
+        from_dates, vec_from = to_dates(date_from, "date_from")
+        to_dates_, vec_to = to_dates(date_to, "date_to")
+        if vec_from or vec_to:
+            raise ValueError("seq takes single dates, not vectors")
+        _from, _to = from_dates[0], to_dates_[0]
+        if np.isnat(_from) or np.isnat(_to):
+            raise ValueError("seq endpoints cannot be missing")
         reverse = False
         if _from > _to:
             _from, _to = _to, _from
@@ -607,7 +612,7 @@ class Calendar:
             The number of business days between consecutive dates, as ``float64``
             with ``NaN`` for missing values.
         """
-        _dts: DateArray = np.asarray(dts, dtype="datetime64[D]")
+        _dts, _ = self._dates(dts, "dts")
         if len(_dts) <= 1:
             return np.array([], dtype=np.float64)
         return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.float64)
