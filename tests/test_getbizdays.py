@@ -176,8 +176,9 @@ def test_getbizdays_partner_still_checked():
         anbima.getbizdays(None, 13)
     with pytest.raises(ValueError, match="whole numbers"):
         anbima.getbizdays(2024.5, np.nan)
-    with pytest.raises(DateOutOfRange):
+    with pytest.raises(DateOutOfRange) as e:
         anbima.getbizdays(1900, np.nan)
+    assert str(e.value).endswith("first at position 0: year=1900")
     assert np.isnan(anbima.getbizdays(2024, np.nan))
 
 

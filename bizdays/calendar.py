@@ -367,7 +367,12 @@ class Calendar:
             return
         positions = np.flatnonzero(bad)
         i = positions[0]
-        args = ", ".join(f"{name}={_format_value(values[i])}" for name, values in paired.items())
+        # a missing count (NaN) is left out: it is not the reason for the error
+        args = ", ".join(
+            f"{name}={_format_value(values[i])}"
+            for name, values in paired.items()
+            if not (isinstance(values[i], np.floating) and np.isnan(values[i]))
+        )
         raise DateOutOfRange(
             f"{len(positions)} of {len(bad)} elements out of {self._range_text()}; first at position {i}: {args}",
             positions=positions,
