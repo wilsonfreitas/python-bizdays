@@ -23,7 +23,8 @@ from bizdays.external import (
     list_pandas_market_calendar_names,
     list_workalendar_calendar_names,
 )
-from bizdays.utils import isseq, recycle_arrays
+from bizdays.getdate_parser import to_exprs, to_refs
+from bizdays.utils import recycle_arrays
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
@@ -643,20 +644,17 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns dates according to the given reference.
         """
-        single_value = not (isseq(expr) or isseq(ref))
-        _expr = np.atleast_1d(np.asarray(expr, dtype=object))
-        _ref = np.atleast_1d(np.asarray(ref, dtype=object))
+        _expr, vec_expr = to_exprs(expr)
+        _ref, vec_ref = to_refs(ref)
+        ref_dates = [r.date for r in _ref if r is not None and r.kind == "date"]
+        self._check_range(np.array(ref_dates, dtype="datetime64[D]"))
+        single_value = not (vec_expr or vec_ref)
         _expr, _ref = recycle_arrays(_expr, _ref)
 
-        missing = np.array([pd.isna(expr_value) or pd.isna(ref_value) for expr_value, ref_value in zip(_expr, _ref)])
+        missing = pd.isna(_expr) | pd.isna(_ref)
         dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-
-        for idx in np.flatnonzero(valid):
-            expr_value = _expr[idx]
-            if not isinstance(expr_value, str):
-                raise ValueError("getdate expressions must be strings or missing")
-            dates[idx] = self._index.getdate(expr_value, _ref[idx])
+        for idx in np.flatnonzero(~missing):
+            dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
 
         return _finalize_date_result(dates, single_value)
 

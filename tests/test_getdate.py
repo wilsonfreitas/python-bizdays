@@ -1,9 +1,10 @@
 from datetime import date, datetime
 
 import numpy as np
+import pandas as pd
 import pytest
 
-from bizdays import Calendar
+from bizdays import Calendar, DateOutOfRange
 from bizdays.calendarfile import load_packaged_calendar_definition
 from bizdays.dateindex import DateIndex
 
@@ -229,3 +230,62 @@ def test_dateindex_getdate_month_reference(anbima_index, expr, ref, expected):
 )
 def test_dateindex_getdate_additional_cases(anbima_index, expr, ref, expected):
     assert str(anbima_index.getdate(expr, ref)) == expected
+
+
+# --- WIL-149: getdate argument conversion ---
+
+
+def test_getdate_whole_float_year_ref(anbima):
+    assert anbima.getdate("first bizday", 2002.0) == np.datetime64("2002-01-02")
+    with pytest.raises(ValueError, match="Invalid getdate ref"):
+        anbima.getdate("first bizday", 2002.5)
+
+
+def test_getdate_datetime64_period_refs(anbima):
+    assert anbima.getdate("first bizday", np.datetime64("2002-01")) == np.datetime64("2002-01-02")
+    assert anbima.getdate("first bizday", np.datetime64("2002")) == np.datetime64("2002-01-02")
+    refs = np.array(["2002-01", "2002-02"], dtype="datetime64[M]")
+    assert anbima.getdate("first bizday", refs).astype(str).tolist() == ["2002-01-02", "2002-02-01"]
+    with pytest.raises(ValueError, match="Invalid getdate ref"):
+        anbima.getdate("first bizday", np.datetime64("2002-01-03", "W"))
+
+
+def test_getdate_date_ref_wall_clock(anbima):
+    assert anbima.getdate("next wed", "2021-02-10T23:30-03:00") == np.datetime64("2021-02-17")
+    ref = pd.Timestamp("2021-02-10 23:30", tz="America/Sao_Paulo")
+    assert anbima.getdate("next wed", ref) == np.datetime64("2021-02-17")
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [np.ma.masked, pd.NA, np.datetime64("NaT"), float("nan")],
+    ids=["masked", "NA", "NaT", "nan"],
+)
+def test_getdate_missing_values(anbima, ref):
+    assert np.isnat(anbima.getdate("first bizday", ref))
+    assert np.isnat(anbima.getdate(pd.NA, "2002-01"))
+
+
+@pytest.mark.parametrize("dt", ["string", "nan-string"])
+def test_getdate_pandas_string_exprs(anbima, dt):
+    if dt == "nan-string":
+        try:
+            dt = pd.StringDtype(na_value=np.nan)
+        except TypeError:
+            pytest.skip("pandas < 2.3 has no StringDtype(na_value=np.nan)")
+    exprs = pd.Series(["first bizday", None], dtype=dt)
+    assert anbima.getdate(exprs, "2002-01").astype(str).tolist() == ["2002-01-02", "NaT"]
+
+
+def test_getdate_non_missing_partner_checked(anbima):
+    with pytest.raises(ValueError, match="Invalid getdate ref"):
+        anbima.getdate(None, "2021/02")
+    with pytest.raises(ValueError, match="expressions must be strings"):
+        anbima.getdate(123, None)
+    with pytest.raises(DateOutOfRange):
+        anbima.getdate(None, "1900-01-02")
+
+
+def test_getdate_rejects_2d(anbima):
+    with pytest.raises(ValueError, match="must be 1-D"):
+        anbima.getdate([["first day"]], "2002-01")

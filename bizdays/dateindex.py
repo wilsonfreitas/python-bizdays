@@ -5,6 +5,7 @@ from bizdays.getdate_parser import (
     CompositeGetDateExpression,
     GetDateExpression,
     GetDateTarget,
+    NormalizedRef,
     RelativeGetDateExpression,
     SimpleGetDateExpression,
     normalize_ref,
@@ -148,9 +149,9 @@ class DateIndex(object):
         d_to = int(date_to.astype(int))
         return self._bizdays[(self._n_bizdays >= d_from) & (self._n_bizdays <= d_to)]
 
-    def getdate(self, expr: str, ref: object) -> np.datetime64:
-        parsed = parse_getdate_expression(expr)
-        normalized = normalize_ref(ref)
+    def getdate(self, expr: str | GetDateExpression, ref: object) -> np.datetime64:
+        parsed = parse_getdate_expression(expr) if isinstance(expr, str) else expr
+        normalized = ref if isinstance(ref, NormalizedRef) else normalize_ref(ref)
 
         if normalized.kind == "date":
             assert normalized.date is not None
