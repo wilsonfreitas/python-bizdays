@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -639,3 +640,34 @@ def test_diff(anbima):
 def test_diff_single_element(anbima):
     result = anbima.diff(["2013-01-02"])
     assert len(result) == 0
+
+
+# --- constructor date rules (WIL-149) ---
+
+
+def test_calendar_constructor_dates_follow_input_rules():
+    assert Calendar(startdate="2020-01-01T10:00").startdate == date(2020, 1, 1)
+    expected = [date(2024, 1, 1), date(2024, 12, 25)]
+    cal = Calendar(holidays=[pd.Timestamp("2024-01-01 23:30", tz="America/Sao_Paulo"), "2024-12-25"])
+    assert cal.holidays == expected
+    assert Calendar(holidays=pd.Series(["2024-01-01", "2024-12-25"], dtype="string")).holidays == expected
+
+
+def test_calendar_constructor_rejects_missing_dates():
+    with pytest.raises(ValueError, match="holidays cannot contain missing"):
+        Calendar(holidays=[None, "2024-12-25"])
+    with pytest.raises(ValueError, match="startdate cannot be missing"):
+        Calendar(startdate=float("nan"))
+    with pytest.raises(ValueError, match="enddate cannot be missing"):
+        Calendar(enddate=pd.NaT)
+
+
+def test_calendar_constructor_rejects_bad_dates():
+    with pytest.raises(ValueError, match="numbers are not dates"):
+        Calendar(holidays=[5, "2024-12-25"])
+    with pytest.raises(ValueError, match="invalid date string"):
+        Calendar(holidays=["2024-01", "2024-12-25"])
+    with pytest.raises(ValueError, match="single date"):
+        Calendar(startdate=["2020-01-01"])
+    with pytest.raises(ValueError, match="sequence of dates"):
+        Calendar(holidays="2024-01-01")

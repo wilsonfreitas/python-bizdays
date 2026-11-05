@@ -32,6 +32,8 @@ class DateIndex(object):
         enddate: np.datetime64,
         weekdays: list[int],
     ):
+        if holidays.dtype != np.dtype("datetime64[D]"):
+            raise ValueError("holidays must be a datetime64[D] array")
         self.weekdays: list[int] = weekdays
         self.holidays = holidays
         self._n_holidays = holidays.astype("datetime64[D]").astype(int)

@@ -56,6 +56,26 @@ class CalendarListing(TypedDict):
     workalendar: CalendarIntegrationListing
 
 
+def _constructor_date(value: object, name: str) -> np.datetime64:
+    dates, is_vector = to_dates(value, name)
+    if is_vector:
+        raise ValueError(f"{name} must be a single date")
+    if np.isnat(dates[0]):
+        raise ValueError(f"{name} cannot be missing")
+    return dates[0]
+
+
+def _constructor_holidays(holidays: object) -> DateArray:
+    if holidays is None:
+        return np.array([], dtype="datetime64[D]")
+    dates, is_vector = to_dates(holidays, "holidays")
+    if not is_vector:
+        raise ValueError("holidays must be a sequence of dates")
+    if np.isnat(dates).any():
+        raise ValueError("holidays cannot contain missing values")
+    return dates
+
+
 def _finalize_date_result(result: DateArray, single_value: bool) -> np.datetime64 | DateArray:
     return result[0] if single_value else result
 
@@ -208,13 +228,11 @@ class Calendar:
         name: str = "",
         financial: bool = True,
     ) -> None:
-        if holidays is None:
-            holidays = []
         if weekdays is None:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
-        self._holidays: DateArray = np.array([Date(d).format() for d in holidays], dtype="datetime64[D]")
+        self._holidays: DateArray = _constructor_holidays(holidays)
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
         ]
@@ -222,20 +240,20 @@ class Calendar:
         self._enddate: Date
         if len(self._holidays):
             if startdate is not None:
-                self._startdate = Date(startdate)
+                self._startdate = Date(_constructor_date(startdate, "startdate").astype(object))
             else:
                 self._startdate = Date(min(self._holidays).astype("O"))
             if enddate is not None:
-                self._enddate = Date(enddate)
+                self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date(max(self._holidays).astype("O"))
         else:
             if startdate is not None:
-                self._startdate = Date(startdate)
+                self._startdate = Date(_constructor_date(startdate, "startdate").astype(object))
             else:
                 self._startdate = Date("1970-01-01")
             if enddate is not None:
-                self._enddate = Date(enddate)
+                self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date("2071-01-01")
         self._index: DateIndex = DateIndex(
