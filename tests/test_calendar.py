@@ -34,12 +34,14 @@ def test_calendar_load_invalid():
 def test_calendar_load_missing_file(tmp_path):
     with pytest.raises(FileNotFoundError):
         Calendar.load(filename=str(tmp_path / "nope.json"))
+    with pytest.raises(FileNotFoundError):
+        Calendar.load(filename=str(tmp_path))
 
 
 def test_calendar_load_cal_file(tmp_path):
     filename = tmp_path / "x.cal"
     filename.write_text("2001-01-01\n2001-02-26\n", encoding="utf-8")
-    with pytest.raises(ValueError, match=r"\.cal"):
+    with pytest.raises(ValueError, match="no longer supported"):
         Calendar.load(filename=str(filename))
 
 
@@ -64,34 +66,51 @@ def test_calendar_load_json_accepts_default_adjust(tmp_path):
 
 
 PROVIDERS = [
-    ("PMC/B3", "load_pandas_market_calendar", "pandas_market_calendars", "pmc"),
-    ("XCAL/XNYS", "load_exchange_calendar", "exchange_calendars", "xcal"),
-    ("WORK/FR", "load_workalendar_calendar", "workalendar", "work"),
+    ("PMC/B3", "pandas_market_calendar", "pandas_market_calendars", "pmc"),
+    ("XCAL/XNYS", "exchange_calendar", "exchange_calendars", "xcal"),
+    ("WORK/FR", "workalendar_calendar", "workalendar", "work"),
 ]
 
 
-@pytest.mark.parametrize("name,loader,package,extra", PROVIDERS)
-def test_calendar_load_missing_provider(monkeypatch, name, loader, package, extra):
-    def raise_import_error(name):
-        raise ImportError
+def _patch_provider(monkeypatch, provider, names, loader):
+    monkeypatch.setattr(calendar_module, f"list_{provider}_names", names)
+    monkeypatch.setattr(calendar_module, f"load_{provider}", loader)
 
-    monkeypatch.setattr(calendar_module, loader, raise_import_error)
+
+def _raise(error):
+    def raiser(*args):
+        raise error
+
+    return raiser
+
+
+@pytest.mark.parametrize("name,provider,package,extra", PROVIDERS)
+def test_calendar_load_missing_provider(monkeypatch, name, provider, package, extra):
+    _patch_provider(monkeypatch, provider, _raise(ImportError), _raise(ImportError))
     with pytest.raises(ImportError, match=package) as excinfo:
         Calendar.load(name=name)
     assert f"bizdays[{extra}]" in str(excinfo.value)
 
 
-@pytest.mark.parametrize("error", [RuntimeError, KeyError, ValueError])
-@pytest.mark.parametrize("name,loader,package,extra", PROVIDERS)
-def test_calendar_load_unknown_provider_name(monkeypatch, name, loader, package, extra, error):
-    def raise_provider_error(name):
-        raise error("provider error")
-
-    monkeypatch.setattr(calendar_module, loader, raise_provider_error)
+@pytest.mark.parametrize("name,provider,package,extra", PROVIDERS)
+def test_calendar_load_unknown_provider_name(monkeypatch, name, provider, package, extra):
+    _patch_provider(monkeypatch, provider, lambda: [name.split("/")[1]], _raise(AssertionError("not called")))
     prefix = name.split("/")[0]
     with pytest.raises(ValueError, match="NOPE") as excinfo:
         Calendar.load(name=f"{prefix}/NOPE")
     assert prefix in str(excinfo.value)
+
+
+@pytest.mark.parametrize("name,provider,package,extra", PROVIDERS)
+def test_calendar_load_provider_error_for_known_name_passes_through(monkeypatch, name, provider, package, extra):
+    _patch_provider(monkeypatch, provider, lambda: [name.split("/")[1]], _raise(RuntimeError("provider failed")))
+    with pytest.raises(RuntimeError, match="provider failed"):
+        Calendar.load(name=name)
+
+
+def test_calendar_load_prefix_without_slash_is_packaged_lookup():
+    with pytest.raises(ValueError, match="Unknown calendar: 'PMC'"):
+        Calendar.load(name="PMC")
 
 
 def test_calendar_load_requires_keyword_arguments():
@@ -251,20 +270,6 @@ def test_list_calendars_reports_unavailable_xcal(monkeypatch):
     }
 
 
-def test_calendar_load_xcal_requires_optional_dependency(monkeypatch):
-    def raise_import_error(name):
-        raise ImportError
-
-    monkeypatch.setattr(
-        calendar_module,
-        "load_exchange_calendar",
-        raise_import_error,
-    )
-
-    with pytest.raises(Exception, match="exchange_calendars"):
-        Calendar.load(name="XCAL/XNYS")
-
-
 def test_list_calendars_reports_unavailable_workalendar(monkeypatch):
     monkeypatch.setattr(
         calendar_module,
@@ -282,20 +287,6 @@ def test_list_calendars_reports_unavailable_workalendar(monkeypatch):
         "prefix": "WORK/",
         "calendars": [],
     }
-
-
-def test_calendar_load_work_requires_optional_dependency(monkeypatch):
-    def raise_import_error(name):
-        raise ImportError
-
-    monkeypatch.setattr(
-        calendar_module,
-        "load_workalendar_calendar",
-        raise_import_error,
-    )
-
-    with pytest.raises(Exception, match="workalendar"):
-        Calendar.load(name="WORK/FR")
 
 
 def test_calendar_default_args_are_not_shared():

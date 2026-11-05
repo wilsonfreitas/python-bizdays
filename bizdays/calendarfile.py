@@ -61,7 +61,7 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
 
 def load_calendar_definition(filename: str) -> CalendarDefinition:
     path = Path(filename)
-    if not path.exists():
+    if not path.is_file():
         raise FileNotFoundError(f"Calendar file not found: {filename}")
     with path.open(encoding="utf-8") as calendar_file:
         try:
