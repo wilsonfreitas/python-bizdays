@@ -25,7 +25,7 @@ from bizdays.external import (
     list_workalendar_calendar_names,
 )
 from bizdays.getdate_parser import to_exprs, to_refs
-from bizdays.utils import recycle_arrays
+from bizdays.utils import broadcast_pair
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
@@ -324,7 +324,7 @@ class Calendar:
         _date_from, vec_from = self._dates(date_from, "date_from")
         _date_to, vec_to = self._dates(date_to, "date_to")
         single_value = not (vec_from or vec_to)
-        _date_from, _date_to = recycle_arrays(_date_from, _date_to)
+        _date_from, _date_to = broadcast_pair(_date_from, _date_to, "date_from", "date_to")
         missing = np.isnat(_date_from) | np.isnat(_date_to)
         bdays = np.full(_date_from.shape, np.nan)
         valid = ~missing
@@ -606,7 +606,7 @@ class Calendar:
         _dt, vec_dt = self._dates(dt, "dt")
         _n, vec_n = to_counts(n, "n")
         single_value = not (vec_dt or vec_n)
-        _dt, _n = recycle_arrays(_dt, _n)
+        _dt, _n = broadcast_pair(_dt, _n, "dt", "n")
         missing = np.isnat(_dt) | np.isnan(_n)
         dts = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
@@ -668,7 +668,7 @@ class Calendar:
         ref_dates = [r.date for r in _ref if r is not None and r.kind == "date"]
         self._check_range(np.array(ref_dates, dtype="datetime64[D]"))
         single_value = not (vec_expr or vec_ref)
-        _expr, _ref = recycle_arrays(_expr, _ref)
+        _expr, _ref = broadcast_pair(_expr, _ref, "expr", "ref")
 
         missing = pd.isna(_expr) | pd.isna(_ref)
         dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")

@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from bizdays.utils import isseq, isstr, match, recycle_arrays
+from bizdays.utils import broadcast_pair, isseq, isstr, match
 
 
 def test_match():
@@ -59,11 +60,33 @@ def test_isseq():
     assert isseq("test") == False, "Expected False for string input"
 
 
-def test_recycle_arrays():
-    a = np.array([1, 2, 3])
-    b = np.array([4, 5])
-    expected_a = np.array([1, 2, 3])
-    expected_b = np.array([4, 5, 4])
-    result_a, result_b = recycle_arrays(a, b)
-    assert np.array_equal(result_a, expected_a), f"Expected {expected_a}, but got {result_a}"
-    assert np.array_equal(result_b, expected_b), f"Expected {expected_b}, but got {result_b}"
+@pytest.mark.parametrize("la, lb", [(3, 2), (2, 4), (0, 2), (2, 0)])
+def test_broadcast_pair_rejects_other_lengths(la, lb):
+    with pytest.raises(ValueError, match=f"a has length {la} and b has length {lb}"):
+        broadcast_pair(np.arange(la), np.arange(lb), "a", "b")
+
+
+def test_broadcast_pair_length_one():
+    a, b = broadcast_pair(np.array([1, 2, 3]), np.array([4]), "a", "b")
+    assert a.tolist() == [1, 2, 3]
+    assert b.tolist() == [4, 4, 4]
+    a, b = broadcast_pair(np.array([4]), np.array([1, 2, 3]), "a", "b")
+    assert a.tolist() == [4, 4, 4]
+    assert b.tolist() == [1, 2, 3]
+
+
+def test_broadcast_pair_equal_lengths():
+    a, b = broadcast_pair(np.array([1, 2]), np.array([3, 4]), "a", "b")
+    assert a.tolist() == [1, 2]
+    assert b.tolist() == [3, 4]
+
+
+@pytest.mark.parametrize(
+    "b_in, b_dtype",
+    [(np.array([5]), np.dtype(np.int64)), (np.array([], dtype=np.float64), np.dtype(np.float64))],
+)
+def test_broadcast_pair_empty(b_in, b_dtype):
+    a, b = broadcast_pair(np.array([], dtype="datetime64[D]"), b_in, "a", "b")
+    assert a.shape == (0,) and b.shape == (0,)
+    assert a.dtype == np.dtype("datetime64[D]")
+    assert b.dtype == b_dtype

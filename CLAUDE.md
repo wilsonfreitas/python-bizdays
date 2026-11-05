@@ -40,7 +40,7 @@ uv run pre-commit run --all-files
 
 The public API is exactly `bizdays.__all__ == ["Calendar", "list_calendars", "DateOutOfRange"]`. Every submodule is internal. `DateOutOfRange` (in `bizdays/utils.py`) subclasses `ValueError`. The legacy `bizdays/bizdays.py` and `get_option`/`set_option` were removed in 2.0.0.
 
-- **`bizdays/calendar.py`** — NumPy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `recycle_arrays()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
+- **`bizdays/calendar.py`** — NumPy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `broadcast_pair()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
 
 ### Supporting modules
 
@@ -50,7 +50,7 @@ The public API is exactly `bizdays.__all__ == ["Calendar", "list_calendars", "Da
 
 - **`bizdays/getdate_parser.py`** — Parser for `getdate` expressions such as `"last bizday"` or `"1st bizday before 2nd fri"`; `DateIndex.getdate` resolves them.
 
-- **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `match()`, `recycle_arrays()`, `DateOutOfRange`.
+- **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `match()`, `broadcast_pair()`, `DateOutOfRange`.
 
 ### Calendar data files
 
