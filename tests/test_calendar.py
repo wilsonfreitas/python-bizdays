@@ -27,8 +27,71 @@ def test_calendar_load():
 
 
 def test_calendar_load_invalid():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="B1"):
         Calendar.load(name="B1")
+
+
+def test_calendar_load_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        Calendar.load(filename=str(tmp_path / "nope.json"))
+
+
+def test_calendar_load_cal_file(tmp_path):
+    filename = tmp_path / "x.cal"
+    filename.write_text("2001-01-01\n2001-02-26\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"\.cal"):
+        Calendar.load(filename=str(filename))
+
+
+def _write_calendar_json(tmp_path, **adjust):
+    filename = tmp_path / "custom.json"
+    payload = {"name": "Custom", "weekdays": ["Saturday", "Sunday"], "holidays": ["2024-01-01", "2024-01-03"]}
+    payload.update(adjust)
+    filename.write_text(json.dumps(payload), encoding="utf-8")
+    return str(filename)
+
+
+def test_calendar_load_json_rejects_non_default_adjust(tmp_path):
+    with pytest.raises(ValueError, match="adjust.to"):
+        Calendar.load(filename=_write_calendar_json(tmp_path, **{"adjust.to": "following"}))
+    with pytest.raises(ValueError, match="adjust.from"):
+        Calendar.load(filename=_write_calendar_json(tmp_path, **{"adjust.from": "preceding"}))
+
+
+def test_calendar_load_json_accepts_default_adjust(tmp_path):
+    filename = _write_calendar_json(tmp_path, **{"adjust.from": "following", "adjust.to": "preceding"})
+    assert Calendar.load(filename=filename).name == "Custom"
+
+
+PROVIDERS = [
+    ("PMC/B3", "load_pandas_market_calendar", "pandas_market_calendars", "pmc"),
+    ("XCAL/XNYS", "load_exchange_calendar", "exchange_calendars", "xcal"),
+    ("WORK/FR", "load_workalendar_calendar", "workalendar", "work"),
+]
+
+
+@pytest.mark.parametrize("name,loader,package,extra", PROVIDERS)
+def test_calendar_load_missing_provider(monkeypatch, name, loader, package, extra):
+    def raise_import_error(name):
+        raise ImportError
+
+    monkeypatch.setattr(calendar_module, loader, raise_import_error)
+    with pytest.raises(ImportError, match=package) as excinfo:
+        Calendar.load(name=name)
+    assert f"bizdays[{extra}]" in str(excinfo.value)
+
+
+@pytest.mark.parametrize("error", [RuntimeError, KeyError, ValueError])
+@pytest.mark.parametrize("name,loader,package,extra", PROVIDERS)
+def test_calendar_load_unknown_provider_name(monkeypatch, name, loader, package, extra, error):
+    def raise_provider_error(name):
+        raise error("provider error")
+
+    monkeypatch.setattr(calendar_module, loader, raise_provider_error)
+    prefix = name.split("/")[0]
+    with pytest.raises(ValueError, match="NOPE") as excinfo:
+        Calendar.load(name=f"{prefix}/NOPE")
+    assert prefix in str(excinfo.value)
 
 
 def test_calendar_load_requires_keyword_arguments():

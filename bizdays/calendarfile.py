@@ -45,8 +45,11 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
     if not isinstance(name, str):
         raise ValueError("Invalid calendar JSON: 'name' must be a string")
 
-    _as_optional_string(payload.get("adjust.from"), "adjust.from")
-    _as_optional_string(payload.get("adjust.to"), "adjust.to")
+    # v2 always adjusts from following and to preceding; other values cannot be honoured.
+    for key, default in (("adjust.from", "following"), ("adjust.to", "preceding")):
+        value = _as_optional_string(payload.get(key), key)
+        if value is not None and value != default:
+            raise ValueError(f"Invalid calendar JSON: '{key}' must be {default!r}, got {value!r}")
 
     return CalendarDefinition(
         name=name,
@@ -59,15 +62,23 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
 def load_calendar_definition(filename: str) -> CalendarDefinition:
     path = Path(filename)
     if not path.exists():
-        raise Exception(f"Invalid calendar: {filename}")
+        raise FileNotFoundError(f"Calendar file not found: {filename}")
     with path.open(encoding="utf-8") as calendar_file:
-        return _parse_calendar_payload(json.load(calendar_file), path.stem)
+        try:
+            payload = json.load(calendar_file)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid calendar file {filename}: a JSON calendar is expected. "
+                "Text .cal files are no longer supported since bizdays 2.0; "
+                "see the migration guide at https://wilsonfreitas.github.io/python-bizdays/migration.html"
+            ) from exc
+    return _parse_calendar_payload(payload, path.stem)
 
 
 def load_packaged_calendar_definition(name: str) -> CalendarDefinition:
     resource = resources.files("bizdays.data").joinpath(f"{name}.json")
     if not resource.is_file():
-        raise Exception(f"Invalid calendar: {name}")
+        raise ValueError(f"Unknown calendar: {name!r}; packaged calendars are {', '.join(PACKAGED_CALENDARS)}")
     with resource.open("r", encoding="utf-8") as calendar_file:
         return _parse_calendar_payload(json.load(calendar_file), name)
 
