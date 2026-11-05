@@ -101,7 +101,8 @@ Example:
 - `XCAL/...` names require the optional `bizdays[xcal]` extra
 - `WORK/...` names require the optional `bizdays[work]` extra
 - top-level `Calendar` methods return NumPy-native values such as
-  `numpy.datetime64`, `numpy.int_`, `numpy.ndarray`, and masked arrays
+  `numpy.datetime64`, `numpy.float64` counts (`NaN` for missing), `numpy.ndarray`,
+  and masked arrays for `isbizday` vectors (`fill_value=False`)
 - pandas timestamps, indexes, and series can be passed directly to the public API
 
 ## Migration

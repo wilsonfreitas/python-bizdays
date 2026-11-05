@@ -4,9 +4,15 @@ API reference
 .. module:: bizdays
 
 The top-level :class:`Calendar` is the NumPy-backed public API. Scalar calls
-return NumPy scalars, vectorized calls return ``numpy.ndarray`` values, missing
-date-like results use ``NaT``, and missing numeric or boolean results use masked
-arrays.
+return NumPy scalars and vectorized calls return NumPy arrays. Date results are
+``datetime64[D]`` with ``NaT`` for missing values. Counts are ``float64``
+(``numpy.float64`` for scalars) with ``NaN`` for missing values. ``isbizday``
+vectors are masked arrays with ``fill_value=False``, and a missing scalar flag
+is ``numpy.ma.masked``.
+
+Numbers, partial strings such as ``"2024-01"``, and ``numpy.datetime64`` values
+with unit ``Y``, ``M`` or ``W`` are not dates and raise ``ValueError``.
+Time-zone-aware values use their wall-clock date.
 
 Public API
 ----------
@@ -125,7 +131,7 @@ Examples:
 
    cal.bizdays("2013-01-02", "2013-01-31")
    cal.bizdays(["2013-01-02", "2013-01-02"], ["2013-01-31", "2013-02-28"])
-   cal.bizdays(None, "2024-01-05")  # masked scalar result
+   cal.bizdays(None, "2024-01-05")  # nan
 
 isbizday
 ^^^^^^^^

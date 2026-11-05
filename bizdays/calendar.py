@@ -354,7 +354,7 @@ class Calendar:
         Returns
         -------
 
-        numpy.bool_ or numpy.ma.MaskedArray
+        ``numpy.bool_`` or ``numpy.ma.MaskedArray``
             Returns ``True`` if the given date is a business day and ``False`` otherwise.
             A vector result is always a masked array with ``fill_value=False``;
             a missing scalar gives ``numpy.ma.masked``.
