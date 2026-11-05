@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Sequence
 from datetime import date, datetime
 from typing import TypedDict, TypeAlias, overload
@@ -75,6 +76,24 @@ def _constructor_holidays(holidays: object) -> DateArray:
     if np.isnat(dates).any():
         raise ValueError("holidays cannot contain missing values")
     return dates
+
+
+_WEEKDAY_NUMBERS = {
+    key: i
+    for i, name in enumerate(("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"))
+    for key in (name, name[:3])
+}
+
+
+def _parse_weekdays(weekdays: Sequence[object]) -> list[int]:
+    """Weekday numbers (Monday = 0) from full or 3-letter English names, any case, without duplicates."""
+    out = []
+    for item in weekdays:
+        key = item.lower() if isinstance(item, str) else None
+        if key not in _WEEKDAY_NUMBERS:
+            raise ValueError(f"Invalid weekday {item!r}; use English names such as 'Saturday' or 'sat'")
+        out.append(_WEEKDAY_NUMBERS[key])
+    return list(dict.fromkeys(out))
 
 
 def _finalize_date_result(result: DateArray, single_value: bool) -> np.datetime64 | DateArray:
@@ -190,12 +209,15 @@ class Calendar:
     ----------
     holidays : list with dates
         Dates can be ISO formated string, datetime.date or datetime.datetime.
+        Holidays outside ``startdate..enddate`` are ignored.
 
     weekdays : list
         A list with weekdays representing nonworking days.
 
-        Accepts: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
-                 'Saturday', 'Sunday'
+        Accepts full or 3-letter English names in any case, such as
+        'Saturday', 'sat' or 'SUN'. Duplicates are removed. Giving holidays
+        with ``weekdays=None`` emits a ``UserWarning``, as in R bizdays; pass
+        ``weekdays=[]`` for a calendar without nonworking weekdays.
 
     startdate : str or datetime.date
         Calendar's start date
@@ -208,6 +230,12 @@ class Calendar:
 
     financial : bool
         Defines a financial calendar
+
+    Raises
+    ------
+    ValueError
+        For an invalid weekday name, ``startdate`` after ``enddate``, or a
+        calendar without business days in its whole range.
     """
 
     _weekdays: tuple[str, str, str, str, str, str, str] = (
@@ -229,14 +257,16 @@ class Calendar:
         name: str = "",
         financial: bool = True,
     ) -> None:
-        if weekdays is None:
-            weekdays = []
         self.financial: bool = financial
         self.name: str = name
         self._holidays: DateArray = _constructor_holidays(holidays)
-        self._nonwork_weekdays: list[int] = [
-            [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
-        ]
+        if weekdays is None and len(self._holidays):
+            warnings.warn(
+                "You provided holidays without set weekdays.\nThat setup leads to inconsistencies!",
+                UserWarning,
+                stacklevel=2,
+            )
+        self._nonwork_weekdays: list[int] = _parse_weekdays(weekdays or [])
         self._startdate: Date
         self._enddate: Date
         if len(self._holidays):
@@ -257,6 +287,10 @@ class Calendar:
                 self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date("2071-01-01")
+        start, end = np.datetime64(self._startdate.date, "D"), np.datetime64(self._enddate.date, "D")
+        if start > end:
+            raise ValueError(f"startdate {start} is after enddate {end}")
+        self._holidays = self._holidays[(self._holidays >= start) & (self._holidays <= end)]
         self._index: DateIndex = DateIndex(
             self._holidays,
             np.datetime64(self._startdate.date),

@@ -49,6 +49,8 @@ class DateIndex(object):
         _is_holiday = np.isin(self._n_dates, self._n_holidays)
         _is_weekday = np.isin(self._weekday_index, self.weekdays)
         self._is_bizday = np.logical_not(np.logical_or(_is_holiday, _is_weekday))
+        if not self._is_bizday.any():
+            raise ValueError(f"The calendar has no business days in {startdate}..{enddate}")
         self._n_bizdays = self._n_dates[self._is_bizday]
         self._bizdays = self._dates[self._is_bizday]
         self._bizdays_index = np.arange(len(self._n_bizdays))
@@ -56,10 +58,6 @@ class DateIndex(object):
         self._n_weekday_dates = [dates.astype("datetime64[D]").astype(int) for dates in self._weekday_dates]
         self._fwd_index = np.cumsum(self._is_bizday) - 1
         self._rev_index = _create_rev_index(self._is_bizday) - 1
-        assert self._fwd_index[-1] == self._rev_index[-1]
-        assert self._fwd_index[-1] == self._bizdays_index[-1]
-        assert self._fwd_index[-1] == len(self._n_bizdays) - 1
-        # self._rev_index = np.cumsum(self._is_bizday[::-1])[::-1]
         dtype = [("dates", "i8"), ("year", "i8"), ("month", "i8"), ("is_bizday", "i4"), ("weekday", "i4")]
         self._dates_table = np.empty(len(self._dates), dtype=dtype)
         self._dates_table["dates"] = self._n_dates
