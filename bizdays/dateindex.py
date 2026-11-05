@@ -84,6 +84,13 @@ class DateIndex(object):
             bdays = np.maximum(bdays - 1, 0)
         return np.where(p_from > p_to, -bdays, bdays)
 
+    def count_bizdays(
+        self, first: npt.NDArray[np.datetime64], last: npt.NDArray[np.datetime64]
+    ) -> npt.NDArray[np.int64]:
+        """Business days in the closed intervals [first, last]; both ends must be in range."""
+        p_first, p_last = self._check(first, last)
+        return self._fwd_index[p_last] - self._fwd_index[p_first] + self._is_bizday[p_first]
+
     def is_bizday(self, date: npt.NDArray[np.datetime64]) -> npt.NDArray[np.bool_]:
         (p,) = self._check(date)
         return self._is_bizday[p]

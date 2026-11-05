@@ -825,29 +825,79 @@ class Calendar:
             self._raise_range(bad, {"expr": texts, "ref": np.array([str(r) for r in _ref], dtype=object)})
         return _finalize_date_result(dates, single_value)
 
-    # def getbizdays(self, year, month=None):
-    #     """
-    #     Business days in a specific year or month.
+    @overload
+    def getbizdays(self, year: int | float, month: int | float | None = None) -> np.float64: ...
 
-    #     Parameters
-    #     ----------
+    @overload
+    def getbizdays(self, year: IntVector, month: int | float | IntVector | None = None) -> FloatArray: ...
 
-    #     year : int, list of int
-    #         Year
+    @overload
+    def getbizdays(self, year: int | float, month: IntVector) -> FloatArray: ...
 
-    #     month : int, list of int
-    #         Month
+    def getbizdays(
+        self, year: int | float | IntVector, month: int | float | IntVector | None = None
+    ) -> np.float64 | FloatArray:
+        """
+        Business days in a whole year, or in one month.
 
-    #     Returns
-    #     -------
-    #     int, list of int
-    #         Returns the number of business days in the given time span.
+        Vector arguments must have equal lengths, or one of them must have length 1;
+        otherwise ``ValueError``.
 
-    #     """
-    #     if any([isseq(year), isseq(month)]):
-    #         return recseq(self.vec.getbizdays(year, month), "array")
-    #     else:
-    #         return self._index.getbizdays(year, month)
+        Parameters
+        ----------
+
+        year : int, list of int
+            Year
+
+        month : int, list of int, optional
+            Month, 1 to 12. The default ``None`` counts the whole year. Only the
+            single value ``None`` means "whole year"; a missing value inside a
+            vector, or any other missing scalar, gives ``NaN``.
+
+        Returns
+        -------
+        numpy.float64 or numpy.ndarray
+            The number of business days in each period, as ``float64``, with
+            ``NaN`` where ``year`` or ``month`` is missing. ``financial`` makes
+            no difference. The whole period must lie inside the calendar range,
+            otherwise ``DateOutOfRange``: on ANBIMA, which ends on 2099-12-25,
+            ``getbizdays(2099, 11)`` works while ``getbizdays(2099, 12)`` and
+            ``getbizdays(2099)`` raise.
+        """
+        _year, vec_y = to_counts(year, "year")
+        if month is None:
+            _month, vec_m = np.zeros(1), False  # month 0 = whole year, internal only
+        else:
+            _month, vec_m = to_counts(month, "month")
+            wrong = ~np.isnan(_month) & ((_month < 1) | (_month > 12))
+            if wrong.any():
+                raise ValueError(f"month must be between 1 and 12 (got {_format_value(_month[wrong][0])})")
+        y0, y1 = self.startdate.year, self.enddate.year
+
+        def bad_year(y: FloatArray) -> BoolArray:
+            return ~np.isnan(y) & ((y < y0) | (y > y1))
+
+        raw_bad = bad_year(_year)
+        _y, _m = broadcast_pair(_year, _month, "year", "month")
+        if len(_y) == 0 and raw_bad.any():
+            raise DateOutOfRange(
+                f"year={_format_value(_year[raw_bad][0])} is out of {self._range_text()} (the result is empty)",
+                positions=[],
+            )
+
+        def count(y: FloatArray, m: FloatArray | None = None) -> npt.NDArray[np.int64]:
+            # the clip keeps huge years out of range without overflow; a NaN month only comes with a bad year
+            y_int = np.clip(y, y0 - 1, y1 + 1).astype(np.int64)
+            m_int = np.zeros(len(y), dtype=np.int64) if m is None else np.nan_to_num(m, nan=1).astype(np.int64)
+            first = ((y_int - 1970) * 12 + np.maximum(m_int, 1) - 1).astype("datetime64[M]")
+            last = (first + np.where(m_int == 0, 12, 1)).astype("datetime64[D]") - 1
+            return self._index.count_bizdays(first.astype("datetime64[D]"), last)
+
+        # a non-missing year is range-checked even when its month is missing
+        missing = np.isnan(_y) | (np.isnan(_m) & ~bad_year(_y))
+        paired = {"year": _y} if month is None else {"year": _y, "month": _m}
+        out = self._apply(count, np.full(_y.shape, np.nan), missing, paired)
+        return _finalize_count_result(out, not (vec_y or vec_m))
 
     @overload
     @classmethod
