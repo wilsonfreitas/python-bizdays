@@ -321,30 +321,60 @@ def test_bizdays_vectorized(anbima):
     assert list(result) == [21, 39]
 
 
-def test_bizdays_scalar_returns_numpy_int(actual):
+def test_bizdays_scalar_returns_numpy_float64(actual):
     result = actual.bizdays("2024-01-01", "2024-01-05")
-    assert isinstance(result, np.int_)
+    assert isinstance(result, np.float64)
+    assert result == 4.0
 
 
-def test_bizdays_scalar_none_returns_masked(actual):
+def test_bizdays_scalar_none_returns_nan(actual):
     result = actual.bizdays(None, "2024-01-05")
-    assert np.ma.is_masked(result)
+    assert isinstance(result, np.float64)
+    assert np.isnan(result)
 
 
-def test_bizdays_vectorized_missing_inputs_return_masked_array(actual):
+def test_bizdays_vectorized_missing_inputs_return_nan(actual):
     result = actual.bizdays(["2024-01-01", None, np.datetime64("NaT")], "2024-01-05")
-    assert isinstance(result, np.ma.MaskedArray)
-    assert result.dtype == np.int_
-    assert result.data.tolist() == [4, 0, 0]
-    assert result.mask.tolist() == [False, True, True]
+    assert type(result) is np.ndarray
+    assert result.dtype == np.float64
+    np.testing.assert_array_equal(result, [4.0, np.nan, np.nan])
 
 
-def test_bizdays_tuple_with_none_returns_masked_array(actual):
+def test_bizdays_tuple_with_none_returns_nan(actual):
     result = actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01")
-    assert isinstance(result, np.ma.MaskedArray)
-    assert result.dtype == np.int_
-    assert result.data.tolist() == [-1, -2, 0]
-    assert result.mask.tolist() == [False, False, True]
+    assert type(result) is np.ndarray
+    assert result.dtype == np.float64
+    np.testing.assert_array_equal(result, [-1.0, -2.0, np.nan])
+
+
+def test_bizdays_vector_without_missing_is_float64(anbima):
+    result = anbima.bizdays(["2013-01-02"], "2013-01-31")
+    assert type(result) is np.ndarray
+    assert result.dtype == np.float64
+    assert result.tolist() == [21.0]
+
+
+def test_isbizday_vector_is_always_masked_array(anbima):
+    r = anbima.isbizday(["2013-01-01", "2013-01-02"])
+    assert isinstance(r, np.ma.MaskedArray)
+    assert r.fill_value == False
+    assert np.ma.getmaskarray(r).tolist() == [False, False]
+    assert r.data.tolist() == [False, True]
+
+
+def test_isbizday_masked_fill_value_is_false(actual):
+    r = actual.isbizday(["2024-01-02", None])
+    assert r.fill_value == False
+    assert r.filled().tolist() == [True, False]
+
+
+def test_diff_returns_float64(anbima):
+    result = anbima.diff(["2013-01-02", "2013-01-03", "2013-01-04"])
+    assert result.dtype == np.float64
+    assert result.tolist() == [1.0, 1.0]
+    result = anbima.diff(["2013-01-02"])
+    assert result.dtype == np.float64
+    assert len(result) == 0
 
 
 # --- isbizday tests ---

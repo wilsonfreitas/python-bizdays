@@ -38,8 +38,7 @@ IntSequence: TypeAlias = list[int] | tuple[int, ...]
 IntVector: TypeAlias = IntSequence | IntArray
 IntInput: TypeAlias = int | IntVector
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
-MaskedIntResult: TypeAlias = np.int_ | IntArray | np.ma.MaskedArray
-MaskedBoolResult: TypeAlias = np.bool_ | BoolArray | np.ma.MaskedArray
+FloatArray: TypeAlias = npt.NDArray[np.float64]
 
 
 class CalendarIntegrationListing(TypedDict):
@@ -82,22 +81,16 @@ def _finalize_date_result(result: DateArray, single_value: bool) -> np.datetime6
     return result[0] if single_value else result
 
 
-def _finalize_masked_int_result(
-    result: IntArray, missing: BoolArray, single_value: bool
-) -> MaskedIntResult:
-    if np.any(missing):
-        masked = np.ma.masked_array(result, mask=missing)
-        return masked[0] if single_value else masked
+def _finalize_count_result(result: FloatArray, single_value: bool) -> np.float64 | FloatArray:
     return result[0] if single_value else result
 
 
-def _finalize_masked_bool_result(
+def _finalize_flag_result(
     result: BoolArray, missing: BoolArray, single_value: bool
-) -> MaskedBoolResult:
-    if np.any(missing):
-        masked = np.ma.masked_array(result, mask=missing)
-        return masked[0] if single_value else masked
-    return result[0] if single_value else result
+) -> np.bool_ | np.ma.MaskedArray:
+    if single_value:
+        return np.ma.masked if missing[0] else result[0]
+    return np.ma.masked_array(result, mask=missing, fill_value=False)
 
 
 def _list_pandas_market_calendars() -> CalendarIntegrationListing:
@@ -294,15 +287,15 @@ class Calendar:
     holidays = property(__get_holidays)
 
     @overload
-    def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.int_: ...
+    def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.float64: ...
 
     @overload
-    def bizdays(self, date_from: DateVector, date_to: DateInput) -> IntArray: ...
+    def bizdays(self, date_from: DateVector, date_to: DateInput) -> FloatArray: ...
 
     @overload
-    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> IntArray: ...
+    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> FloatArray: ...
 
-    def bizdays(self, date_from: DateInput, date_to: DateInput) -> MaskedIntResult:
+    def bizdays(self, date_from: DateInput, date_to: DateInput) -> np.float64 | FloatArray:
         """
         Calculate the amount of business days between two dates
 
@@ -317,31 +310,32 @@ class Calendar:
 
         Returns
         -------
-        numpy scalar or numpy.ndarray
-            The number of business days between ``date_from`` and ``date_to``.
+        numpy.float64 or numpy.ndarray
+            The number of business days between ``date_from`` and ``date_to``,
+            as ``float64``. A missing input gives ``NaN``.
         """
         single_value = not (isseq(date_from) or isseq(date_to))
         _date_from = _normalize_date_input(date_from)
         _date_to = _normalize_date_input(date_to)
         _date_from, _date_to = recycle_arrays(_date_from, _date_to)
         missing = np.isnat(_date_from) | np.isnat(_date_to)
-        bdays = np.zeros(_date_from.shape, dtype=np.int_)
+        bdays = np.full(_date_from.shape, np.nan)
         valid = ~missing
         if np.any(valid):
-            bdays[valid] = self._index.bizdays(_date_from[valid], _date_to[valid])
+            counts = self._index.bizdays(_date_from[valid], _date_to[valid])
             if not self.financial:
                 date_reverse = _date_from[valid] > _date_to[valid]
-                adjust = np.where(date_reverse, -1, 1)
-                bdays[valid] = bdays[valid] + adjust
-        return _finalize_masked_int_result(bdays, missing, single_value)
+                counts = counts + np.where(date_reverse, -1, 1)
+            bdays[valid] = counts
+        return _finalize_count_result(bdays, single_value)
 
     @overload
     def isbizday(self, dt: DateScalar) -> np.bool_: ...
 
     @overload
-    def isbizday(self, dt: DateVector) -> BoolArray: ...
+    def isbizday(self, dt: DateVector) -> np.ma.MaskedArray: ...
 
-    def isbizday(self, dt: DateInput) -> MaskedBoolResult:
+    def isbizday(self, dt: DateInput) -> np.bool_ | np.ma.MaskedArray:
         """
         Checks if the given dates are business days.
 
@@ -354,8 +348,10 @@ class Calendar:
         Returns
         -------
 
-        numpy scalar or numpy.ndarray
+        numpy.bool_ or numpy.ma.MaskedArray
             Returns ``True`` if the given date is a business day and ``False`` otherwise.
+            A vector result is always a masked array with ``fill_value=False``;
+            a missing scalar gives ``numpy.ma.masked``.
         """
         single_value = not isseq(dt)
         _dt = _normalize_date_input(dt)
@@ -364,7 +360,7 @@ class Calendar:
         valid = ~missing
         if np.any(valid):
             is_bizday[valid] = self._index.is_bizday(_dt[valid])
-        return _finalize_masked_bool_result(is_bizday, missing, single_value)
+        return _finalize_flag_result(is_bizday, missing, single_value)
 
     @overload
     def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
@@ -608,7 +604,7 @@ class Calendar:
             dts[valid] = self._index.offset(_dt[valid], _n[valid])
         return _finalize_date_result(dts, single_value)
 
-    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> IntArray:
+    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> FloatArray:
         """
         Compute the number of business days between dates in a given vector
         of dates.
@@ -623,12 +619,13 @@ class Calendar:
         -------
 
         numpy.ndarray
-            The number of business days between consecutive dates.
+            The number of business days between consecutive dates, as ``float64``
+            with ``NaN`` for missing values.
         """
         _dts: DateArray = np.asarray(dts, dtype="datetime64[D]")
         if len(_dts) <= 1:
-            return np.array([], dtype=np.int_)
-        return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.int_)
+            return np.array([], dtype=np.float64)
+        return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.float64)
 
     def getdate(
         self,
