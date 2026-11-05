@@ -560,11 +560,11 @@ class Calendar:
         numpy.ndarray
             Returns a NumPy array containing business days only.
         """
-        from_dates, vec_from = to_dates(date_from, "date_from")
-        to_dates_, vec_to = to_dates(date_to, "date_to")
+        from_arr, vec_from = to_dates(date_from, "date_from")
+        to_arr, vec_to = to_dates(date_to, "date_to")
         if vec_from or vec_to:
             raise ValueError("seq takes single dates, not vectors")
-        _from, _to = from_dates[0], to_dates_[0]
+        _from, _to = from_arr[0], to_arr[0]
         if np.isnat(_from) or np.isnat(_to):
             raise ValueError("seq endpoints cannot be missing")
         reverse = False
