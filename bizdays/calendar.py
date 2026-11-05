@@ -779,6 +779,11 @@ class Calendar:
         """
         _expr, vec_expr = to_exprs(expr)
         _ref, vec_ref = to_refs(ref)
+        kinds = {r.kind for r in _ref if r is not None}
+        if len(kinds) > 1:
+            raise ValueError(
+                f"getdate refs must all be of one kind (year, month or date); found: {', '.join(sorted(kinds))}"
+            )
         single_value = not (vec_expr or vec_ref)
         # refs are checked even where the expression is missing
         raw_ref = _ref

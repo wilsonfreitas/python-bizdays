@@ -138,11 +138,10 @@ def test_getdate_vectorized_expr_and_ref(anbima):
 
 
 def test_getdate_recycles_expr_and_ref(anbima):
-    result = anbima.getdate(
-        ["first day", "next wed"],
-        ["2002-01", "2021-02-10"],
-    )
-    assert result.astype(str).tolist() == ["2002-01-01", "2021-02-17"]
+    # one kind of ref per call (contract D6)
+    with pytest.raises(ValueError, match="one kind") as e:
+        anbima.getdate(["first day", "next wed"], ["2002-01", "2021-02-10"])
+    assert "found: date, month" in str(e.value)
 
 
 def test_getdate_missing_inputs_return_nat(anbima):
@@ -477,3 +476,31 @@ def test_getdate_date_ref_edges(anbima, expr, ref):
 def test_getdate_composite_rejects_date_ref(anbima):
     with pytest.raises(ValueError, match="year or month ref"):
         anbima.getdate("1st bizday before 2nd fri", "2021-02-10")
+
+
+@pytest.mark.parametrize(
+    ("refs", "found"),
+    [
+        (["2002-01", "2021-02-10"], "date, month"),
+        ([2002, "2002-01"], "month, year"),
+        (["2002", date(2021, 2, 10)], "date, year"),
+        ([np.datetime64("2002-01"), np.datetime64("2002-01-10")], "date, month"),
+        (["2002-01", 2002, "2021-02-10"], "date, month, year"),
+    ],
+)
+def test_getdate_one_ref_kind_per_call(anbima, refs, found):
+    with pytest.raises(ValueError, match="one kind") as e:
+        anbima.getdate("first bizday", refs)
+    assert f"found: {found}" in str(e.value)
+
+
+def test_getdate_missing_refs_do_not_count(anbima):
+    result = anbima.getdate("first bizday", ["2002-01", None, np.datetime64("2002-02")])
+    assert result.astype(str).tolist() == ["2002-01-02", "NaT", "2002-02-01"]
+    assert anbima.getdate("next bizday", [None, "2021-02-10"]).astype(str).tolist() == ["NaT", "2021-02-11"]
+
+
+def test_getdate_ref_kind_checked_before_range(anbima):
+    with pytest.raises(ValueError, match="one kind") as e:
+        anbima.getdate("first day", ["1900-01", "2021-02-10"])
+    assert not isinstance(e.value, DateOutOfRange)
