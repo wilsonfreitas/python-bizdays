@@ -5,7 +5,18 @@ import numpy.typing as npt
 
 
 class DateOutOfRange(ValueError):
-    pass
+    """A date, input or result, lies outside the calendar range.
+
+    ``positions`` is a sorted 1-D ``int64`` array with the index of every bad
+    element, counted in the result of the call.
+    """
+
+    def __init__(self, message: str, positions: npt.ArrayLike = (0,)) -> None:
+        super().__init__(message)
+        self.positions: npt.NDArray[np.int64] = np.unique(np.asarray(positions, dtype=np.int64))
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        return (type(self), (str(self), self.positions))
 
 
 def isstr(d: object) -> bool:

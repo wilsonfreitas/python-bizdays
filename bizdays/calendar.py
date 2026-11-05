@@ -25,7 +25,7 @@ from bizdays.external import (
     list_workalendar_calendar_names,
 )
 from bizdays.getdate_parser import to_exprs, to_refs
-from bizdays.utils import broadcast_pair
+from bizdays.utils import DateOutOfRange, broadcast_pair
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
@@ -285,7 +285,8 @@ class Calendar:
     holidays = property(__get_holidays)
 
     def _check_range(self, dates: DateArray) -> None:
-        self._index.check_range(dates[~np.isnat(dates)])
+        if np.any(~np.isnat(dates) & ~self._index.inrange(dates)):
+            raise DateOutOfRange("Given date out of calendar range")
 
     def _dates(self, x: object, name: str) -> tuple[DateArray, bool]:
         # shortcut: range is checked per argument before pairing; WIL-140 moves it after pairing for positions
@@ -371,6 +372,39 @@ class Calendar:
         if np.any(valid):
             is_bizday[valid] = self._index.is_bizday(_dt[valid])
         return _finalize_flag_result(is_bizday, missing, single_value)
+
+    @overload
+    def inrange(self, dates: DateScalar) -> np.bool_ | MaskedConstant: ...
+
+    @overload
+    def inrange(self, dates: DateVector) -> np.ma.MaskedArray: ...
+
+    def inrange(self, dates: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
+        """
+        Checks if the given dates lie inside the calendar range.
+
+        Use it to check input dates before a call; it never raises
+        :class:`DateOutOfRange`. Results that leave the range (``offset``,
+        ``following``, ``getdate``) cannot be checked in advance: catch
+        :class:`DateOutOfRange` and read its ``positions`` instead.
+
+        Parameters
+        ----------
+
+        dates : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be checked
+
+        Returns
+        -------
+
+        ``numpy.bool_`` or ``numpy.ma.MaskedArray``
+            ``True`` where the date lies inside ``startdate..enddate``, both ends
+            included. Output rules as for :meth:`isbizday`: a vector result is a
+            masked array with ``fill_value=False``; a missing scalar gives
+            ``numpy.ma.masked``.
+        """
+        _x, is_vector = to_dates(dates, "dates")
+        return _finalize_flag_result(self._index.inrange(_x), np.isnat(_x), not is_vector)
 
     @overload
     def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
