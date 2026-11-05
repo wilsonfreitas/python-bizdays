@@ -34,19 +34,17 @@ uv run pre-commit run --all-files
 
 ## Architecture
 
-**bizdays** is a Python library for financial business day calculations. It provides two parallel implementations of the `Calendar` class:
+**bizdays** is a Python library for financial business day calculations.
 
-### Dual Calendar Implementation
+### Public surface
 
-- **`bizdays/bizdays.py`** — Legacy implementation using pure Python `datetime.date` objects and a dict-based `DateIndex`. Also defines `VectorizedOps` for sequence operations via iteration, and `get_option`/`set_option` for runtime mode switching (python vs pandas); these options do not affect the NumPy `Calendar`. It is not the public `Calendar`: `bizdays/__init__.py` only re-exports `get_option`/`set_option` from it.
+The public API is exactly `bizdays.__all__ == ["Calendar", "list_calendars", "DateOutOfRange"]`. Every submodule is internal. `DateOutOfRange` (in `bizdays/utils.py`) subclasses `ValueError`. The legacy `bizdays/bizdays.py` and `get_option`/`set_option` were removed in 2.0.0.
 
-- **`bizdays/calendar.py`** — New numpy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `recycle_arrays()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
+- **`bizdays/calendar.py`** — NumPy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `recycle_arrays()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
 
 ### Supporting modules
 
 - **`bizdays/dateindex.py`** — Numpy-based `DateIndex`: builds forward/reverse cumulative sum indices (`_fwd_index`, `_rev_index`) over the date range for O(1) bizday lookups, offsets, and sequences.
-
-- **`bizdays/bizdays.py`** (also contains) — Legacy `DateIndex` using a Python dict mapping `date → DateIndexNode` (with `workday`, `revworkday`, `currentday`, `isholiday` fields).
 
 - **`bizdays/date.py`** — `Date` wrapper supporting `str`, `datetime.date`, `datetime.datetime`, `np.datetime64`, and `None`.
 

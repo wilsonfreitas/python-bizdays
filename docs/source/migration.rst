@@ -121,10 +121,9 @@ After:
 5. pandas usage
 ---------------
 
-Older docs sometimes implied that switching a global runtime mode would change
-the return types of the top-level calendar API. The current NumPy-backed
-``Calendar`` accepts pandas inputs directly, but still returns NumPy-native
-results.
+``get_option`` and ``set_option`` were removed in 2.0.0, together with the
+global runtime mode they controlled. The NumPy-backed ``Calendar`` accepts
+pandas inputs directly, and always returns NumPy-native results.
 
 Before:
 

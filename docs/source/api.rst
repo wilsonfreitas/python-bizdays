@@ -8,6 +8,23 @@ return NumPy scalars, vectorized calls return ``numpy.ndarray`` values, missing
 date-like results use ``NaT``, and missing numeric or boolean results use masked
 arrays.
 
+Public API
+----------
+
+The public API is exactly the names in ``bizdays.__all__``, with their
+documented methods, properties and exceptions:
+
+- :class:`Calendar`
+- :func:`list_calendars`
+- :class:`DateOutOfRange`, raised when a date lies outside the calendar range.
+  It is a subclass of ``ValueError``, so ``except ValueError`` catches it.
+
+Every submodule (``bizdays.calendar``, ``bizdays.dateindex``, ``bizdays.utils``,
+``bizdays.date``, ``bizdays.getdate_parser``, ``bizdays.calendarfile``,
+``bizdays.external``) is internal and may change without notice.
+
+.. autoexception:: DateOutOfRange
+
 Calendar discovery
 ------------------
 
