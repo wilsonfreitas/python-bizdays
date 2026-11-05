@@ -2,6 +2,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bizdays.getdate_parser import (
+    CompositeGetDateExpression,
     GetDateExpression,
     GetDateTarget,
     NormalizedRef,
@@ -226,10 +227,10 @@ class DateIndex(object):
         if ref_date < self.startdate or ref_date > self.enddate:
             raise DateOutOfRange("Reference out of calendar range")
 
+        if isinstance(parsed, CompositeGetDateExpression):
+            raise ValueError("Composite getdate expressions need a year or month ref, not a date ref")
         if isinstance(parsed, RelativeGetDateExpression):  # previous <weekday>
             return self._resolve_relative_target(1, GetDateTarget("weekday", parsed.weekday), "before", ref_date)
-
-        if isinstance(parsed, SimpleGetDateExpression) and parsed.target.kind == "weekday" and parsed.count > 0:
-            return self._resolve_relative_target(parsed.count, parsed.target, "after", ref_date)
-
-        raise ValueError("Date refs only support weekday expressions such as 'next wed', 'previous mon', or 'second fri'")
+        if parsed.count < 0:  # last <day|bizday|weekday>
+            return self._resolve_relative_target(1, parsed.target, "before", ref_date)
+        return self._resolve_relative_target(parsed.count, parsed.target, "after", ref_date)

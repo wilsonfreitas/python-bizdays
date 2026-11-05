@@ -16,6 +16,11 @@ def anbima():
 
 
 @pytest.fixture(scope="module")
+def actual():
+    return Calendar(name="actual")
+
+
+@pytest.fixture(scope="module")
 def anbima_index():
     definition = load_packaged_calendar_definition("ANBIMA")
     nonwork_weekdays = {weekday[:3].lower() for weekday in definition.weekdays}
@@ -164,11 +169,8 @@ def test_getdate_date_relative_requires_date_ref(anbima):
 
 
 def test_getdate_date_ref_rejects_non_weekday_expressions(anbima):
-    with pytest.raises(
-        ValueError,
-        match="Date refs only support weekday expressions",
-    ):
-        anbima.getdate("first bizday", "2021-02-10")
+    # R's date-ref forms: first bizday is offset(date, 1)
+    assert anbima.getdate("first bizday", "2021-02-10") == np.datetime64("2021-02-11")
 
 
 def test_getdate_rejects_invalid_ref(anbima):
@@ -387,3 +389,91 @@ def test_getdate_new_forms_do_not_exist(anbima):
     with pytest.raises(ValueError, match="does not exist") as e:
         anbima.getdate("next bizday after 5th fri", "2024-02")
     assert not isinstance(e.value, DateOutOfRange)
+
+
+def _ordinal(n):
+    return f"{n}{'th' if n % 100 in (11, 12, 13) else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def test_getdate_r_period_refs(actual, anbima):
+    assert actual.getdate("10th wed", 2018) == np.datetime64("2018-03-07")
+    assert anbima.getdate("last bizday", list(range(2010, 2019))).astype(str).tolist() == [
+        "2010-12-31", "2011-12-30", "2012-12-31", "2013-12-31", "2014-12-31",
+        "2015-12-31", "2016-12-30", "2017-12-29", "2018-12-31",
+    ]
+    assert anbima.getdate("first bizday", [f"2018-{m:02d}" for m in range(1, 13)]).astype(str).tolist() == [
+        "2018-01-02", "2018-02-01", "2018-03-01", "2018-04-02", "2018-05-02", "2018-06-01",
+        "2018-07-02", "2018-08-01", "2018-09-03", "2018-10-01", "2018-11-01", "2018-12-03",
+    ]
+
+
+_TODAY = np.datetime64(date.today(), "D")
+
+
+@pytest.mark.parametrize(
+    ("cal", "expr", "ref", "expected"),
+    [
+        ("actual", "next day", date.today(), _TODAY + 1),
+        ("actual", "last day", date.today(), _TODAY - 1),
+        ("actual", "next day", "2022-06-20", "2022-06-21"),
+        ("actual", "last day", "2022-06-20", "2022-06-19"),
+        ("anbima", "next bizday", "2022-06-18", "2022-06-20"),
+        ("anbima", "last bizday", "2022-06-19", "2022-06-17"),
+        ("anbima", "2nd wed", "2022-06-20", "2022-06-29"),
+        ("anbima", "next wed", "2022-06-20", "2022-06-22"),
+        ("anbima", "last wed", "2022-06-20", "2022-06-15"),
+        ("anbima", "next mon", "2022-06-20", "2022-06-27"),
+        ("anbima", "last mon", "2022-06-20", "2022-06-13"),
+    ],
+)
+def test_getdate_r_date_refs(request, cal, expr, ref, expected):
+    assert request.getfixturevalue(cal).getdate(expr, ref) == np.datetime64(expected, "D")
+
+
+def test_getdate_date_ref_day_forms(anbima):
+    ref = np.datetime64("2024-02-27")
+    for n in [1, 2, 3, 10]:
+        assert anbima.getdate(f"{_ordinal(n)} day", ref) == ref + n
+    assert anbima.getdate("first day", ref) == ref + 1
+    assert anbima.getdate("last day", "2024-03-01") == np.datetime64("2024-02-29")
+
+
+@pytest.mark.parametrize("ref", ["2021-02-10", "2021-02-13", "2021-02-15", "2021-02-16"])
+def test_getdate_date_ref_bizday_equals_offset(anbima, ref):
+    for n in range(1, 6):
+        assert anbima.getdate(f"{_ordinal(n)} bizday", ref) == anbima.offset(ref, n)
+    assert anbima.getdate("next bizday", ref) == anbima.offset(ref, 1)
+    assert anbima.getdate("last bizday", ref) == anbima.offset(ref, -1)
+
+
+_NAMES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+@pytest.mark.parametrize("target", range(7))
+@pytest.mark.parametrize("ref", np.arange("2022-06-20", "2022-06-27", dtype="datetime64[D]"))
+def test_getdate_date_ref_weekday_matrix(anbima, ref, target):
+    def wd(d):
+        return (d.astype("datetime64[D]").astype(int) + 3) % 7
+
+    w = _NAMES[target]
+    after = next(ref + k for k in range(1, 8) if wd(ref + k) == target)
+    before = next(ref - k for k in range(1, 8) if wd(ref - k) == target)
+    for expr in [f"next {w}", f"1st {w}", f"first {w}"]:
+        assert anbima.getdate(expr, ref) == after
+    assert anbima.getdate(f"2nd {w}", ref) == after + 7
+    assert anbima.getdate(f"last {w}", ref) == before
+    assert anbima.getdate(f"previous {w}", ref) == before
+
+
+@pytest.mark.parametrize(
+    ("expr", "ref"),
+    [("next day", "2099-12-25"), ("next bizday", "2099-12-24"), ("last day", "2000-01-01"), ("last bizday", "2000-01-03")],
+)
+def test_getdate_date_ref_edges(anbima, expr, ref):
+    with pytest.raises(DateOutOfRange):
+        anbima.getdate(expr, ref)
+
+
+def test_getdate_composite_rejects_date_ref(anbima):
+    with pytest.raises(ValueError, match="year or month ref"):
+        anbima.getdate("1st bizday before 2nd fri", "2021-02-10")
