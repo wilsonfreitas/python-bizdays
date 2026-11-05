@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from typing import Literal, TypeAlias
 
@@ -40,6 +40,7 @@ class SimpleGetDateExpression:
     kind: Literal["simple"]
     count: int
     target: GetDateTarget
+    text: str = field(default="", compare=False)
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,7 @@ class CompositeGetDateExpression:
     operator: Literal["before", "after"]
     anchor_count: int
     anchor_target: GetDateTarget
+    text: str = field(default="", compare=False)
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,7 @@ class RelativeGetDateExpression:
     kind: Literal["relative"]
     operator: Literal["next", "previous"]
     weekday: int
+    text: str = field(default="", compare=False)
 
 
 GetDateExpression: TypeAlias = (
@@ -73,6 +76,13 @@ class NormalizedRef:
     month: int | None = None
     date: np.datetime64 | None = None
 
+    def __str__(self) -> str:
+        if self.kind == "date":
+            return str(self.date)
+        if self.kind == "month":
+            return f"{self.year:04d}-{self.month:02d}"
+        return str(self.year)
+
 
 def _parse_ordinal(token: str, *, relative_offset: bool = False) -> int:
     token = token.lower()
@@ -84,6 +94,8 @@ def _parse_ordinal(token: str, *, relative_offset: bool = False) -> int:
     match = re.fullmatch(r"(\d+)(st|nd|rd|th)", token)
     if match is None:
         raise ValueError(f"Invalid ordinal in getdate expression: {token}")
+    if int(match.group(1)) == 0:
+        raise ValueError(f"Invalid ordinal in getdate expression: {token} (ordinals start at 1)")
     return int(match.group(1))
 
 
@@ -100,6 +112,10 @@ def _parse_target(token: str) -> GetDateTarget:
 
 
 def parse_getdate_expression(expr: str) -> GetDateExpression:
+    return replace(_parse_expression(expr), text=expr)
+
+
+def _parse_expression(expr: str) -> GetDateExpression:
     tokens = expr.lower().split()
     if len(tokens) == 2 and tokens[0] in {"next", "previous"}:
         target = _parse_target(tokens[1])

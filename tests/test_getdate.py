@@ -7,6 +7,7 @@ import pytest
 from bizdays import Calendar, DateOutOfRange
 from bizdays.calendarfile import load_packaged_calendar_definition
 from bizdays.dateindex import DateIndex
+from bizdays.getdate_parser import normalize_ref, parse_getdate_expression
 
 
 @pytest.fixture(scope="module")
@@ -70,6 +71,8 @@ def anbima_index():
         ("first wed after 15th day", "2002-05", "2002-05-22"),
         ("first wed before 15th day", "2002-05", "2002-05-08"),
         ("1st bizday before 2nd fri", "2002-05", "2002-05-09"),
+        ("first bizday before first day", "2002-01", "2001-12-31"),
+        ("2nd bizday before first day", "2002-01", "2001-12-28"),
     ],
 )
 def test_getdate_month_reference_matches_legacy_behavior(
@@ -186,50 +189,9 @@ def test_getdate_additional_legacy_calendar_cases(anbima, expr, ref, expected):
     assert str(anbima.getdate(expr, ref)) == expected
 
 
-@pytest.mark.parametrize(
-    ("expr", "ref", "expected"),
-    [
-        ("15th day", "2002-01", "2002-01-15"),
-        ("first day before 15th day", "2002-01", "2002-01-14"),
-        ("second day after 15th day", "2002-01", "2002-01-17"),
-        ("second bizday before 15th day", "2002-01", "2002-01-11"),
-        ("second bizday after 15th day", "2002-01", "2002-01-17"),
-        ("first bizday", "2002-01", "2002-01-02"),
-        ("second bizday", "2002-01", "2002-01-03"),
-        ("third bizday", "2002-01", "2002-01-04"),
-        ("second bizday before 10th bizday", "2002-01", "2002-01-11"),
-        ("first tue before first day", "2002-01", "2001-12-25"),
-        ("first tue after first day", "2002-01", "2002-01-08"),
-        ("first tue before second day", "2002-01", "2002-01-01"),
-        ("first tue after second day", "2002-01", "2002-01-08"),
-        ("2nd bizday", "2002-01", "2002-01-03"),
-        ("3rd bizday", "2002-01", "2002-01-04"),
-        ("first tue", "2002-01", "2002-01-01"),
-        ("last fri", "2002-01", "2002-01-25"),
-        ("first day before first day", "2002-01", "2001-12-31"),
-        ("2nd day before first day", "2002-01", "2001-12-30"),
-        ("last day", "2002-01", "2002-01-31"),
-        ("first bizday before last day", "2002-01", "2002-01-30"),
-        ("second bizday before last day", "2002-01", "2002-01-29"),
-        ("10th fri before 10th bizday", "2002-05", "2002-03-08"),
-        ("first wed after 15th day", "2002-05", "2002-05-22"),
-        ("first wed before 15th day", "2002-05", "2002-05-08"),
-    ],
-)
-def test_dateindex_getdate_month_reference(anbima_index, expr, ref, expected):
-    assert str(anbima_index.getdate(expr, ref)) == expected
-
-
-@pytest.mark.parametrize(
-    ("expr", "ref", "expected"),
-    [
-        ("first day", "2002-01", "2002-01-01"),
-        ("first bizday before first day", "2002-01", "2001-12-31"),
-        ("2nd bizday before first day", "2002-01", "2001-12-28"),
-    ],
-)
-def test_dateindex_getdate_additional_cases(anbima_index, expr, ref, expected):
-    assert str(anbima_index.getdate(expr, ref)) == expected
+def test_dateindex_getdate_is_strict(anbima_index):
+    expr, ref = parse_getdate_expression("first bizday"), normalize_ref("2002-01")
+    assert anbima_index.getdate(expr, ref) == np.datetime64("2002-01-02")
 
 
 # --- WIL-149: getdate argument conversion ---
@@ -289,3 +251,39 @@ def test_getdate_non_missing_partner_checked(anbima):
 def test_getdate_rejects_2d(anbima):
     with pytest.raises(ValueError, match="must be 1-D"):
         anbima.getdate([["first day"]], "2002-01")
+
+
+# --- WIL-140: strict getdate, never wraps ---
+
+
+def test_getdate_zero_ordinal(anbima):
+    for expr in ["0th day", "0th bizday after 1st day", "1st bizday before 0th day"]:
+        with pytest.raises(ValueError, match="ordinal"):
+            anbima.getdate(expr, "2024-02")
+
+
+@pytest.mark.parametrize("expr", ["5th fri", "22nd bizday", "31st day", "1st bizday after 5th fri"])
+def test_getdate_date_does_not_exist(anbima, expr):
+    with pytest.raises(ValueError, match="does not exist") as e:
+        anbima.getdate(expr, "2024-02")
+    assert not isinstance(e.value, DateOutOfRange)
+
+
+def test_getdate_period_must_be_inside_range(anbima):
+    for expr, ref in [("last bizday", "2099-12"), ("first day", "2099-12"), ("last bizday", 2099), ("first bizday", 1999)]:
+        with pytest.raises(DateOutOfRange):
+            anbima.getdate(expr, ref)
+    assert anbima.getdate("last bizday", "2099-11") == np.datetime64("2099-11-30")
+    assert anbima.getdate("first bizday", "2000-01") == np.datetime64("2000-01-03")
+
+
+def test_getdate_never_wraps(anbima):
+    for expr, ref in [
+        ("first bizday before first day", "2000-01"),
+        ("first day before first day", "2000-01"),
+        ("next mon", "2099-12-24"),
+        ("1st tue before first day", "2000-01"),
+    ]:
+        with pytest.raises(DateOutOfRange):
+            anbima.getdate(expr, ref)
+    assert anbima.getdate("first day before first day", "2000-02") == np.datetime64("2000-01-31")

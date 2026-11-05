@@ -2,14 +2,11 @@ import numpy as np
 import numpy.typing as npt
 
 from bizdays.getdate_parser import (
-    CompositeGetDateExpression,
     GetDateExpression,
     GetDateTarget,
     NormalizedRef,
     RelativeGetDateExpression,
     SimpleGetDateExpression,
-    normalize_ref,
-    parse_getdate_expression,
 )
 from bizdays.utils import DateOutOfRange
 
@@ -46,7 +43,6 @@ class DateIndex(object):
         self._n_bizdays = self._n_dates[self._is_bizday]
         self._bizdays = self._dates[self._is_bizday]
         self._weekday_dates = [self._dates[self._weekday_index == weekday] for weekday in range(7)]
-        self._n_weekday_dates = [dates.astype("datetime64[D]").astype(int) for dates in self._weekday_dates]
         self._fwd_index = np.cumsum(self._is_bizday) - 1
         dtype = [("dates", "i8"), ("year", "i8"), ("month", "i8"), ("is_bizday", "i4"), ("weekday", "i4")]
         self._dates_table = np.empty(len(self._dates), dtype=dtype)
@@ -137,33 +133,45 @@ class DateIndex(object):
         d_to = int(date_to.astype(int))
         return self._bizdays[(self._n_bizdays >= d_from) & (self._n_bizdays <= d_to)]
 
-    def getdate(self, expr: str | GetDateExpression, ref: object) -> np.datetime64:
-        parsed = parse_getdate_expression(expr) if isinstance(expr, str) else expr
-        normalized = ref if isinstance(ref, NormalizedRef) else normalize_ref(ref)
+    def getdate(self, expr: GetDateExpression, ref: NormalizedRef) -> np.datetime64:
+        """Resolve a parsed expression against a normalized ref (both from ``Calendar``)."""
+        if ref.kind == "date":
+            assert ref.date is not None
+            return self._resolve_date_relative_expression(expr, ref.date)
 
-        if normalized.kind == "date":
-            assert normalized.date is not None
-            return self._resolve_date_relative_expression(parsed, normalized.date)
-
-        if isinstance(parsed, RelativeGetDateExpression):
+        if isinstance(expr, RelativeGetDateExpression):
             raise ValueError("Date-relative expressions require a date ref")
 
-        assert normalized.year is not None
-        period_idx = self._period_indices(normalized.year, normalized.month)
-        if isinstance(parsed, SimpleGetDateExpression):
-            return self._resolve_period_target(parsed.count, parsed.target, period_idx)
-        assert isinstance(parsed, CompositeGetDateExpression)
-        anchor = self._resolve_period_target(parsed.anchor_count, parsed.anchor_target, period_idx)
-        return self._resolve_relative_target(parsed.count, parsed.target, parsed.operator, anchor)
+        period_idx = self._period_indices(ref)
+        if isinstance(expr, SimpleGetDateExpression):
+            return self._resolve_period_target(expr.count, expr.target, period_idx)
+        anchor = self._resolve_period_target(expr.anchor_count, expr.anchor_target, period_idx)
+        return self._resolve_relative_target(expr.count, expr.target, expr.operator, anchor)
 
-    def _period_indices(self, year: int, month: int | None) -> npt.NDArray[np.int_]:
-        mask = self._years == year
-        if month is not None:
-            mask &= self._months == month
-        period_idx = np.flatnonzero(mask).astype(np.int_)
-        if len(period_idx) == 0:
-            raise DateOutOfRange("Reference out of calendar range")
-        return period_idx
+    def _period_bounds(self, ref: NormalizedRef) -> tuple[int, int]:
+        """Positions of the first day of a year or month ref and of the day after it."""
+        assert ref.year is not None
+        if ref.kind == "month":
+            assert ref.month is not None
+            first = np.datetime64((ref.year - 1970) * 12 + ref.month - 1, "M")
+        else:
+            first = np.datetime64(ref.year - 1970, "Y")
+        lo = int((first.astype("datetime64[D]") - self.startdate).astype(np.int64))
+        hi = int(((first + 1).astype("datetime64[D]") - self.startdate).astype(np.int64))
+        return lo, hi
+
+    def ref_inrange(self, ref: NormalizedRef) -> bool:
+        """A date ref inside the range, or a year or month ref whose whole period is inside it."""
+        if ref.kind == "date":
+            return bool(self.startdate <= ref.date <= self.enddate)  # type: ignore[operator]
+        lo, hi = self._period_bounds(ref)
+        return lo >= 0 and hi <= len(self._dates)
+
+    def _period_indices(self, ref: NormalizedRef) -> npt.NDArray[np.int_]:
+        if not self.ref_inrange(ref):
+            raise DateOutOfRange("Reference period not fully inside the calendar range")
+        lo, hi = self._period_bounds(ref)
+        return np.arange(lo, hi)
 
     def _candidate_indices(
         self, target: GetDateTarget, period_idx: npt.NDArray[np.int_]
@@ -179,8 +187,8 @@ class DateIndex(object):
         self, count: int, target: GetDateTarget, period_idx: npt.NDArray[np.int_]
     ) -> np.datetime64:
         candidates = self._candidate_indices(target, period_idx)
-        if len(candidates) == 0:
-            raise ValueError("No matching dates found for getdate expression")
+        if len(candidates) == 0 or count > len(candidates):
+            raise ValueError("The date does not exist in its period")
         pos = count - 1 if count > 0 else count
         return self._dates[int(candidates[pos])]
 
@@ -191,24 +199,20 @@ class DateIndex(object):
         operator: str,
         anchor: np.datetime64,
     ) -> np.datetime64:
-        anchor_n = int(anchor.astype("datetime64[D]").astype(int))
         if target.kind == "day":
-            target_pos = int((anchor - self.startdate).astype(np.int64)) +(count if operator == "after" else -count)
-            if not 0 <= target_pos < len(self._dates):
-                raise DateOutOfRange("Result out of calendar range")
-            return self._dates[target_pos]
-        if target.kind == "bizday":
-            pos = np.searchsorted(self._n_bizdays, anchor_n, side="right" if operator == "after" else "left")
-            if operator == "after":
-                return self._bizdays[pos + count - 1]
-            return self._bizdays[pos - count]
-        assert target.weekday is not None
-        dates = self._weekday_dates[target.weekday]
-        weekday_numbers = self._n_weekday_dates[target.weekday]
-        pos = np.searchsorted(weekday_numbers, anchor_n, side="right" if operator == "after" else "left")
-        if operator == "after":
-            return dates[pos + count - 1]
-        return dates[pos - count]
+            dates = self._dates
+            k = int((anchor - self.startdate).astype(np.int64)) + (count if operator == "after" else -count)
+        else:
+            if target.kind == "bizday":
+                dates = self._bizdays
+            else:
+                assert target.weekday is not None
+                dates = self._weekday_dates[target.weekday]
+            pos = int(np.searchsorted(dates, anchor, side="right" if operator == "after" else "left"))
+            k = pos + count - 1 if operator == "after" else pos - count
+        if not 0 <= k < len(dates):
+            raise DateOutOfRange("Result out of calendar range")
+        return dates[k]
 
     def _resolve_date_relative_expression(
         self, parsed: GetDateExpression, ref_date: np.datetime64
