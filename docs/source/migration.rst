@@ -147,24 +147,20 @@ Current pattern:
 -------------------------
 
 - ``Calendar.getdate`` is still supported on the top-level API.
-- ``Calendar.getbizdays`` is not part of the NumPy-backed top-level API.
+- ``Calendar.getbizdays(year, month=None)`` is back, with these changes:
 
-If older material uses ``getbizdays``, rewrite it in terms of explicit date
-ranges or the operations you actually need to perform. For example:
-
-Before:
-
-.. code-block:: python
-
-   cal.getbizdays(2021, 12)
-
-After:
+  - Results are ``float64`` (``NaN`` where ``year`` or ``month`` is missing).
+  - The whole period must lie inside the calendar range. v1 returned a partial
+    count: on ANBIMA, which ends on 2099-12-25, v1 ``getbizdays(2099)`` gave
+    245; v2 raises ``DateOutOfRange``.
+  - v1 ``getbizdays(year, 0)`` meant the whole year; v2 raises ``ValueError``.
+    Leave ``month`` out (or pass ``month=None``) instead.
+  - Vectors follow the length rules: equal lengths, or one of length 1.
 
 .. code-block:: python
 
-   start = "2021-12-01"
-   end = "2022-01-01"
-   cal.bizdays(start, end)
+   cal.getbizdays(2021)          # whole year
+   cal.getbizdays(2021, 12)      # December
 
 7. JSON calendar files
 ----------------------

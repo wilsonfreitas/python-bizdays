@@ -56,7 +56,7 @@ Calendar construction
 
 .. autoclass:: Calendar
    :members:
-   :exclude-members: bizdays, isbizday, inrange, adjust_next, following, modified_following, adjust_previous, preceding, modified_preceding, seq, offset, diff, getdate, load
+   :exclude-members: bizdays, isbizday, inrange, adjust_next, following, modified_following, adjust_previous, preceding, modified_preceding, seq, offset, diff, getdate, getbizdays, load
 
 Create a calendar in memory when you already have the holidays and nonworking
 weekdays available in Python:
@@ -363,3 +363,20 @@ Examples:
    cal.getdate("next bizday", "2022-06-18")   # 2022-06-20
    cal.getdate("last mon", "2022-06-20")      # 2022-06-13
    cal.getdate("first bizday", ["2002-01", "2002-02"])
+
+Business days in a period
+-------------------------
+
+getbizdays
+^^^^^^^^^^
+
+.. automethod:: Calendar.getbizdays
+
+Example:
+
+.. code-block:: python
+
+   cal = Calendar.load(name="ANBIMA")
+   cal.getbizdays(2024)                     # 253.0, the whole year
+   cal.getbizdays(2024, 2)                  # 19.0
+   cal.getbizdays([2024, 2024], [1, 2])     # array([22., 19.])
