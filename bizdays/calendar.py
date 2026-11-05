@@ -773,17 +773,31 @@ class Calendar:
         """
         _expr, vec_expr = to_exprs(expr)
         _ref, vec_ref = to_refs(ref)
-        ref_dates = np.array([r.date for r in _ref if r is not None and r.kind == "date"], dtype="datetime64[D]")
-        if not self._index.inrange(ref_dates).all():
-            raise DateOutOfRange("Given date out of calendar range")
         single_value = not (vec_expr or vec_ref)
+        # refs are checked even where the expression is missing
+        raw_ref = _ref
+        raw_bad = np.array([r is not None and not self._index.ref_inrange(r) for r in raw_ref], dtype=np.bool_)
         _expr, _ref = broadcast_pair(_expr, _ref, "expr", "ref")
+        if len(_ref) == 0 and raw_bad.any():
+            raise DateOutOfRange(
+                f"ref={raw_ref[raw_bad][0]} is out of {self._range_text()} (the result is empty)",
+                positions=[],
+            )
+        bad = np.broadcast_to(raw_bad, _ref.shape).copy()
 
         missing = pd.isna(_expr) | pd.isna(_ref)
         dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        for idx in np.flatnonzero(~missing):
-            dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
+        for idx in np.flatnonzero(~missing & ~bad):
+            try:
+                dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
+            except DateOutOfRange:  # before ValueError: it is one
+                bad[idx] = True
+            except ValueError as e:
+                raise ValueError(f"{e}: expr={_expr[idx].text!r}, ref={_ref[idx]}") from e
 
+        if bad.any():
+            texts = np.array([repr(e.text) if e is not None else "None" for e in _expr], dtype=object)
+            self._raise_range(bad, {"expr": texts, "ref": np.array([str(r) for r in _ref], dtype=object)})
         return _finalize_date_result(dates, single_value)
 
     # def getbizdays(self, year, month=None):

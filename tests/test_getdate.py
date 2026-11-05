@@ -267,6 +267,7 @@ def test_getdate_date_does_not_exist(anbima, expr):
     with pytest.raises(ValueError, match="does not exist") as e:
         anbima.getdate(expr, "2024-02")
     assert not isinstance(e.value, DateOutOfRange)
+    assert expr in str(e.value) and "2024-02" in str(e.value)
 
 
 def test_getdate_period_must_be_inside_range(anbima):
@@ -287,3 +288,25 @@ def test_getdate_never_wraps(anbima):
         with pytest.raises(DateOutOfRange):
             anbima.getdate(expr, ref)
     assert anbima.getdate("first day before first day", "2000-02") == np.datetime64("2000-01-31")
+
+
+def _range_error(call, *args):
+    with pytest.raises(DateOutOfRange) as e:
+        call(*args)
+    return e.value
+
+
+def test_getdate_positions(anbima):
+    e = _range_error(anbima.getdate, ["first bizday", "last bizday", "first bizday"], ["2024-01", "2099-12", "1999-01"])
+    assert e.positions.tolist() == [1, 2]
+    for part in ["2 of 3", "expr='last bizday'", "ref=2099-12"]:
+        assert part in str(e)
+    assert _range_error(anbima.getdate, "next mon", ["2024-01-03", "2099-12-24"]).positions.tolist() == [1]
+    assert _range_error(anbima.getdate, None, "1900-01").positions.tolist() == [0]
+    assert _range_error(anbima.getdate, [], "1900-01").positions.tolist() == []
+
+
+def test_getdate_does_not_exist_message(anbima):
+    with pytest.raises(ValueError, match=r"does not exist.*5th fri.*2024-02") as e:
+        anbima.getdate(["first fri", "5th fri"], "2024-02")
+    assert not isinstance(e.value, DateOutOfRange)
