@@ -56,7 +56,7 @@ Calendar construction
 
 .. autoclass:: Calendar
    :members:
-   :exclude-members: bizdays, isbizday, adjust_next, following, modified_following, adjust_previous, preceding, modified_preceding, seq, offset, diff, getdate, load
+   :exclude-members: bizdays, isbizday, inrange, adjust_next, following, modified_following, adjust_previous, preceding, modified_preceding, seq, offset, diff, getdate, load
 
 Create a calendar in memory when you already have the holidays and nonworking
 weekdays available in Python:
@@ -82,6 +82,41 @@ Constructor notes:
 - when ``startdate`` and ``enddate`` are omitted, they are inferred from the
   holiday range
 - calendars without holidays default to a broad built-in date range
+- holidays outside an explicit ``startdate..enddate`` are ignored
+- ``ValueError`` for ``startdate`` after ``enddate``, a calendar without
+  business days, or an invalid weekday name
+- holidays with ``weekdays=None`` emit a ``UserWarning``; pass ``weekdays=[]``
+  for a calendar without nonworking weekdays
+
+Calendar range
+--------------
+
+A calendar covers ``startdate..enddate``, both ends included. Any input date
+outside that range, or any result that would fall outside it, raises
+:class:`DateOutOfRange`. One bad element fails the whole call: there are no
+partial results, and dates are never clamped or wrapped. ``offset`` past either
+end, ``following`` past the end and ``preceding`` before the start all raise.
+Missing values are never out of range.
+
+The error message names the first bad element by its inputs and says how many
+elements are bad. ``DateOutOfRange.positions`` is a sorted ``int64`` array with
+the index of every bad element in the result (after the length rules); a call
+with only scalars gives ``[0]``.
+
+.. automethod:: Calendar.inrange
+
+Check input dates before a call with :meth:`Calendar.inrange`. Results cannot be
+checked in advance, so catch the error and use ``positions``:
+
+.. code-block:: python
+
+   from bizdays import DateOutOfRange
+
+   ok = cal.inrange(df.maturity).filled(False)   # check inputs first
+   try:
+       d = cal.offset(df.date, df.n)
+   except DateOutOfRange as e:                     # results cannot be checked in advance
+       bad_rows = df.index[e.positions]
 
 Loading calendars
 -----------------
