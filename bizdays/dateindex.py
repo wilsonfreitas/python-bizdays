@@ -65,6 +65,11 @@ class DateIndex(object):
         self._dates_table["is_bizday"] = self._is_bizday.astype(int)
         self._dates_table["weekday"] = self._weekday_index
 
+    def check_range(self, dates: npt.NDArray[np.datetime64]) -> None:
+        """Raise DateOutOfRange if any date (no NaT allowed) is outside the calendar range."""
+        if np.any((dates < self.startdate) | (dates > self.enddate)):
+            raise DateOutOfRange("Given date out of calendar range")
+
     def bizdays(
         self, date_from: npt.NDArray[np.datetime64], date_to: npt.NDArray[np.datetime64]
     ) -> npt.NDArray[np.int_]:
