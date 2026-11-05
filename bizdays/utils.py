@@ -23,11 +23,6 @@ def isstr(d: object) -> bool:
     return isinstance(d, str)
 
 
-def match(x: npt.NDArray[np.int_], table: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-    pos_dict: dict[np.int_, int] = dict(zip(table, range(len(table))))
-    return np.array([pos_dict.get(val, -1) for val in x])
-
-
 def isseq(seq: Any) -> bool:
     if isstr(seq):
         return False

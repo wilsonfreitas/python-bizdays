@@ -6,6 +6,7 @@ import pytest
 
 from bizdays.calendarfile import load_calendar_definition
 from bizdays.dateindex import DateIndex
+from bizdays.utils import DateOutOfRange
 
 _DATA_DIR = Path(__file__).parent.parent / "bizdays" / "data"
 
@@ -450,3 +451,90 @@ def test_dateindex_requires_day_holidays():
             enddate=np.datetime64("2099-12-31"),
             weekdays=[],
         )
+
+
+# --- range edges (WIL-140): never wrap, never clamp ---
+
+EDGE = DateIndex(holidays=HOL, startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-25"), weekdays=WD)
+
+
+def _d(*values: str) -> npt.NDArray[np.datetime64]:
+    return np.array(values, dtype="datetime64[D]")
+
+
+def test_dateindex_offset_never_wraps():
+    with pytest.raises(DateOutOfRange):
+        EDGE.offset(_d("2099-12-24"), np.array([1]))
+    with pytest.raises(DateOutOfRange):
+        EDGE.offset(_d("2000-01-03"), np.array([-3]))
+    assert EDGE.offset(_d("2099-12-25"), np.array([-1])).tolist() == _d("2099-12-24").tolist()
+    assert EDGE.offset(_d("2000-01-01"), np.array([1])).tolist() == _d("2000-01-03").tolist()
+    assert EDGE.offset(_d("2099-12-25"), np.array([0])).tolist() == _d("2099-12-25").tolist()
+    with pytest.raises(DateOutOfRange) as e:
+        EDGE.offset(_d("2024-01-02", "2099-12-24", "2099-12-24"), np.array([1, 1, -1]))
+    assert e.value.positions.tolist() == [1]
+
+
+def test_dateindex_adjust_at_edges():
+    with pytest.raises(DateOutOfRange):
+        EDGE.adjust(_d("2099-12-25"), 1)
+    with pytest.raises(DateOutOfRange):
+        EDGE.adjust(_d("2000-01-01"), -1)
+    assert EDGE.adjust(_d("2000-01-01"), 1).tolist() == _d("2000-01-03").tolist()
+    assert EDGE.adjust(_d("2099-12-25"), -1).tolist() == _d("2099-12-24").tolist()
+
+
+def test_dateindex_input_out_of_range():
+    with pytest.raises(DateOutOfRange) as e:
+        EDGE.is_bizday(_d("2024-01-02", "1999-12-31"))
+    assert e.value.positions.tolist() == [1]
+
+
+def test_dateindex_bizdays_non_business_ends_match_r():
+    # values from R bizdays 1.0.17 on Brazil/ANBIMA; the old index gave 0 for all three
+    assert EDGE.bizdays(_d("2030-12-29", "2022-11-02"), _d("2031-01-01", "2022-11-06")).tolist() == [1, 1]
+    assert EDGE.bizdays(_d("2016-09-11"), _d("2016-09-07")).tolist() == [-1]
+
+
+def _walk(index: DateIndex, p: int, step: int, count: int) -> int | None:
+    """Position of the count-th business day strictly after (step=1) or before (step=-1) position p."""
+    while count:
+        p += step
+        if not 0 <= p < len(index._dates):
+            return None
+        count -= bool(index._is_bizday[p])
+    return p
+
+
+def _ref_offset(index: DateIndex, p: int, n: int) -> int | None:
+    return p if n == 0 else _walk(index, p, 1 if n > 0 else -1, abs(n))
+
+
+def _ref_adjust(index: DateIndex, p: int, step: int) -> int | None:
+    return p if index._is_bizday[p] else _walk(index, p, step, 1)
+
+
+def _check_against(call, expected: list[int | None], dates, *args) -> None:
+    bad = [i for i, e in enumerate(expected) if e is None]
+    if bad:
+        with pytest.raises(DateOutOfRange) as e:
+            call(dates, *args)
+        assert e.value.positions.tolist() == bad
+    good = np.array([e is not None for e in expected])
+    result = call(dates[good], *(a[good] if isinstance(a, np.ndarray) else a for a in args))
+    assert result.tolist() == EDGE._dates[[e for e in expected if e is not None]].tolist()
+
+
+def test_dateindex_matches_reference_formulas():
+    rng = np.random.default_rng(0)
+    span = len(EDGE._dates)
+    pos = np.concatenate([rng.integers(0, span, 10_000), np.arange(60), np.arange(span - 60, span)])
+    dates = EDGE.startdate + pos
+    n = rng.integers(-20, 21, len(pos))
+    _check_against(EDGE.offset, [_ref_offset(EDGE, int(p), int(k)) for p, k in zip(pos, n)], dates, n)
+    for step in (1, -1):
+        _check_against(EDGE.adjust, [_ref_adjust(EDGE, int(p), step) for p in pos], dates, step)
+    to_pos = np.minimum(pos + 30, span - 1)
+    expected = [max(int(EDGE._is_bizday[p : q + 1].sum()) - 1, 0) for p, q in zip(pos, to_pos)]
+    assert EDGE.bizdays(dates, EDGE.startdate + to_pos).tolist() == expected
+    assert EDGE.bizdays(EDGE.startdate + to_pos, dates).tolist() == [-x for x in expected]

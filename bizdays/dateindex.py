@@ -11,14 +11,7 @@ from bizdays.getdate_parser import (
     normalize_ref,
     parse_getdate_expression,
 )
-from bizdays.utils import DateOutOfRange, match
-
-
-def _create_rev_index(idx: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-    x = np.cumsum(idx) + 1 - idx.astype(np.int_)
-    m = int(np.sum(idx))
-    x[x > m] = m
-    return x
+from bizdays.utils import DateOutOfRange
 
 
 class DateIndex(object):
@@ -42,7 +35,6 @@ class DateIndex(object):
 
         self._dates: npt.NDArray[np.datetime64] = np.arange(self.startdate, self.enddate + np.timedelta64(1, "D"))
         self._n_dates = self._dates.astype("datetime64[D]").astype(int)
-        self._n_dates_index: dict[np.int_, int] = dict(zip(self._n_dates, range(len(self._n_dates))))
         self._years = self._dates.astype("datetime64[Y]").astype(int) + 1970
         self._months = self._dates.astype("datetime64[M]").astype(int) % 12 + 1
         self._weekday_index = (self._n_dates + 3) % 7
@@ -53,11 +45,9 @@ class DateIndex(object):
             raise ValueError(f"The calendar has no business days in {startdate}..{enddate}")
         self._n_bizdays = self._n_dates[self._is_bizday]
         self._bizdays = self._dates[self._is_bizday]
-        self._bizdays_index = np.arange(len(self._n_bizdays))
         self._weekday_dates = [self._dates[self._weekday_index == weekday] for weekday in range(7)]
         self._n_weekday_dates = [dates.astype("datetime64[D]").astype(int) for dates in self._weekday_dates]
         self._fwd_index = np.cumsum(self._is_bizday) - 1
-        self._rev_index = _create_rev_index(self._is_bizday) - 1
         dtype = [("dates", "i8"), ("year", "i8"), ("month", "i8"), ("is_bizday", "i4"), ("weekday", "i4")]
         self._dates_table = np.empty(len(self._dates), dtype=dtype)
         self._dates_table["dates"] = self._n_dates
@@ -70,74 +60,73 @@ class DateIndex(object):
         """``True`` where a date lies inside ``startdate..enddate`` (``NaT`` gives ``False``)."""
         return (dates >= self.startdate) & (dates <= self.enddate)
 
+    def _pos(self, dates: npt.NDArray[np.datetime64]) -> npt.NDArray[np.int64]:
+        return (dates - self.startdate).astype(np.int64)
+
+    def _check(self, *dates: npt.NDArray[np.datetime64]) -> list[npt.NDArray[np.int64]]:
+        """Positions of equal-length date arrays; any date outside the range raises."""
+        bad = np.zeros(len(dates[0]), dtype=np.bool_)
+        for d in dates:
+            bad |= ~self.inrange(d)
+        if bad.any():
+            raise DateOutOfRange("Given date out of calendar range", positions=np.flatnonzero(bad))
+        return [self._pos(d) for d in dates]
+
     def bizdays(
         self, date_from: npt.NDArray[np.datetime64], date_to: npt.NDArray[np.datetime64]
-    ) -> npt.NDArray[np.int_]:
-        if any(date_from < self.startdate) or any(date_from > self.enddate):
-            raise DateOutOfRange("Given date out of calendar range")
-        if any(date_to < self.startdate) or any(date_to > self.enddate):
-            raise DateOutOfRange("Given date out of calendar range")
-        # adjust dates ----
-        idx = date_from > date_to
-        new_from = date_from.copy()
-        new_to = date_to.copy()
-        new_from[idx] = date_to[idx]
-        new_to[idx] = date_from[idx]
-        # create indexes ----
-        d_from = new_from.astype("datetime64[D]").astype(int)
-        d_to = new_to.astype("datetime64[D]").astype(int)
-        _m_from = [self._n_dates_index[val] for val in d_from]
-        _m_to = [self._n_dates_index[val] for val in d_to]
-        # fwd index dif
-        _fwd_dif = self._fwd_index[_m_to] - self._fwd_index[_m_from]
-        # rev index dif
-        _rev_dif = self._rev_index[_m_to] - self._rev_index[_m_from]
-        # bizdays calculations and adjustments ----
-        bdays = np.minimum(_fwd_dif, _rev_dif)
-        adj_vec = (~(self._is_bizday[_m_from] | self._is_bizday[_m_to])).astype(int)
-        bdays = bdays - adj_vec
-        # adjust for the case when it is a weekend and the index returns bdays = 1
-        _wx = (~self._is_bizday[_m_from]) & (~self._is_bizday[_m_to]) & (np.abs(bdays) == 1)
-        bdays[_wx] = 0
-        # adjuste for the case when date_from > date_to
-        bdays[idx] = -bdays[idx]
-        return bdays
+    ) -> npt.NDArray[np.int64]:
+        p_from, p_to = self._check(date_from, date_to)
+        lo, hi = np.minimum(p_from, p_to), np.maximum(p_from, p_to)
+        # business days in [lo, hi], minus one: the two ends move to following(lo) and preceding(hi)
+        bdays = np.maximum(self._fwd_index[hi] - self._fwd_index[lo] + self._is_bizday[lo] - 1, 0)
+        return np.where(p_from > p_to, -bdays, bdays)
 
     def is_bizday(self, date: npt.NDArray[np.datetime64]) -> npt.NDArray[np.bool_]:
-        if any(date < self.startdate) or any(date > self.enddate):
-            raise DateOutOfRange("Given date out of calendar range")
-        d = date.astype("datetime64[D]").astype(int)
-        return self._is_bizday[[self._n_dates_index[val] for val in d]]
+        (p,) = self._check(date)
+        return self._is_bizday[p]
 
-    def offset(self, date: npt.NDArray[np.datetime64], n: npt.NDArray[np.int_]) -> npt.NDArray[np.datetime64]:
-        if any(date < self.startdate) or any(date > self.enddate):
-            raise DateOutOfRange("Given date out of calendar range")
+    def _raise_results(self, bad: npt.NDArray[np.bool_]) -> None:
+        if bad.any():
+            raise DateOutOfRange("Result out of calendar range", positions=np.flatnonzero(bad))
+
+    def _bizday_at(self, k: npt.NDArray[np.int64]) -> npt.NDArray[np.datetime64]:
+        # callers raise for k outside 0..m-1 first; the clip only keeps the lookup safe
+        return self._bizdays[np.clip(k, 0, len(self._bizdays) - 1)]
+
+    def offset(self, date: npt.NDArray[np.datetime64], n: npt.NDArray[np.int64]) -> npt.NDArray[np.datetime64]:
         if len(date) != len(n):
             raise ValueError("Date and n must have the same length")
-        ref = np.zeros(len(date), dtype=np.int_)
-        ix = n > 0
-        d = date.astype(int)
-        if len(d[ix]) > 0:
-            ref[ix] = self._fwd_index[[self._n_dates_index[val] for val in d[ix]]]
-        if len(d[~ix]) > 0:
-            ref[~ix] = self._rev_index[[self._n_dates_index[val] for val in d[~ix]]]
-        _date = self._bizdays[match(ref + n, self._bizdays_index)]
-        # This is to handle the case when n == 0
-        # this is necessary because the offset function
-        # should return the same date when n == 0
-        # even if the date is not a business day
-        _date[n == 0] = date[n == 0]
-        return _date
+        (p,) = self._check(date)
+        # _fwd_index is the last business day on or before the date; from a non-business day, -1 is that day
+        k = self._fwd_index[p] + n + ((n < 0) & ~self._is_bizday[p])
+        self._raise_results((n != 0) & ((k < 0) | (k >= len(self._bizdays))))
+        return np.where(n == 0, date, self._bizday_at(k))
 
-    def adjust(self, date: npt.NDArray[np.datetime64], n: int) -> npt.NDArray[np.datetime64]:
-        if any(date < self.startdate) or any(date > self.enddate):
-            raise DateOutOfRange("Given date out of calendar range")
-        d = date.astype(int)
-        idx = self._is_bizday[[self._n_dates_index[val] for val in d]]
-        while not all(idx):
-            d[~idx] = d[~idx] + n
-            idx = self._is_bizday[[self._n_dates_index[val] for val in d]]
-        return self._dates[[self._n_dates_index[val] for val in d]]
+    def adjust(
+        self, date: npt.NDArray[np.datetime64], n: int, modified: bool = False
+    ) -> npt.NDArray[np.datetime64]:
+        """Following (``n=1``) or preceding (``n=-1``) business day; ``modified`` stays in the month."""
+        (p,) = self._check(date)
+        k_pre = self._fwd_index[p]
+        k_fol = k_pre + ~self._is_bizday[p]
+        ok_pre, ok_fol = k_pre >= 0, k_fol < len(self._bizdays)
+        first, other = (self._bizday_at(k_fol), self._bizday_at(k_pre))
+        ok_first, ok_other = ok_fol, ok_pre
+        if n < 0:
+            first, other, ok_first, ok_other = other, first, ok_other, ok_first
+        if not modified:
+            self._raise_results(~ok_first)
+            return first
+        month = date.astype("datetime64[M]")
+        # where the first choice lies outside the range, it leaves the month for certain only
+        # when the whole month side toward that end is inside the range
+        if n > 0:
+            edge_known = (month + 1).astype("datetime64[D]") - 1 <= self.enddate
+        else:
+            edge_known = month.astype("datetime64[D]") >= self.startdate
+        leaves = np.where(ok_first, first.astype("datetime64[M]") != month, edge_known)
+        self._raise_results((~ok_first & ~edge_known) | (leaves & ~ok_other))
+        return np.where(leaves, other, first)
 
     def seq(self, date_from: np.datetime64, date_to: np.datetime64) -> npt.NDArray[np.datetime64]:
         if date_from < self.startdate or date_from > self.enddate:
@@ -204,9 +193,10 @@ class DateIndex(object):
     ) -> np.datetime64:
         anchor_n = int(anchor.astype("datetime64[D]").astype(int))
         if target.kind == "day":
-            anchor_pos = self._n_dates_index[np.int_(anchor_n)]
-            delta = count if operator == "after" else -count
-            return self._dates[anchor_pos + delta]
+            target_pos = int((anchor - self.startdate).astype(np.int64)) +(count if operator == "after" else -count)
+            if not 0 <= target_pos < len(self._dates):
+                raise DateOutOfRange("Result out of calendar range")
+            return self._dates[target_pos]
         if target.kind == "bizday":
             pos = np.searchsorted(self._n_bizdays, anchor_n, side="right" if operator == "after" else "left")
             if operator == "after":
