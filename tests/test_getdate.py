@@ -156,8 +156,11 @@ def test_getdate_requires_string_expressions(anbima):
 
 
 def test_getdate_date_relative_requires_date_ref(anbima):
-    with pytest.raises(ValueError, match="date ref"):
-        anbima.getdate("next wed", "2002-01")
+    # R: next means first with period refs; only previous needs a date ref
+    assert anbima.getdate("next wed", "2002-01") == np.datetime64("2002-01-02")
+    for ref in ["2002-01", 2002]:
+        with pytest.raises(ValueError, match="date ref"):
+            anbima.getdate("previous wed", ref)
 
 
 def test_getdate_date_ref_rejects_non_weekday_expressions(anbima):
@@ -309,4 +312,78 @@ def test_getdate_positions(anbima):
 def test_getdate_does_not_exist_message(anbima):
     with pytest.raises(ValueError, match=r"does not exist.*5th fri.*2024-02") as e:
         anbima.getdate(["first fri", "5th fri"], "2024-02")
+    assert not isinstance(e.value, DateOutOfRange)
+
+
+# --- WIL-227: getdate parity with R ---
+
+
+@pytest.mark.parametrize(
+    ("expr", "expected"),
+    [("11th day", "2002-01-11"), ("12th day", "2002-01-12"), ("13th day", "2002-01-13"),
+     ("21st day", "2002-01-21"), ("22nd day", "2002-01-22"), ("23rd day", "2002-01-23")],
+)
+def test_getdate_ordinal_suffixes(anbima, expr, expected):
+    assert anbima.getdate(expr, "2002-01") == np.datetime64(expected)
+
+
+@pytest.mark.parametrize(
+    "expr", ["2st bizday", "1nd day", "3th day", "11st day", "12nd day", "21th day", "1st bizday after 2st day"]
+)
+def test_getdate_wrong_ordinal_suffix(anbima, expr):
+    with pytest.raises(ValueError, match="ordinal"):
+        anbima.getdate(expr, "2002-01")
+
+
+def test_getdate_case_insensitive(anbima):
+    assert anbima.getdate("FIRST BizDay", "2002-01") == np.datetime64("2002-01-02")
+    assert anbima.getdate("Last FRI", "2002-01") == np.datetime64("2002-01-25")
+    assert anbima.getdate("NEXT Wednesday", "2002-01") == np.datetime64("2002-01-02")
+    assert anbima.getdate("Previous MON", "2021-02-10") == np.datetime64("2021-02-08")
+
+
+@pytest.mark.parametrize(
+    ("short", "full"),
+    [("mon", "monday"), ("tue", "tuesday"), ("wed", "wednesday"), ("thu", "thursday"),
+     ("fri", "friday"), ("sat", "saturday"), ("sun", "sunday")],
+)
+def test_getdate_full_weekday_names(anbima, short, full):
+    for ref in ["2002-01", "2021-02-10"]:
+        assert anbima.getdate(f"first {full}", ref) == anbima.getdate(f"first {short}", ref)
+
+
+@pytest.mark.parametrize(
+    "expr",
+    ["first monkey", "first wedn", "first thurs", "first tues", "first mo", "first bizdays",
+     "1st bizday around 15th day", "next", ""],
+)
+def test_getdate_rejects_unknown_words(anbima, expr):
+    with pytest.raises(ValueError):
+        anbima.getdate(expr, "2002-01")
+
+
+def test_getdate_next_with_period_refs(anbima):
+    assert anbima.getdate("next wed", "2002-01") == np.datetime64("2002-01-02")
+    assert anbima.getdate("next bizday", "2002-01") == np.datetime64("2002-01-02")
+    assert anbima.getdate("next day", "2002-01") == np.datetime64("2002-01-01")
+    assert anbima.getdate("next bizday", 2002) == np.datetime64("2002-01-02")
+
+
+def test_getdate_composite_first_slot(anbima):
+    expected = np.datetime64("2002-01-16")
+    assert anbima.getdate("next bizday after 15th day", "2002-01") == expected
+    assert anbima.getdate("1st bizday after 15th day", "2002-01") == expected
+    assert anbima.getdate("last bizday before 15th day", "2002-01") == np.datetime64("2002-01-14")
+    assert anbima.getdate("next wed after 15th day", "2002-05") == np.datetime64("2002-05-22")
+
+
+@pytest.mark.parametrize("expr", ["previous bizday", "previous day"])
+def test_getdate_previous_only_weekdays(anbima, expr):
+    with pytest.raises(ValueError, match="weekday"):
+        anbima.getdate(expr, "2021-02-10")
+
+
+def test_getdate_new_forms_do_not_exist(anbima):
+    with pytest.raises(ValueError, match="does not exist") as e:
+        anbima.getdate("next bizday after 5th fri", "2024-02")
     assert not isinstance(e.value, DateOutOfRange)

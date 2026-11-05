@@ -146,7 +146,7 @@ class DateIndex(object):
             return self._resolve_date_relative_expression(expr, ref.date)
 
         if isinstance(expr, RelativeGetDateExpression):
-            raise ValueError("Date-relative expressions require a date ref")
+            raise ValueError("previous <weekday> needs a date ref")
 
         period_idx = self._period_indices(ref)
         if isinstance(expr, SimpleGetDateExpression):
@@ -226,9 +226,8 @@ class DateIndex(object):
         if ref_date < self.startdate or ref_date > self.enddate:
             raise DateOutOfRange("Reference out of calendar range")
 
-        if isinstance(parsed, RelativeGetDateExpression):
-            operator = "after" if parsed.operator == "next" else "before"
-            return self._resolve_relative_target(1, GetDateTarget("weekday", parsed.weekday), operator, ref_date)
+        if isinstance(parsed, RelativeGetDateExpression):  # previous <weekday>
+            return self._resolve_relative_target(1, GetDateTarget("weekday", parsed.weekday), "before", ref_date)
 
         if isinstance(parsed, SimpleGetDateExpression) and parsed.target.kind == "weekday" and parsed.count > 0:
             return self._resolve_relative_target(parsed.count, parsed.target, "after", ref_date)
