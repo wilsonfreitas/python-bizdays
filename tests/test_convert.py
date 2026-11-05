@@ -218,3 +218,69 @@ def test_to_counts_values():
 def test_to_counts_rejects(x):
     with pytest.raises(ValueError, match="whole numbers"):
         to_counts(x, "n")
+
+
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.timedelta64(48, "h"),
+        np.timedelta64(2, "D"),
+        np.array([1, 2], dtype="timedelta64[D]"),
+        [np.timedelta64(1, "D")],
+        np.datetime64("2024-01-02"),
+        [np.datetime64("2024-01-02")],
+    ],
+    ids=["td-h", "td-D", "td-array", "td-list", "dt64", "dt64-list"],
+)
+def test_to_counts_rejects_time_values(x):
+    with pytest.raises(ValueError, match="whole numbers"):
+        to_counts(x, "n")
+
+
+@pytest.mark.parametrize(
+    "x",
+    [1e20, -1e20, 2**63, -(2**63), np.uint64(2**64 - 1), [2**70], np.array([2**60]), 2**53 + 1],
+    ids=["1e20", "-1e20", "2**63", "-2**63", "uint64-max", "list-2**70", "array-2**60", "2**53+1"],
+)
+def test_to_counts_rejects_huge_values(x):
+    with pytest.raises(ValueError, match="too large"):
+        to_counts(x, "n")
+
+
+def test_to_counts_accepts_2_pow_53():
+    np.testing.assert_array_equal(to_counts(2**53, "n")[0], [2.0**53])
+
+
+@pytest.mark.parametrize(
+    "s",
+    ["2024-01-02T99:99", "2024-01-02T24:00", "2024-01-02T23:60", "2024-01-02T23:59:60", "2024-01-02 25:00:00"],
+)
+def test_to_dates_rejects_bad_times(s):
+    with pytest.raises(ValueError, match="invalid date string"):
+        to_dates(s, "dt")
+
+
+def test_to_dates_accepts_edge_times():
+    for s in ["2024-01-02T00:00", "2024-01-02T23:59:59.999999999", "2024-01-02 23:59:59+14:00"]:
+        assert _dates(s)[0].tolist() == [date(2024, 1, 2)]
+
+
+@pytest.mark.parametrize(
+    "s",
+    ["2024-13-01", "2024-00-10", "2024-01-32", "2023-02-29", "2024/01/02", "2024-01-0a", "+024-01-02", "2024-01-02 "],
+)
+def test_to_dates_rejects_bad_ten_char_strings(s):
+    with pytest.raises(ValueError, match="invalid date string"):
+        to_dates(np.array([s, "2024-01-02"]), "dt")
+    with pytest.raises(ValueError, match="invalid date string"):
+        to_dates(["2024-01-02", s], "dt")
+
+
+def test_to_dates_mixed_lengths_and_date_objects():
+    x = ["2024-01-02", "2024-01-03T10:00", None, "2024-01-04"]
+    assert _dates(x)[0].astype(str).tolist() == ["2024-01-02", "2024-01-03", "NaT", "2024-01-04"]
+    x = [date(2024, 1, 2), None, date(2024, 1, 3)]
+    assert _dates(x)[0].astype(str).tolist() == ["2024-01-02", "NaT", "2024-01-03"]
+    aware = datetime(2024, 1, 5, 23, 30, tzinfo=timezone(timedelta(hours=-3)))
+    x = [date(2024, 1, 2), aware, pd.Timestamp("2024-01-05 23:30", tz="America/Sao_Paulo")]
+    assert _dates(x)[0].astype(str).tolist() == ["2024-01-02", "2024-01-05", "2024-01-05"]

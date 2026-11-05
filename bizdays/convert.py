@@ -5,7 +5,6 @@ into it (NaT for dates, NaN for counts) and a flag that says whether the
 input was a vector.
 """
 
-import re
 from datetime import date, datetime
 from typing import Any
 
@@ -17,9 +16,15 @@ DateArray = npt.NDArray[np.datetime64]
 FloatArray = npt.NDArray[np.float64]
 BoolArray = npt.NDArray[np.bool_]
 
-_DATE_STRING = r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?)?"
-_DATE_STRING_RE = re.compile(_DATE_STRING)
+_DATE_STRING = (
+    r"\d{4}-\d{2}-\d{2}"
+    r"(?:[T ](?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?)?"
+)
 _COARSE_UNITS = ("Y", "M", "W", "generic")
+_DIGIT_POS = [0, 1, 2, 3, 5, 6, 8, 9]
+# counts beyond 2**53 lose precision as float64 and overflow the int64 offset math
+_MAX_COUNT = 2**53
+_EPOCH_ORDINAL = date(1970, 1, 1).toordinal()
 
 
 def _not_1d(name: str, ndim: int) -> ValueError:
@@ -59,7 +64,7 @@ def to_1d(x: object, name: str) -> tuple[npt.NDArray[Any], BoolArray, bool]:
             "use a list, tuple, NumPy array or pandas Series/Index"
         )
     missing = np.asarray(mask | pd.isna(values), dtype=np.bool_)
-    if values.dtype == object:
+    if values.dtype == object and type(np.ma.masked) in set(map(type, values)):
         missing |= np.fromiter((v is np.ma.masked for v in values), dtype=np.bool_, count=len(values))
     return values, missing, is_vector
 
@@ -73,19 +78,23 @@ def _days_from_datetime64(values: npt.NDArray[np.datetime64], name: str) -> Date
 
 def _days_from_strings(values: npt.NDArray[Any], name: str) -> DateArray:
     strings = values.astype(str)
-    ok = pd.Series(strings, dtype=object).str.fullmatch(_DATE_STRING).to_numpy(dtype=bool)
+    # the date as written is the first 10 characters; read them as code points minus "0"
+    codes = strings.astype("U10").view(np.uint32).reshape(-1, 10)
+    digits = codes[:, _DIGIT_POS].astype(np.int32) - 48
+    ok = ((digits >= 0) & (digits <= 9)).all(axis=1) & (codes[:, 4] == 45) & (codes[:, 7] == 45)
+    plain = np.char.str_len(strings) == 10
+    if not plain.all():
+        ok[~plain] = pd.Series(strings[~plain], dtype=object).str.fullmatch(_DATE_STRING).to_numpy(dtype=bool)
+    year = digits[:, 0] * 1000 + digits[:, 1] * 100 + digits[:, 2] * 10 + digits[:, 3]
+    month = digits[:, 4] * 10 + digits[:, 5]
+    day = digits[:, 6] * 10 + digits[:, 7]
+    months = ((year - 1970) * 12 + month - 1).astype("datetime64[M]")
+    days = months.astype("datetime64[D]") + (day - 1)
+    # impossible dates such as 2024-02-30 roll into the next month
+    ok &= (month >= 1) & (month <= 12) & (day >= 1) & (days.astype("datetime64[M]") == months)
     if not ok.all():
         raise ValueError(f"{name}: invalid date string {strings[~ok][0]!r}; expected YYYY-MM-DD")
-    try:
-        # the date as written: drop any time and offset
-        return strings.astype("U10").astype("datetime64[D]")
-    except ValueError:
-        for s in strings:
-            try:
-                np.datetime64(s[:10], "D")
-            except ValueError:
-                raise ValueError(f"{name}: invalid date string {s!r}; expected YYYY-MM-DD") from None
-        raise
+    return days
 
 
 def _is_number(value: object) -> bool:
@@ -122,6 +131,10 @@ def to_dates(x: object, name: str) -> tuple[DateArray, bool]:
         raise ValueError(f"{name}: numbers are not dates (got {v[0]!r})")
     elif kind == "U" or (kind == "O" and pd.api.types.infer_dtype(v, skipna=True) == "string"):
         out[valid] = _days_from_strings(v, name)
+    elif kind == "O" and set(map(type, v)) == {date}:
+        # plain datetime.date objects only; datetime subclasses need the wall-clock rule
+        ordinals = np.fromiter(map(date.toordinal, v), dtype=np.int64, count=len(v))
+        out[valid] = (ordinals - _EPOCH_ORDINAL).astype("datetime64[D]")
     elif kind == "O":
         out[valid] = np.array([date_scalar(e, name) for e in v], dtype="datetime64[D]")
     else:
@@ -131,6 +144,10 @@ def to_dates(x: object, name: str) -> tuple[DateArray, bool]:
 
 def _count_error(name: str, value: object) -> ValueError:
     return ValueError(f"{name} must be whole numbers or missing (got {value!r})")
+
+
+def _too_large(name: str, value: object) -> ValueError:
+    return ValueError(f"{name} is too large for a count (got {value!r}); the limit is 2**53")
 
 
 def to_counts(x: object, name: str) -> tuple[FloatArray, bool]:
@@ -144,13 +161,24 @@ def to_counts(x: object, name: str) -> tuple[FloatArray, bool]:
     kind = values.dtype.kind
     if kind == "O":
         for e in v:
-            if isinstance(e, (bool, np.bool_)) or not isinstance(e, (int, float, np.integer, np.floating)):
+            if isinstance(e, (bool, np.bool_, np.timedelta64)) or not isinstance(
+                e, (int, float, np.integer, np.floating)
+            ):
                 raise _count_error(name, e)
-        v = v.astype(np.float64)
+            if isinstance(e, (float, np.floating)) and not np.isfinite(e):
+                raise _count_error(name, e)
+            if e > _MAX_COUNT or e < -_MAX_COUNT:
+                raise _too_large(name, e)
     elif kind not in "iuf":
         raise _count_error(name, v[0])
+    elif kind == "f" and not np.isfinite(v).all():
+        raise _count_error(name, v[~np.isfinite(v)][0])
+    else:
+        huge = (v > _MAX_COUNT) | (v < -_MAX_COUNT)
+        if huge.any():
+            raise _too_large(name, v[huge][0])
     counts = v.astype(np.float64)
-    bad = ~np.isfinite(counts) | (counts != np.floor(counts))
+    bad = counts != np.floor(counts)
     if bad.any():
         raise _count_error(name, v[bad][0])
     out[valid] = counts

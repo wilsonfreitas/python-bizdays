@@ -269,3 +269,11 @@ def test_diff_time_zone(anbima):
 def test_diff_rejects_2d(anbima):
     with pytest.raises(ValueError, match="must be 1-D"):
         anbima.diff([["2024-01-02", "2024-01-10"]])
+
+
+def test_offset_rejects_time_and_huge_counts(anbima):
+    with pytest.raises(ValueError, match="whole numbers"):
+        anbima.offset("2024-01-02", np.timedelta64(48, "h"))
+    for n in [1e20, 2**63, np.uint64(2**64 - 1), [2**70]]:
+        with pytest.raises(ValueError, match="too large"):
+            anbima.offset("2024-01-02", n)

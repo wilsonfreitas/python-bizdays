@@ -5,6 +5,7 @@ from typing import TypedDict, TypeAlias, overload
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from numpy.ma.core import MaskedConstant
 
 from bizdays.calendarfile import (
     CalendarDefinition,
@@ -86,7 +87,7 @@ def _finalize_count_result(result: FloatArray, single_value: bool) -> np.float64
 
 def _finalize_flag_result(
     result: BoolArray, missing: BoolArray, single_value: bool
-) -> np.bool_ | np.ma.MaskedArray:
+) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
     if single_value:
         return np.ma.masked if missing[0] else result[0]
     return np.ma.masked_array(result, mask=missing, fill_value=False)
@@ -336,12 +337,12 @@ class Calendar:
         return _finalize_count_result(bdays, single_value)
 
     @overload
-    def isbizday(self, dt: DateScalar) -> np.bool_: ...
+    def isbizday(self, dt: DateScalar) -> np.bool_ | MaskedConstant: ...
 
     @overload
     def isbizday(self, dt: DateVector) -> np.ma.MaskedArray: ...
 
-    def isbizday(self, dt: DateInput) -> np.bool_ | np.ma.MaskedArray:
+    def isbizday(self, dt: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
         """
         Checks if the given dates are business days.
 
