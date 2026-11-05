@@ -678,8 +678,13 @@ def test_calendar_constructor_rejects_bad_dates():
 
 
 def test_calendar_startdate_after_enddate():
-    with pytest.raises(ValueError, match="after enddate"):
+    with pytest.raises(ValueError, match="after enddate") as e:
         Calendar(startdate="2024-02-01", enddate="2024-01-01")
+    assert "defaults" not in str(e.value)
+    with pytest.raises(ValueError, match=r"\(enddate defaults to the last holiday\)"):
+        Calendar(holidays=["2024-01-01"], weekdays=[], startdate="2024-02-01")
+    with pytest.raises(ValueError, match=r"\(startdate defaults to the first holiday\)"):
+        Calendar(holidays=["2024-12-25"], weekdays=[], enddate="2024-01-01")
 
 
 @pytest.mark.parametrize(
@@ -709,6 +714,8 @@ def test_calendar_weekdays_validation():
     for weekdays in ([5, 6], ["Saturnday"], ["sa"]):
         with pytest.raises(ValueError, match="Invalid weekday"):
             Calendar(weekdays=weekdays)
+    with pytest.raises(ValueError, match="weekdays must be a list of weekday names"):
+        Calendar(weekdays="Saturday")
     assert Calendar(weekdays=["sat", "Saturday", "SUN"]).weekdays == ("Saturday", "Sunday")
     assert Calendar(weekdays=["SATURDAY", "sun"]).weekdays == ("Saturday", "Sunday")
 

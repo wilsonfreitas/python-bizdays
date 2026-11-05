@@ -87,6 +87,8 @@ _WEEKDAY_NUMBERS = {
 
 def _parse_weekdays(weekdays: Sequence[object]) -> list[int]:
     """Weekday numbers (Monday = 0) from full or 3-letter English names, any case, without duplicates."""
+    if isinstance(weekdays, str):
+        raise ValueError(f"weekdays must be a list of weekday names, not the string {weekdays!r}")
     out = []
     for item in weekdays:
         key = item.lower() if isinstance(item, str) else None
@@ -296,7 +298,13 @@ class Calendar:
                 self._enddate = Date("2071-01-01")
         start, end = np.datetime64(self._startdate.date, "D"), np.datetime64(self._enddate.date, "D")
         if start > end:
-            raise ValueError(f"startdate {start} is after enddate {end}")
+            defaults = [
+                f"{name} defaults to the {which} holiday"
+                for name, given, which in (("startdate", startdate, "first"), ("enddate", enddate, "last"))
+                if given is None and len(self._holidays)
+            ]
+            note = f" ({'; '.join(defaults)})" if defaults else ""
+            raise ValueError(f"startdate {start} is after enddate {end}{note}")
         self._holidays = self._holidays[(self._holidays >= start) & (self._holidays <= end)]
         self._index: DateIndex = DateIndex(
             self._holidays,
@@ -420,7 +428,9 @@ class Calendar:
         -------
         numpy.float64 or numpy.ndarray
             The number of business days between ``date_from`` and ``date_to``,
-            as ``float64``. A missing input gives ``NaN``.
+            as ``float64``. A missing input gives ``NaN``. When no business day
+            lies between the two dates the count is 0, unlike R bizdays, which
+            returns -1 or +1.
         """
         _date_from, vec_from = to_dates(date_from, "date_from")
         _date_to, vec_to = to_dates(date_to, "date_to")

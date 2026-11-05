@@ -147,6 +147,12 @@ def test_bizdays_never_needs_outside_days(anbima):
     assert anbima.bizdays("2000-01-01", "2000-01-04") == 1
 
 
+def test_bizdays_span_without_bizdays_is_zero(anbima):
+    # intended difference: R bizdays gives -1, -1, +1 here; v1.0.19 gives 0
+    for a, b in [("2007-11-17", "2007-11-18"), ("2007-11-18", "2007-11-18"), ("2007-11-18", "2007-11-17")]:
+        assert anbima.bizdays(a, b) == 0
+
+
 def test_r_range_errors(short):
     # R test-calendar.R:8-44
     cal = Calendar(weekdays=["Saturday", "Sunday"])
