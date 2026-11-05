@@ -306,6 +306,9 @@ class Calendar:
         """
         Calculate the amount of business days between two dates
 
+        Vector arguments must have equal lengths, or one of them must have length 1;
+        otherwise ``ValueError``.
+
         Parameters
         ----------
 
@@ -588,6 +591,9 @@ class Calendar:
         """
         Offsets the given dates by n business days.
 
+        Vector arguments must have equal lengths, or one of them must have length 1;
+        otherwise ``ValueError``.
+
         Parameters
         ----------
 
@@ -644,6 +650,9 @@ class Calendar:
     ) -> np.datetime64 | DateArray:
         """
         Get dates using a month, year, or date reference.
+
+        Vector arguments must have equal lengths, or one of them must have length 1;
+        otherwise ``ValueError``.
 
         Parameters
         ----------
