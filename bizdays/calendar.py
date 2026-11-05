@@ -797,6 +797,12 @@ class Calendar:
         raw_ref = _ref
         raw_bad = np.array([r is not None and not self._index.ref_inrange(r) for r in raw_ref], dtype=np.bool_)
         _expr, _ref = broadcast_pair(_expr, _ref, "expr", "ref")
+        # before the range check, so this ValueError wins over DateOutOfRange
+        for e, r in zip(_expr, _ref):
+            if e is not None and r is not None and e.kind == "composite" and r.kind == "date":
+                raise ValueError(
+                    f"Composite getdate expressions need a year or month ref, not a date ref: expr={e.text!r}, ref={r}"
+                )
         if len(_ref) == 0 and raw_bad.any():
             raise DateOutOfRange(
                 f"ref={raw_ref[raw_bad][0]} is out of {self._range_text()} (the result is empty)",

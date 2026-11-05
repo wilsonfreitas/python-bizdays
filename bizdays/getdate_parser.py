@@ -93,7 +93,7 @@ def _parse_ordinal(token: str, *, relative_offset: bool = False) -> int:
         if relative_offset and value < 0:
             return 1
         return value
-    match = re.fullmatch(r"(\d+)(st|nd|rd|th)", token)
+    match = re.fullmatch(r"([1-9]\d*|0)(st|nd|rd|th)", token)
     if match is None:
         raise ValueError(f"Invalid ordinal in getdate expression: {token}")
     n = int(match.group(1))

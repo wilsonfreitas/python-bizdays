@@ -329,7 +329,7 @@ def test_getdate_ordinal_suffixes(anbima, expr, expected):
 
 
 @pytest.mark.parametrize(
-    "expr", ["2st bizday", "1nd day", "3th day", "11st day", "12nd day", "21th day", "1st bizday after 2st day"]
+    "expr", ["2st bizday", "1nd day", "3th day", "11st day", "12nd day", "21th day", "1st bizday after 2st day", "01st day"]
 )
 def test_getdate_wrong_ordinal_suffix(anbima, expr):
     with pytest.raises(ValueError, match="ordinal"):
@@ -476,6 +476,10 @@ def test_getdate_date_ref_edges(anbima, expr, ref):
 def test_getdate_composite_rejects_date_ref(anbima):
     with pytest.raises(ValueError, match="year or month ref"):
         anbima.getdate("1st bizday before 2nd fri", "2021-02-10")
+    # rejected before the range check
+    with pytest.raises(ValueError, match="year or month ref") as e:
+        anbima.getdate("1st bizday before 2nd fri", "1990-01-05")
+    assert not isinstance(e.value, DateOutOfRange)
 
 
 @pytest.mark.parametrize(
