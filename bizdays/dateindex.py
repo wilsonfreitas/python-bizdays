@@ -69,12 +69,18 @@ class DateIndex(object):
         return [self._pos(d) for d in dates]
 
     def bizdays(
-        self, date_from: npt.NDArray[np.datetime64], date_to: npt.NDArray[np.datetime64]
+        self,
+        date_from: npt.NDArray[np.datetime64],
+        date_to: npt.NDArray[np.datetime64],
+        financial: bool = True,
     ) -> npt.NDArray[np.int64]:
         p_from, p_to = self._check(date_from, date_to)
         lo, hi = np.minimum(p_from, p_to), np.maximum(p_from, p_to)
-        # business days in [lo, hi], minus one: the two ends move to following(lo) and preceding(hi)
-        bdays = np.maximum(self._fwd_index[hi] - self._fwd_index[lo] + self._is_bizday[lo] - 1, 0)
+        # business days in the closed interval [lo, hi]
+        bdays = self._fwd_index[hi] - self._fwd_index[lo] + self._is_bizday[lo]
+        if financial:
+            # minus one: the two ends move to following(lo) and preceding(hi)
+            bdays = np.maximum(bdays - 1, 0)
         return np.where(p_from > p_to, -bdays, bdays)
 
     def is_bizday(self, date: npt.NDArray[np.datetime64]) -> npt.NDArray[np.bool_]:
