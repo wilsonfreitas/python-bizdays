@@ -191,3 +191,22 @@ Minimal example:
 
 If you are updating older custom-file examples, keep the file-based workflow but
 move the content to JSON and load it with ``Calendar.load(filename=...)``.
+
+8. Vector lengths
+-----------------
+
+In v1, ``bizdays`` recycled a shorter vector when its length divided the longer
+one, and raised a plain ``Exception`` otherwise; ``offset``, ``getdate`` and
+``getbizdays`` recycled any lengths silently.
+
+In v2, two vector arguments must have equal lengths, or one of them must have
+length 1. Any other combination raises ``ValueError``. An empty argument gives
+an empty array when the other argument is empty or has length 1.
+
+The fix is mechanical: pass equal lengths, or repeat the shorter input with
+``np.tile`` or ``np.repeat``:
+
+.. code-block:: python
+
+   cal.bizdays(["2024-01-02", "2024-01-03"], ["2024-02-01"] * 4)  # v1: 4 numbers; v2: ValueError
+   cal.bizdays(np.tile(["2024-01-02", "2024-01-03"], 2), ["2024-02-01"] * 4)  # explicit repeat
