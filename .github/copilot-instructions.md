@@ -36,10 +36,10 @@ make -C docs html
 
 ## High-level architecture
 
-`bizdays` currently carries **two Calendar implementations**:
+`bizdays` has **one Calendar implementation**:
 
 - `bizdays/calendar.py` is the **current public Calendar API**. `bizdays/__init__.py` re-exports this `Calendar`, so `from bizdays import Calendar` and `from bizdays.calendar import Calendar` both point to the numpy-backed implementation.
-- `bizdays/bizdays.py` is the **legacy implementation**. It still matters because it owns the global `get_option` / `set_option` runtime switches and older behavior around `python` vs `pandas` modes.
+- The public API is exactly `bizdays.__all__`: `Calendar`, `list_calendars` and `DateOutOfRange` (a `ValueError` subclass). Every submodule is internal. The legacy `bizdays/bizdays.py` and `get_option` / `set_option` were removed in 2.0.0.
 
 The numpy-backed path is split across a few modules:
 
@@ -53,8 +53,7 @@ Calendar definitions come from packaged JSON files in `bizdays/data/`, using the
 ## Key conventions
 
 - Preserve the **scalar/sequence contract** in `bizdays/calendar.py`: public methods detect sequences with `isseq()`, normalize with `np.atleast_1d(...)`, recycle mismatched argument lengths with `recycle_arrays()`, and return a scalar only when the original input was scalar.
-- Treat the repo as a **transition state between the new and legacy APIs**. The top-level `Calendar` is the new numpy implementation, but `get_option` / `set_option` still come from `bizdays/bizdays.py`, and some tests/docs still reflect legacy behavior.
-- Tests that change runtime mode should explicitly set and restore it. The mode is global process state, not per-calendar state.
+- There is no global runtime mode: the top-level `Calendar` always returns NumPy results. `tests/legacy/` is reference only and is not collected by pytest.
 - `Calendar.load()` is the preferred entry point for bundled calendars. Use `name=` for packaged calendars, `filename=` for custom JSON calendar files, and the `PMC/` prefix only when the pandas-market-calendars integration is intended.
 - Weekday names are parsed leniently: both full names and short forms such as `"sat"` / `"sun"` are accepted because matching is based on the first three letters.
 - `Calendar(name="actual")` is the common “all days are business days” calendar used throughout the tests.

@@ -754,44 +754,33 @@ class Calendar:
         else:
             assert name is not None
             if name.startswith("PMC/"):
-                try:
-                    data = load_pandas_market_calendar(name[4:])
-                except ImportError:
-                    raise Exception("pandas_market_calendars must be installed to use PMC calendars")
-                _cal = cls(
-                    data["holidays"],
-                    weekdays=data["weekdays"],
-                    startdate=data["startdate"],
-                    enddate=data["enddate"],
-                    name=name,
-                )
+                lister, loader = list_pandas_market_calendar_names, load_pandas_market_calendar
+                package, extra = "pandas_market_calendars", "pmc"
             elif name.startswith("XCAL/"):
-                try:
-                    data = load_exchange_calendar(name[5:])
-                except ImportError:
-                    raise Exception("exchange_calendars must be installed to use XCAL calendars")
-                _cal = cls(
-                    data["holidays"],
-                    weekdays=data["weekdays"],
-                    startdate=data["startdate"],
-                    enddate=data["enddate"],
-                    name=name,
-                )
+                lister, loader = list_exchange_calendar_names, load_exchange_calendar
+                package, extra = "exchange_calendars", "xcal"
             elif name.startswith("WORK/"):
-                try:
-                    data = load_workalendar_calendar(name[5:])
-                except ImportError:
-                    raise Exception("workalendar must be installed to use WORK calendars")
-                _cal = cls(
-                    data["holidays"],
-                    weekdays=data["weekdays"],
-                    startdate=data["startdate"],
-                    enddate=data["enddate"],
-                    name=name,
-                )
+                lister, loader = list_workalendar_calendar_names, load_workalendar_calendar
+                package, extra = "workalendar", "work"
             else:
                 definition = load_packaged_calendar_definition(name)
-                _cal = cls._load_calendar_definition(definition)
+                return cls._load_calendar_definition(definition)
+            prefix, _, provider_name = name.partition("/")
+            try:
+                if provider_name not in lister():
+                    raise ValueError(f"Unknown {prefix} calendar: {provider_name!r}")
+                data = loader(provider_name)
+            except ImportError as exc:
+                raise ImportError(
+                    f'{package} must be installed to use {prefix} calendars: pip install "bizdays[{extra}]"'
+                ) from exc
+            _cal = cls(
+                data["holidays"],
+                weekdays=data["weekdays"],
+                startdate=data["startdate"],
+                enddate=data["enddate"],
+                name=name,
+            )
         return _cal
 
     @classmethod

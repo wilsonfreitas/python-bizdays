@@ -50,7 +50,3 @@ warn_unused_configs = true
 show_error_codes = true
 pretty = true
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["bizdays.bizdays"]
-ignore_errors = true
