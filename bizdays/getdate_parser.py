@@ -6,13 +6,15 @@ from datetime import date, datetime
 from typing import Literal, TypeAlias
 
 import numpy as np
+import numpy.typing as npt
+
+from bizdays.convert import date_scalar, to_1d
 
 TargetKind: TypeAlias = Literal["day", "bizday", "weekday"]
 RefKind: TypeAlias = Literal["year", "month", "date"]
 
 _YEAR_RE = re.compile(r"^\d{4}$")
 _MONTH_RE = re.compile(r"^(\d{4})-(\d{2})$")
-_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 _ORDINALS = {
     "first": 1,
@@ -145,9 +147,11 @@ def normalize_ref(ref: object) -> NormalizedRef:
         raise ValueError(f"Invalid getdate ref: {ref!r}")
     if isinstance(ref, (int, np.integer)):
         return NormalizedRef("year", year=int(ref))
+    if isinstance(ref, (float, np.floating)):
+        if np.isfinite(ref) and float(ref).is_integer():
+            return NormalizedRef("year", year=int(ref))
+        raise ValueError(f"Invalid getdate ref: {ref!r}")
     if isinstance(ref, str):
-        if _DATE_RE.fullmatch(ref):
-            return NormalizedRef("date", date=np.datetime64(ref, "D"))
         month_match = _MONTH_RE.fullmatch(ref)
         if month_match is not None:
             year = int(month_match.group(1))
@@ -157,13 +161,48 @@ def normalize_ref(ref: object) -> NormalizedRef:
             return NormalizedRef("month", year=year, month=month)
         if _YEAR_RE.fullmatch(ref):
             return NormalizedRef("year", year=int(ref))
-        raise ValueError(f"Invalid getdate ref: {ref!r}")
-    if isinstance(ref, datetime):
-        return NormalizedRef("date", date=np.datetime64(ref.date(), "D"))
-    if isinstance(ref, date):
-        return NormalizedRef("date", date=np.datetime64(ref, "D"))
+        return NormalizedRef("date", date=_date_ref(ref))
+    if isinstance(ref, (datetime, date)):
+        return NormalizedRef("date", date=_date_ref(ref))
     if isinstance(ref, np.datetime64):
         if np.isnat(ref):
             raise ValueError("Invalid getdate ref: NaT")
-        return NormalizedRef("date", date=ref.astype("datetime64[D]"))
+        unit = np.datetime_data(ref.dtype)[0]
+        if unit == "Y":
+            return NormalizedRef("year", year=int(ref.astype(int)) + 1970)
+        if unit == "M":
+            months = int(ref.astype(int))
+            return NormalizedRef("month", year=months // 12 + 1970, month=months % 12 + 1)
+        return NormalizedRef("date", date=_date_ref(ref))
     raise ValueError(f"Invalid getdate ref: {ref!r}")
+
+
+def _date_ref(ref: object) -> np.datetime64:
+    try:
+        return date_scalar(ref, "ref")
+    except ValueError:
+        raise ValueError(f"Invalid getdate ref: {ref!r}") from None
+
+
+def to_exprs(x: object) -> tuple[npt.NDArray[np.object_], bool]:
+    """Parse getdate expressions; ``None`` where missing."""
+    values, missing, is_vector = to_1d(x, "expr")
+    out = np.full(values.shape, None, dtype=object)
+    parsed: dict[str, GetDateExpression] = {}
+    for i in np.flatnonzero(~missing):
+        value = values[i]
+        if not isinstance(value, str):
+            raise ValueError("getdate expressions must be strings or missing")
+        if value not in parsed:
+            parsed[value] = parse_getdate_expression(value)
+        out[i] = parsed[value]
+    return out, is_vector
+
+
+def to_refs(x: object) -> tuple[npt.NDArray[np.object_], bool]:
+    """Normalize getdate refs; ``None`` where missing."""
+    values, missing, is_vector = to_1d(x, "ref")
+    out = np.full(values.shape, None, dtype=object)
+    for i in np.flatnonzero(~missing):
+        out[i] = normalize_ref(values[i])
+    return out, is_vector

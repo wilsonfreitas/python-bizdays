@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
+import pytest
 
 from bizdays.calendarfile import load_calendar_definition
 from bizdays.dateindex import DateIndex
@@ -431,8 +432,21 @@ def test_seq():
 
 def test_seq2():
     act = DateIndex(
-        holidays=np.array([]), startdate=np.datetime64("2000-01-01"), enddate=np.datetime64("2099-12-31"), weekdays=[]
+        holidays=np.array([], dtype="datetime64[D]"),
+        startdate=np.datetime64("2000-01-01"),
+        enddate=np.datetime64("2099-12-31"),
+        weekdays=[],
     )
     dts = np.arange(np.datetime64("2013-01-01"), np.datetime64("2013-01-11"))
     seq = act.seq(np.datetime64("2013-01-01"), np.datetime64("2013-01-10"))
     assert np.array_equal(seq, dts)
+
+
+def test_dateindex_requires_day_holidays():
+    with pytest.raises(ValueError, match=r"datetime64\[D\]"):
+        DateIndex(
+            holidays=np.array([]),
+            startdate=np.datetime64("2000-01-01"),
+            enddate=np.datetime64("2099-12-31"),
+            weekdays=[],
+        )

@@ -99,10 +99,11 @@ The NumPy-backed API returns NumPy-native values:
 
 - scalar date results such as ``following`` and ``getdate`` return
   ``numpy.datetime64``
-- scalar counters such as ``bizdays`` return ``numpy.int_``
+- scalar counters such as ``bizdays`` return ``numpy.float64``
 - vectorized calls return ``numpy.ndarray`` values
-- missing date-like results use ``NaT``; missing numeric and boolean results use
-  masked arrays
+- counts are ``float64`` with ``NaN`` for missing values; missing date-like
+  results use ``NaT``; ``isbizday`` vectors are masked arrays with
+  ``fill_value=False``, and a missing scalar flag is ``numpy.ma.masked``
 
 Before:
 

@@ -5,6 +5,7 @@ from typing import TypedDict, TypeAlias, overload
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from numpy.ma.core import MaskedConstant
 
 from bizdays.calendarfile import (
     CalendarDefinition,
@@ -12,6 +13,7 @@ from bizdays.calendarfile import (
     load_calendar_definition,
     load_packaged_calendar_definition,
 )
+from bizdays.convert import to_counts, to_dates
 from bizdays.date import Date
 from bizdays.dateindex import DateIndex
 from bizdays.external import (
@@ -22,7 +24,8 @@ from bizdays.external import (
     list_pandas_market_calendar_names,
     list_workalendar_calendar_names,
 )
-from bizdays.utils import isseq, recycle_arrays
+from bizdays.getdate_parser import to_exprs, to_refs
+from bizdays.utils import recycle_arrays
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
@@ -38,8 +41,7 @@ IntSequence: TypeAlias = list[int] | tuple[int, ...]
 IntVector: TypeAlias = IntSequence | IntArray
 IntInput: TypeAlias = int | IntVector
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
-MaskedIntResult: TypeAlias = np.int_ | IntArray | np.ma.MaskedArray
-MaskedBoolResult: TypeAlias = np.bool_ | BoolArray | np.ma.MaskedArray
+FloatArray: TypeAlias = npt.NDArray[np.float64]
 
 
 class CalendarIntegrationListing(TypedDict):
@@ -55,49 +57,40 @@ class CalendarListing(TypedDict):
     workalendar: CalendarIntegrationListing
 
 
-def _normalize_date_input(dt: DateInput) -> DateArray:
-    return np.atleast_1d(np.asarray(dt, dtype="datetime64[D]"))
+def _constructor_date(value: object, name: str) -> np.datetime64:
+    dates, is_vector = to_dates(value, name)
+    if is_vector:
+        raise ValueError(f"{name} must be a single date")
+    if np.isnat(dates[0]):
+        raise ValueError(f"{name} cannot be missing")
+    return dates[0]
 
 
-def _normalize_offset_input(n: IntInput) -> tuple[IntArray, BoolArray]:
-    raw = np.atleast_1d(np.asarray(n, dtype=object))
-    missing = np.asarray(pd.isna(raw), dtype=np.bool_)
-    values = np.zeros(raw.shape, dtype=np.int_)
-
-    for idx, value in np.ndenumerate(raw):
-        if missing[idx]:
-            continue
-        if isinstance(value, (int, np.integer)):
-            values[idx] = int(value)
-            continue
-        if isinstance(value, (float, np.floating)) and np.isfinite(value) and float(value).is_integer():
-            values[idx] = int(value)
-            continue
-        raise ValueError("Offset values must be integers or missing")
-
-    return values, missing
+def _constructor_holidays(holidays: object) -> DateArray:
+    if holidays is None:
+        return np.array([], dtype="datetime64[D]")
+    dates, is_vector = to_dates(holidays, "holidays")
+    if not is_vector:
+        raise ValueError("holidays must be a sequence of dates")
+    if np.isnat(dates).any():
+        raise ValueError("holidays cannot contain missing values")
+    return dates
 
 
 def _finalize_date_result(result: DateArray, single_value: bool) -> np.datetime64 | DateArray:
     return result[0] if single_value else result
 
 
-def _finalize_masked_int_result(
-    result: IntArray, missing: BoolArray, single_value: bool
-) -> MaskedIntResult:
-    if np.any(missing):
-        masked = np.ma.masked_array(result, mask=missing)
-        return masked[0] if single_value else masked
+def _finalize_count_result(result: FloatArray, single_value: bool) -> np.float64 | FloatArray:
     return result[0] if single_value else result
 
 
-def _finalize_masked_bool_result(
+def _finalize_flag_result(
     result: BoolArray, missing: BoolArray, single_value: bool
-) -> MaskedBoolResult:
-    if np.any(missing):
-        masked = np.ma.masked_array(result, mask=missing)
-        return masked[0] if single_value else masked
-    return result[0] if single_value else result
+) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
+    if single_value:
+        return np.ma.masked if missing[0] else result[0]
+    return np.ma.masked_array(result, mask=missing, fill_value=False)
 
 
 def _list_pandas_market_calendars() -> CalendarIntegrationListing:
@@ -236,13 +229,11 @@ class Calendar:
         name: str = "",
         financial: bool = True,
     ) -> None:
-        if holidays is None:
-            holidays = []
         if weekdays is None:
             weekdays = []
         self.financial: bool = financial
         self.name: str = name
-        self._holidays: DateArray = np.array([Date(d).format() for d in holidays], dtype="datetime64[D]")
+        self._holidays: DateArray = _constructor_holidays(holidays)
         self._nonwork_weekdays: list[int] = [
             [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
         ]
@@ -250,20 +241,20 @@ class Calendar:
         self._enddate: Date
         if len(self._holidays):
             if startdate is not None:
-                self._startdate = Date(startdate)
+                self._startdate = Date(_constructor_date(startdate, "startdate").astype(object))
             else:
                 self._startdate = Date(min(self._holidays).astype("O"))
             if enddate is not None:
-                self._enddate = Date(enddate)
+                self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date(max(self._holidays).astype("O"))
         else:
             if startdate is not None:
-                self._startdate = Date(startdate)
+                self._startdate = Date(_constructor_date(startdate, "startdate").astype(object))
             else:
                 self._startdate = Date("1970-01-01")
             if enddate is not None:
-                self._enddate = Date(enddate)
+                self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date("2071-01-01")
         self._index: DateIndex = DateIndex(
@@ -293,16 +284,25 @@ class Calendar:
 
     holidays = property(__get_holidays)
 
-    @overload
-    def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.int_: ...
+    def _check_range(self, dates: DateArray) -> None:
+        self._index.check_range(dates[~np.isnat(dates)])
+
+    def _dates(self, x: object, name: str) -> tuple[DateArray, bool]:
+        # shortcut: range is checked per argument before pairing; WIL-140 moves it after pairing for positions
+        dates, is_vector = to_dates(x, name)
+        self._check_range(dates)
+        return dates, is_vector
 
     @overload
-    def bizdays(self, date_from: DateVector, date_to: DateInput) -> IntArray: ...
+    def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.float64: ...
 
     @overload
-    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> IntArray: ...
+    def bizdays(self, date_from: DateVector, date_to: DateInput) -> FloatArray: ...
 
-    def bizdays(self, date_from: DateInput, date_to: DateInput) -> MaskedIntResult:
+    @overload
+    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> FloatArray: ...
+
+    def bizdays(self, date_from: DateInput, date_to: DateInput) -> np.float64 | FloatArray:
         """
         Calculate the amount of business days between two dates
 
@@ -317,31 +317,32 @@ class Calendar:
 
         Returns
         -------
-        numpy scalar or numpy.ndarray
-            The number of business days between ``date_from`` and ``date_to``.
+        numpy.float64 or numpy.ndarray
+            The number of business days between ``date_from`` and ``date_to``,
+            as ``float64``. A missing input gives ``NaN``.
         """
-        single_value = not (isseq(date_from) or isseq(date_to))
-        _date_from = _normalize_date_input(date_from)
-        _date_to = _normalize_date_input(date_to)
+        _date_from, vec_from = self._dates(date_from, "date_from")
+        _date_to, vec_to = self._dates(date_to, "date_to")
+        single_value = not (vec_from or vec_to)
         _date_from, _date_to = recycle_arrays(_date_from, _date_to)
         missing = np.isnat(_date_from) | np.isnat(_date_to)
-        bdays = np.zeros(_date_from.shape, dtype=np.int_)
+        bdays = np.full(_date_from.shape, np.nan)
         valid = ~missing
         if np.any(valid):
-            bdays[valid] = self._index.bizdays(_date_from[valid], _date_to[valid])
+            counts = self._index.bizdays(_date_from[valid], _date_to[valid])
             if not self.financial:
                 date_reverse = _date_from[valid] > _date_to[valid]
-                adjust = np.where(date_reverse, -1, 1)
-                bdays[valid] = bdays[valid] + adjust
-        return _finalize_masked_int_result(bdays, missing, single_value)
+                counts = counts + np.where(date_reverse, -1, 1)
+            bdays[valid] = counts
+        return _finalize_count_result(bdays, single_value)
 
     @overload
-    def isbizday(self, dt: DateScalar) -> np.bool_: ...
+    def isbizday(self, dt: DateScalar) -> np.bool_ | MaskedConstant: ...
 
     @overload
-    def isbizday(self, dt: DateVector) -> BoolArray: ...
+    def isbizday(self, dt: DateVector) -> np.ma.MaskedArray: ...
 
-    def isbizday(self, dt: DateInput) -> MaskedBoolResult:
+    def isbizday(self, dt: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
         """
         Checks if the given dates are business days.
 
@@ -354,17 +355,19 @@ class Calendar:
         Returns
         -------
 
-        numpy scalar or numpy.ndarray
+        ``numpy.bool_`` or ``numpy.ma.MaskedArray``
             Returns ``True`` if the given date is a business day and ``False`` otherwise.
+            A vector result is always a masked array with ``fill_value=False``;
+            a missing scalar gives ``numpy.ma.masked``.
         """
-        single_value = not isseq(dt)
-        _dt = _normalize_date_input(dt)
+        _dt, is_vector = self._dates(dt, "dt")
+        single_value = not is_vector
         missing = np.isnat(_dt)
         is_bizday = np.zeros(_dt.shape, dtype=np.bool_)
         valid = ~missing
         if np.any(valid):
             is_bizday[valid] = self._index.is_bizday(_dt[valid])
-        return _finalize_masked_bool_result(is_bizday, missing, single_value)
+        return _finalize_flag_result(is_bizday, missing, single_value)
 
     @overload
     def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
@@ -392,8 +395,8 @@ class Calendar:
             Returns the next business day if the given date is not a business day.
 
         """
-        single_value = not isseq(dt)
-        _dt = _normalize_date_input(dt)
+        _dt, is_vector = self._dates(dt, "dt")
+        single_value = not is_vector
         missing = np.isnat(_dt)
         adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
@@ -438,8 +441,8 @@ class Calendar:
             Returns the next business day unless that would cross into the next month.
 
         """
-        single_value = not isseq(dt)
-        _dt = _normalize_date_input(dt)
+        _dt, is_vector = self._dates(dt, "dt")
+        single_value = not is_vector
         missing = np.isnat(_dt)
         adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
@@ -479,8 +482,8 @@ class Calendar:
             Returns the previous business day if the given date is not a business day.
 
         """
-        single_value = not isseq(dt)
-        _dt = _normalize_date_input(dt)
+        _dt, is_vector = self._dates(dt, "dt")
+        single_value = not is_vector
         missing = np.isnat(_dt)
         adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
@@ -525,8 +528,8 @@ class Calendar:
             Returns the previous business day unless that would cross into the previous month.
 
         """
-        single_value = not isseq(dt)
-        _dt = _normalize_date_input(dt)
+        _dt, is_vector = self._dates(dt, "dt")
+        single_value = not is_vector
         missing = np.isnat(_dt)
         adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
@@ -558,8 +561,13 @@ class Calendar:
         numpy.ndarray
             Returns a NumPy array containing business days only.
         """
-        _from: np.datetime64 = np.datetime64(date_from)
-        _to: np.datetime64 = np.datetime64(date_to)
+        from_arr, vec_from = to_dates(date_from, "date_from")
+        to_arr, vec_to = to_dates(date_to, "date_to")
+        if vec_from or vec_to:
+            raise ValueError("seq takes single dates, not vectors")
+        _from, _to = from_arr[0], to_arr[0]
+        if np.isnat(_from) or np.isnat(_to):
+            raise ValueError("seq endpoints cannot be missing")
         reverse = False
         if _from > _to:
             _from, _to = _to, _from
@@ -595,20 +603,18 @@ class Calendar:
             Returns the given dates offset by the given amount of business days.
 
         """
-        single_value = not (isseq(dt) or isseq(n))
-        _dt = _normalize_date_input(dt)
-        _n, missing_n = _normalize_offset_input(n)
+        _dt, vec_dt = self._dates(dt, "dt")
+        _n, vec_n = to_counts(n, "n")
+        single_value = not (vec_dt or vec_n)
         _dt, _n = recycle_arrays(_dt, _n)
-        _, missing_n = recycle_arrays(_dt, missing_n)
-        missing_dt = np.isnat(_dt)
-        missing = missing_dt | missing_n
+        missing = np.isnat(_dt) | np.isnan(_n)
         dts = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         valid = ~missing
         if np.any(valid):
-            dts[valid] = self._index.offset(_dt[valid], _n[valid])
+            dts[valid] = self._index.offset(_dt[valid], _n[valid].astype(np.int64))
         return _finalize_date_result(dts, single_value)
 
-    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> IntArray:
+    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> FloatArray:
         """
         Compute the number of business days between dates in a given vector
         of dates.
@@ -623,12 +629,13 @@ class Calendar:
         -------
 
         numpy.ndarray
-            The number of business days between consecutive dates.
+            The number of business days between consecutive dates, as ``float64``
+            with ``NaN`` for missing values.
         """
-        _dts: DateArray = np.asarray(dts, dtype="datetime64[D]")
+        _dts, _ = self._dates(dts, "dts")
         if len(_dts) <= 1:
-            return np.array([], dtype=np.int_)
-        return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.int_)
+            return np.array([], dtype=np.float64)
+        return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.float64)
 
     def getdate(
         self,
@@ -656,20 +663,17 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns dates according to the given reference.
         """
-        single_value = not (isseq(expr) or isseq(ref))
-        _expr = np.atleast_1d(np.asarray(expr, dtype=object))
-        _ref = np.atleast_1d(np.asarray(ref, dtype=object))
+        _expr, vec_expr = to_exprs(expr)
+        _ref, vec_ref = to_refs(ref)
+        ref_dates = [r.date for r in _ref if r is not None and r.kind == "date"]
+        self._check_range(np.array(ref_dates, dtype="datetime64[D]"))
+        single_value = not (vec_expr or vec_ref)
         _expr, _ref = recycle_arrays(_expr, _ref)
 
-        missing = np.array([pd.isna(expr_value) or pd.isna(ref_value) for expr_value, ref_value in zip(_expr, _ref)])
+        missing = pd.isna(_expr) | pd.isna(_ref)
         dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-
-        for idx in np.flatnonzero(valid):
-            expr_value = _expr[idx]
-            if not isinstance(expr_value, str):
-                raise ValueError("getdate expressions must be strings or missing")
-            dates[idx] = self._index.getdate(expr_value, _ref[idx])
+        for idx in np.flatnonzero(~missing):
+            dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
 
         return _finalize_date_result(dates, single_value)
 

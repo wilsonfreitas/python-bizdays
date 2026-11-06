@@ -5,6 +5,7 @@ from bizdays.getdate_parser import (
     CompositeGetDateExpression,
     GetDateExpression,
     GetDateTarget,
+    NormalizedRef,
     RelativeGetDateExpression,
     SimpleGetDateExpression,
     normalize_ref,
@@ -31,6 +32,8 @@ class DateIndex(object):
         enddate: np.datetime64,
         weekdays: list[int],
     ):
+        if holidays.dtype != np.dtype("datetime64[D]"):
+            raise ValueError("holidays must be a datetime64[D] array")
         self.weekdays: list[int] = weekdays
         self.holidays = holidays
         self._n_holidays = holidays.astype("datetime64[D]").astype(int)
@@ -64,6 +67,11 @@ class DateIndex(object):
         self._dates_table["month"] = self._months
         self._dates_table["is_bizday"] = self._is_bizday.astype(int)
         self._dates_table["weekday"] = self._weekday_index
+
+    def check_range(self, dates: npt.NDArray[np.datetime64]) -> None:
+        """Raise DateOutOfRange if any date (no NaT allowed) is outside the calendar range."""
+        if np.any((dates < self.startdate) | (dates > self.enddate)):
+            raise DateOutOfRange("Given date out of calendar range")
 
     def bizdays(
         self, date_from: npt.NDArray[np.datetime64], date_to: npt.NDArray[np.datetime64]
@@ -143,9 +151,9 @@ class DateIndex(object):
         d_to = int(date_to.astype(int))
         return self._bizdays[(self._n_bizdays >= d_from) & (self._n_bizdays <= d_to)]
 
-    def getdate(self, expr: str, ref: object) -> np.datetime64:
-        parsed = parse_getdate_expression(expr)
-        normalized = normalize_ref(ref)
+    def getdate(self, expr: str | GetDateExpression, ref: object) -> np.datetime64:
+        parsed = parse_getdate_expression(expr) if isinstance(expr, str) else expr
+        normalized = ref if isinstance(ref, NormalizedRef) else normalize_ref(ref)
 
         if normalized.kind == "date":
             assert normalized.date is not None
