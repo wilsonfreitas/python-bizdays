@@ -1,3 +1,12 @@
+### version 1.0.20 (2026-04-12)
+
+* NumPy-backed `Calendar.getdate(expr, ref)` implemented for month (`YYYY-MM`), year (`YYYY` / `int`), and date references.
+* Added direct parser and resolver support for relative weekday expressions such as `next wed`, `previous mon`, and ordinal weekday lookups from date references.
+* Fixed weekday-anchor expressions such as `1st bizday before 2nd fri` in the new API (Issue #31).
+* Bundled calendars migrated from `.cal` files to JSON definitions.
+* Active `getdate` coverage added in `tests/test_getdate.py`, including migrated legacy expectations and direct `DateIndex.getdate(...)` checks.
+* API and index documentation updated for the new `getdate(expr, ref)` signature.
+
 ### version 1.0.19 (2026-01-04)
 
 * Restructured package: converted from single module to package directory

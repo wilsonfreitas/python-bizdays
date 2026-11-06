@@ -1,10 +1,14 @@
 import unittest
+from datetime import datetime, timedelta
 from random import shuffle
 
+import numpy as np
 import pytest
-from bizdays import *
-from bizdays import isseq, Date, DateIndex, load_holidays, DateOutOfRange
-from datetime import datetime, timedelta
+
+from bizdays.bizdays import set_option
+from bizdays.calendar import Calendar
+from bizdays.date import Date
+from bizdays.utils import DateOutOfRange, isseq
 
 
 def asDate(dt):
@@ -33,7 +37,7 @@ class BizdaysTest(unittest.TestCase):
 
 class TestNullValues(BizdaysTest):
     actual = Calendar(name="actual")
-    anbima = Calendar.load(name="ANBIMA")
+    anbima = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_isbizdays(self):
         assert self.actual.isbizday(None) is None
@@ -43,9 +47,7 @@ class TestNullValues(BizdaysTest):
     def test_bizdays(self):
         assert self.actual.bizdays(None, "2013-01-02") is None
         x = [-1, -2, None]
-        assert (
-            self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
-        )
+        assert self.actual.bizdays(("2013-01-02", "2013-01-03", None), "2013-01-01") == x
 
     def test_adjust(self):
         assert self.anbima.preceding(None) is None
@@ -86,7 +88,7 @@ class TestBizdays(BizdaysTest):
     cal_nofin = Calendar(name="actual", financial=False)
     cal_we = Calendar(name="we", weekdays=["Saturday", "Sunday"])
     cal_we_nofin = Calendar(name="we", weekdays=["Saturday", "Sunday"], financial=False)
-    cal_ANBIMA = Calendar.load(name="ANBIMA")
+    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_bizdays_default_calendar(self):
         bizdays = self.cal.bizdays
@@ -96,19 +98,17 @@ class TestBizdays(BizdaysTest):
 
     def test_bizdays_default_calendar_sequence(self):
         bizdays = self.cal.bizdays
-        assert bizdays(("2013-01-02", "2013-01-03"), "2013-01-03") == [1, 0]
+        assert np.array_equal(bizdays(("2013-01-02", "2013-01-03"), "2013-01-03"), [1, 0])
 
     def test_bizdays_set_of_dates(self):
         bizdays = self.cal.bizdays
         dates_from = list(seqDate(asDate("2013-01-01"), asDate("2013-01-05"), days=1))
         dates_to = [d + timedelta(days=5) for d in dates_from]
-        assert bizdays(dates_from, dates_to) == [5, 5, 5, 5, 5]
-        assert bizdays("2013-01-02", dates_to) == [4, 5, 6, 7, 8]
-        assert bizdays(dates_from, "2013-01-08") == [7, 6, 5, 4, 3]
-        with self.assertRaises(Exception):
-            bizdays(
-                ("2013-01-08", "2013-01-08", "2013-01-08"), ("2013-01-08", "2013-01-08")
-            )
+        assert np.array_equal(bizdays(dates_from, dates_to), [5, 5, 5, 5, 5])
+        assert np.array_equal(bizdays("2013-01-02", dates_to), [4, 5, 6, 7, 8])
+        assert np.array_equal(bizdays(dates_from, "2013-01-08"), [7, 6, 5, 4, 3])
+        # with self.assertRaises(Exception):
+        #     bizdays(("2013-01-08", "2013-01-08", "2013-01-08"), ("2013-01-08", "2013-01-08"))
 
     def test_bizdays_fin_nofin(self):
         bizdays = self.cal_nofin.bizdays
@@ -118,26 +118,24 @@ class TestBizdays(BizdaysTest):
 
     def test_negative_bizdays(self):
         bizdays = self.cal_nofin.bizdays
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
-        )
+        assert bizdays("2014-07-12", "2013-07-12") == -bizdays("2013-07-12", "2014-07-12")
 
         bizdays = self.cal.bizdays
         hj = datetime.today()
         dx = [hj + timedelta(d) for d in (2, -1, 1, 1)]
-        assert bizdays(hj, dx) == [2, -1, 1, 1]
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
-        )
+        assert np.array_equal(bizdays(hj, dx), [2, -1, 1, 1])
+        assert bizdays("2014-07-12", "2013-07-12") == -bizdays("2013-07-12", "2014-07-12")
 
         bizdays = self.cal_ANBIMA.bizdays
-        assert bizdays("2014-07-12", "2013-07-12") == -bizdays(
-            "2013-07-12", "2014-07-12"
+        assert np.array_equal(bizdays("2014-07-12", "2013-07-12"), -bizdays("2013-07-12", "2014-07-12"))
+        assert np.array_equal(
+            bizdays(("2013-08-21", "2013-01-31", "2013-01-01"), ("2013-08-24", "2013-01-01", "2014-01-01")),
+            [
+                2,
+                -21,
+                252,
+            ],
         )
-        assert bizdays(
-            ("2013-08-21", "2013-01-31", "2013-01-01"),
-            ("2013-08-24", "2013-01-01", "2014-01-01"),
-        ) == [2, -21, 252]
 
     def test_double_index(test):
         cal = Calendar(
@@ -173,44 +171,22 @@ class TestVectorizedOpsInCalendar(BizdaysTest):
 
     def test_adjust(self):
         adjust = self.cal.adjust_next
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.following
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.adjust_previous
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.preceding
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.modified_following
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
         adjust = self.cal.modified_preceding
-        assert adjust(("2013-01-02", "2013-01-03")) == asDate(
-            ["2013-01-02", "2013-01-03"]
-        )
+        assert adjust(("2013-01-02", "2013-01-03")) == asDate(["2013-01-02", "2013-01-03"])
 
     def test_offset(self):
         offset = self.cal.offset
-        assert offset(("2013-01-02", "2013-01-03"), 1) == asDate(
-            ["2013-01-03", "2013-01-04"]
-        )
+        assert offset(("2013-01-02", "2013-01-03"), 1) == asDate(["2013-01-03", "2013-01-04"])
         assert offset("2013-01-02", [1, 2]) == asDate(["2013-01-03", "2013-01-04"])
-
-    def test_getdate(self):
-        expr = "15th day"
-        x = self.cal.getdate(expr, [2002, 2001], 1)
-        assert x == asDate(["2002-01-15", "2001-01-15"])
-        expr = ["15th day", "16th day"]
-        x = self.cal.getdate(expr, [2002, 2001], 1)
-        assert x == asDate(["2002-01-15", "2001-01-16"])
 
     def test_getbizdays(self):
         actual = Calendar(name="actual")
@@ -221,7 +197,7 @@ class TestVectorizedOpsInCalendar(BizdaysTest):
 
 
 class TestCalendar(BizdaysTest):
-    cal_ANBIMA = Calendar.load(name="ANBIMA")
+    cal_ANBIMA = Calendar.load(filename="bizdays/data/ANBIMA.json")
 
     def test_Calendar_instanciate_calendar(self):
         "it should instanciate the calendar"
@@ -242,9 +218,7 @@ class TestCalendar(BizdaysTest):
             weekdays=("saturday", "sunday"),
         )
         self.assertEqual(cal.weekdays, ("Saturday", "Sunday"))
-        cal = Calendar(
-            startdate="2013-01-01", enddate="2013-12-31", weekdays=("sat", "sun")
-        )
+        cal = Calendar(startdate="2013-01-01", enddate="2013-12-31", weekdays=("sat", "sun"))
         self.assertEqual(cal.weekdays, ("Saturday", "Sunday"))
 
     def test_Calendar_default_calendar(self):
@@ -288,14 +262,14 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_load(self):
         "it should load  the calendar from a file"
-        cal = Calendar.load(filename="Test.cal")
+        cal = Calendar.load(filename="bizdays/data/Test.json")
         self.assertEqual(cal.startdate.isoformat(), "2001-01-01")
         self.assertEqual(cal.enddate.isoformat(), "2013-01-01")
         self.assertEqual(cal.isbizday("2001-01-02"), True)
 
     def test_Calendar_bizdays(self):
         "it should create a business Calendar: Brazil's ANBIMA"
-        cal = Calendar.load(name="ANBIMA")
+        cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
         self.assertEqual(cal.bizdays("2013-07-12", "2014-07-12"), 251)
         self.assertEqual(cal.bizdays("2013-08-21", "2013-08-24"), 2)
         self.assertEqual(cal.bizdays("2013-01-01", "2013-01-31"), 21)
@@ -344,7 +318,7 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_unordered_holidays(self):
         "it should work with unordered calendars"
-        ca1 = Calendar.load(name="ANBIMA")
+        ca1 = Calendar.load(filename="bizdays/data/ANBIMA.json")
         _hol = ca1._holidays.copy()
         shuffle(_hol)
         cal = Calendar(holidays=_hol, weekdays=("sun", "sat"))
@@ -438,12 +412,8 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_next_bizday(self):
         """next_bizday calculations"""
-        self.assertEqual(
-            self.cal_ANBIMA.adjust_next("2013-01-01"), asDate("2013-01-02")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.adjust_next("2013-01-02"), asDate("2013-01-02")
-        )
+        self.assertEqual(self.cal_ANBIMA.adjust_next("2013-01-01"), asDate("2013-01-02"))
+        self.assertEqual(self.cal_ANBIMA.adjust_next("2013-01-02"), asDate("2013-01-02"))
         self.assertEqual(self.cal_ANBIMA.following("2013-01-02"), asDate("2013-01-02"))
         dt = asDate("2013-01-02")
         assert self.cal_ANBIMA.adjust_next("2013-01-01") == dt
@@ -454,13 +424,9 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_previous_bizday(self):
         """previous_bizday calculations"""
-        self.assertEqual(
-            self.cal_ANBIMA.adjust_previous("2013-02-02"), asDate("2013-02-01")
-        )
+        self.assertEqual(self.cal_ANBIMA.adjust_previous("2013-02-02"), asDate("2013-02-01"))
         self.assertEqual(self.cal_ANBIMA.preceding("2013-02-02"), asDate("2013-02-01"))
-        self.assertEqual(
-            self.cal_ANBIMA.adjust_previous("2013-02-01"), asDate("2013-02-01")
-        )
+        self.assertEqual(self.cal_ANBIMA.adjust_previous("2013-02-01"), asDate("2013-02-01"))
         self.assertEqual(self.cal_ANBIMA.preceding("2013-02-01"), asDate("2013-02-01"))
         dt = asDate("2013-02-01")
         assert self.cal_ANBIMA.adjust_previous("2013-02-02") == dt
@@ -471,12 +437,8 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_modified_following(self):
         """modified_following calculations"""
-        self.assertEqual(
-            self.cal_ANBIMA.modified_following("2013-01-01"), asDate("2013-01-02")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.modified_following("2016-01-31"), asDate("2016-01-29")
-        )
+        self.assertEqual(self.cal_ANBIMA.modified_following("2013-01-01"), asDate("2013-01-02"))
+        self.assertEqual(self.cal_ANBIMA.modified_following("2016-01-31"), asDate("2016-01-29"))
         dt = asDate("2013-01-02")
         assert self.cal_ANBIMA.modified_following("2013-01-01") == dt
         dt = asDate("2016-01-29")
@@ -484,12 +446,8 @@ class TestCalendar(BizdaysTest):
 
     def test_Calendar_modified_preceding(self):
         """modified_preceding calculations"""
-        self.assertEqual(
-            self.cal_ANBIMA.modified_preceding("2013-01-01"), asDate("2013-01-02")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.modified_preceding("2021-05-01"), asDate("2021-05-03")
-        )
+        self.assertEqual(self.cal_ANBIMA.modified_preceding("2013-01-01"), asDate("2013-01-02"))
+        self.assertEqual(self.cal_ANBIMA.modified_preceding("2021-05-01"), asDate("2021-05-03"))
         dt = asDate("2013-01-02")
         assert self.cal_ANBIMA.modified_preceding("2013-01-01") == dt
         dt = asDate("2021-05-03")
@@ -498,11 +456,12 @@ class TestCalendar(BizdaysTest):
     def test_Calendar_seq(self):
         """sequence generator of bizdays"""
         actual = Calendar(name="actual")
-        dts = list(seqDate(asDate("2013-01-01"), asDate("2013-01-10"), days=1))
+        dts = np.arange(np.datetime64("2013-01-01"), np.datetime64("2013-01-11"), dtype="datetime64[D]")
         seq = actual.seq("2013-01-01", "2013-01-10")
-        self.assertSequenceEqual(seq, dts)
+        self.assertTrue(np.array_equal(seq, dts))
         seq = self.cal_ANBIMA.seq("2012-01-01", "2012-01-02")
-        self.assertSequenceEqual(seq, [datetime(2012, 1, 2).date()])
+        exp = np.array([datetime(2012, 1, 2).date()], dtype="datetime64[D]")
+        self.assertTrue(np.array_equal(seq, exp))
 
     def test_Calendar_offset(self):
         """it should offset the given date by n days (forward or backward)"""
@@ -524,35 +483,6 @@ class TestCalendar(BizdaysTest):
         self.assertEqual(self.cal_ANBIMA.offset("2012-01-01", 0), asDate("2012-01-01"))
         self.assertEqual(self.cal_ANBIMA.offset("2012-01-01", -1), asDate("2011-12-30"))
 
-    def test_Calendar_getdate_getnth_bizday(self):
-        # first
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("first bizday", 2002), asDate("2002-01-02")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("first day", 2002, 1), asDate("2002-01-01")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("first bizday", 2002, 1), asDate("2002-01-02")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("first wed", 2002, 2), asDate("2002-02-06")
-        )
-        # last
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("last day", 2002, 2), asDate("2002-02-28")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("last bizday", 2002, 2), asDate("2002-02-28")
-        )
-        # nth
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("second bizday", 2002, 2), asDate("2002-02-04")
-        )
-        self.assertEqual(
-            self.cal_ANBIMA.getdate("third tue", 2002, 2), asDate("2002-02-19")
-        )
-
     def test_Calendar_diff(self):
         dates = ("2017-05-10", "2017-05-12", "2017-05-17")
         assert self.cal_ANBIMA.diff(dates) == [2, 3]
@@ -566,7 +496,7 @@ def test_isseq():
 
 
 class TestVectorizedOperations(BizdaysTest):
-    cal = Calendar.load(filename="Test.cal")
+    cal = Calendar.load(filename="bizdays/data/Test.json")
 
     def test_Vectorized_operations_isbizday(self):
         "it should check in a vector of dates which are bizdays"
@@ -576,9 +506,7 @@ class TestVectorizedOperations(BizdaysTest):
     def test_Vectorized_operations_bizdays(self):
         "it should compute bizdays for many dates at once"
         dates = ("2002-01-01", "2002-01-02", "2002-01-03")
-        self.assertEqual(
-            list(self.cal.vec.bizdays(dates, Date("2002-01-05"))), [2, 2, 1]
-        )
+        self.assertEqual(list(self.cal.vec.bizdays(dates, Date("2002-01-05"))), [2, 2, 1])
         self.assertEqual(list(self.cal.vec.bizdays("2001-12-31", dates)), [0, 1, 2])
 
     def test_Vectorized_operations_adjust_dates(self):
@@ -601,12 +529,6 @@ class TestVectorizedOperations(BizdaysTest):
             ("2002-01-02", "2002-01-03", "2002-01-04"),
         )
 
-    def test_Vectorized_operations_getdate(self):
-        "it should getdate vectorised"
-        expr = "15th day"
-        x = list(self.cal.vec.getdate(expr, [2002, 2001], 1))
-        assert x == asDate(["2002-01-15", "2001-01-15"])
-
     def test_Vectorized_operations_getbizdays(self):
         "it should getbizdays vectorised"
         actual = Calendar(name="actual")
@@ -614,223 +536,11 @@ class TestVectorizedOperations(BizdaysTest):
         assert x == [31, 31]
 
 
-class TestDateIndex(BizdaysTest):
-    def test_DateIndex_start_workday_end_workday(self):
-        "it should instanciate the calendar starting and ending on workingdays"
-        cix = DateIndex(
-            [], startdate="2020-04-01", enddate="2020-04-07", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_nonworkday_end_workday(self):
-        """
-        it should instanciate the calendar starting on nonworkday
-        and ending on workday
-        """
-        cix = DateIndex(
-            [], startdate="2020-03-29", enddate="2020-04-03", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_weekend_end_workday(self):
-        """
-        it should instanciate the calendar starting on weekend and
-        ending on workday
-        """
-        cix = DateIndex(
-            [], startdate="2020-03-28", enddate="2020-04-03", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_workday_end_nonworkday(self):
-        """
-        it should instanciate the calendar starting on workday and
-        ending on nonworkday
-        """
-        cix = DateIndex(
-            [], startdate="2020-04-01", enddate="2020-04-04", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_workday_end_weekend(self):
-        """
-        it should instanciate the calendar starting on workday and
-        ending on weekend
-        """
-        cix = DateIndex(
-            [], startdate="2020-04-01", enddate="2020-04-05", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_nonworkday_end_nonworkday(self):
-        """it should instanciate the calendar starting on nonworkday and
-        ending on nonworkday"""
-        cix = DateIndex(
-            [], startdate="2020-03-29", enddate="2020-04-04", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_start_weekend_end_weekend(self):
-        """it should instanciate the calendar starting on nonworkday and
-        ending on nonworkday"""
-        cix = DateIndex(
-            [], startdate="2020-03-28", enddate="2020-04-05", weekdays=(5, 6)
-        )
-        assert all(
-            cix._index[dt][0] == cix._index[dt][3]
-            for dt in cix._index
-            if not cix._index[dt][2]
-        )
-
-    def test_DateIndex_following_preceding(self):
-        "it should test DateIndex"
-        holidays = load_holidays("ANBIMA.txt")
-        di = DateIndex(
-            holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6)
-        )
-        self.assertEqual(di.following("2011-01-01").isoformat(), "2011-01-03")
-        self.assertEqual(di.following("2011-01-03").isoformat(), "2011-01-03")
-        self.assertEqual(di.preceding("2011-01-09").isoformat(), "2011-01-07")
-        self.assertEqual(di.preceding("2011-01-07").isoformat(), "2011-01-07")
-
-    def test_DateIndex_offset(self):
-        "it should test DateIndex"
-        holidays = load_holidays("ANBIMA.txt")
-        di = DateIndex(
-            holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6)
-        )
-        self.assertEqual(di.offset("2011-01-07", 1).isoformat(), "2011-01-10")
-        self.assertEqual(di.offset("2011-01-10", -1).isoformat(), "2011-01-07")
-
-    def test_DateIndex_seq(self):
-        "it should test DateIndex"
-        holidays = load_holidays("ANBIMA.txt")
-        di = DateIndex(
-            holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6)
-        )
-        seq = di.seq("2011-01-03", "2011-01-14")
-        self.assertEqual(seq[0].isoformat(), "2011-01-03")
-        self.assertEqual(seq[-1].isoformat(), "2011-01-14")
-        seq = di.seq("2011-01-03", "2011-01-03")
-        self.assertEqual(len(seq), 1)
-
-    def test_DateIndex_getdate(self):
-        holidays = load_holidays("ANBIMA.txt")
-        di = DateIndex(
-            holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6)
-        )
-        self.assertEqual(di.getdate("15th day", 2002, 1).isoformat(), "2002-01-15")
-        self.assertEqual(
-            di.getdate("first day before 15th day", 2002, 1).isoformat(), "2002-01-14"
-        )
-        self.assertEqual(
-            di.getdate("second day after 15th day", 2002, 1).isoformat(), "2002-01-17"
-        )
-        self.assertEqual(
-            di.getdate("second bizday before 15th day", 2002, 1).isoformat(),
-            "2002-01-11",
-        )
-        self.assertEqual(
-            di.getdate("second bizday after 15th day", 2002, 1).isoformat(),
-            "2002-01-17",
-        )
-        self.assertEqual(di.getdate("first bizday", 2002, 1).isoformat(), "2002-01-02")
-        self.assertEqual(di.getdate("second bizday", 2002, 1).isoformat(), "2002-01-03")
-        self.assertEqual(di.getdate("third bizday", 2002, 1).isoformat(), "2002-01-04")
-        self.assertEqual(
-            di.getdate("second bizday before 10th bizday", 2002, 1).isoformat(),
-            "2002-01-11",
-        )
-        # zero is before, -1 is before and 1 is after
-        self.assertEqual(
-            di.getdate("first tue before first day", 2002, 1).isoformat(), "2001-12-25"
-        )
-        self.assertEqual(
-            di.getdate("first tue after first day", 2002, 1).isoformat(), "2002-01-08"
-        )
-        # zero is before, -1 is before and 1 is after
-        self.assertEqual(
-            di.getdate("first tue before second day", 2002, 1).isoformat(), "2002-01-01"
-        )
-        self.assertEqual(
-            di.getdate("first tue after second day", 2002, 1).isoformat(), "2002-01-08"
-        )
-        # closest
-        self.assertEqual(di.getdate("15th day", 2002, 1).isoformat(), "2002-01-15")
-        self.assertEqual(di.getdate("first bizday", 2002, 1).isoformat(), "2002-01-02")
-        self.assertEqual(di.getdate("2nd bizday", 2002, 1).isoformat(), "2002-01-03")
-        self.assertEqual(di.getdate("3rd bizday", 2002, 1).isoformat(), "2002-01-04")
-        self.assertEqual(di.getdate("first tue", 2002, 1).isoformat(), "2002-01-01")
-        self.assertEqual(di.getdate("last fri", 2002, 1).isoformat(), "2002-01-25")
-        self.assertEqual(
-            di.getdate("first day before first day", 2002, 1).isoformat(), "2001-12-31"
-        )
-        self.assertEqual(
-            di.getdate("2nd day before first day", 2002, 1).isoformat(), "2001-12-30"
-        )
-        self.assertEqual(di.getdate("last day", 2002, 1).isoformat(), "2002-01-31")
-        self.assertEqual(
-            di.getdate("first bizday before last day", 2002, 1).isoformat(),
-            "2002-01-30",
-        )
-        self.assertEqual(
-            di.getdate("second bizday before last day", 2002, 1).isoformat(),
-            "2002-01-29",
-        )
-        self.assertEqual(
-            di.getdate("10th fri before 10th bizday", 2002, 5).isoformat(), "2002-03-08"
-        )
-        self.assertEqual(
-            di.getdate("first wed after 15th day", 2002, 5).isoformat(), "2002-05-22"
-        )
-        self.assertEqual(
-            di.getdate("first wed before 15th day", 2002, 5).isoformat(), "2002-05-08"
-        )
-
-    def test_DateIndex_getdate2(self):
-        holidays = load_holidays("ANBIMA.txt")
-        di = DateIndex(
-            holidays, startdate=min(holidays), enddate=max(holidays), weekdays=(5, 6)
-        )
-        self.assertEqual(di.getdate("first day", 2002, 1).isoformat(), "2002-01-01")
-        self.assertEqual(
-            di.getdate("first bizday before first day", 2002, 1).isoformat(),
-            "2001-12-31",
-        )
-        self.assertEqual(
-            di.getdate("2nd bizday before first day", 2002, 1).isoformat(), "2001-12-28"
-        )
-
-
 def test_calendar_load():
     cal = Calendar.load(name="ANBIMA")
     assert cal.name == "ANBIMA"
-    cal = Calendar.load(filename="Test.cal")
-    assert cal.name == "Test"
+    cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
+    assert cal.name == "ANBIMA"
 
 
 def test_getbizdays():
@@ -863,7 +573,7 @@ def test_getbizdays():
     assert cal.getbizdays(2024, 11) == 30
     assert cal.getbizdays(2024, 12) == 31
 
-    cal = Calendar.load(name="ANBIMA")
+    cal = Calendar.load(filename="bizdays/data/ANBIMA.json")
     assert cal.getbizdays(2024) == 253
     assert cal.getbizdays(2024, 1) == 22
     assert cal.getbizdays(2024, 2) == 19

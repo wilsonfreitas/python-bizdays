@@ -1,29 +1,52 @@
-[tool.poetry]
+[project]
 name = "bizdays"
-version = "1.0.19"
+version = "1.0.20"
 description = "Functions to handle business days calculations"
-authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
+authors = [{ name = "wilsonfreitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
-include = ["bizdays/*.cal"]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
-[tool.poetry.dependencies]
-python = ">=3.9"
-pandas-market-calendars = "^4"
-pandas = "^2"
+[project.optional-dependencies]
+pmc = ["pandas-market-calendars>=4,<5"]
+xcal = ["exchange-calendars>=4,<5"]
+work = ["workalendar>=17,<18"]
+dev = [
+    "pytest",
+    "pycodestyle",
+    "ipykernel",
+    "ruff",
+    "mypy",
+    "pre-commit",
+    "pandas-market-calendars>=4,<5",
+    "exchange-calendars>=4,<5",
+    "workalendar>=17,<18",
+]
+docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
-pycodestyle = "*"
-ipykernel = "*"
-
-[tool.poetry.group.docs.dependencies]
-Sphinx = "*"
-nbsphinx = "*"
-matplotlib = "*"
-lxml = "*"
-alabaster = "*"
-ipywidgets = "*"
+[tool.uv]
+package = true
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build]
+include = ["bizdays/**/*.py", "bizdays/data/*.json"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = ["tests/legacy"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E712"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["bizdays"]
+warn_unused_configs = true
+show_error_codes = true
+pretty = true
+ignore_missing_imports = true

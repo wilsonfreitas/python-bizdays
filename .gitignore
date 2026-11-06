@@ -11,10 +11,8 @@ bizdays.egg-info/*
 bizdays.egg-info
 venv
 _templates
-_static
 _build
 .pytest_cache
 .vscode
 __pycache__
 .ipynb_checkpoints/*
-docs/source/*.ipynb

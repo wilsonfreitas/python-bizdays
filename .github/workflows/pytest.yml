@@ -1,32 +1,42 @@
-name: Test Python package with Poetry
+name: Test Python package
 
-on: 
+on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
+    branches: [ master, feature/typing ]
 
 jobs:
-  pytest:
-
+  quality:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: uv sync --extra dev
+    - name: Run pre-commit checks
+      run: uv run pre-commit run --all-files
+
+  pytest:
+    runs-on: ubuntu-latest
+    needs: quality
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
-      run: |
-        pip install poetry
     - name: Install dependencies
-      run: |
-        poetry install
+      run: uv sync --extra dev
     - name: Run tests
-      run: |
-        poetry run pytest
+      run: uv run pytest -v
