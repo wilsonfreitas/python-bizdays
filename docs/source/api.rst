@@ -300,87 +300,57 @@ references:
 
 - month references such as ``"2002-05"``
 - year references such as ``2006`` or ``"2006"``
-- date references such as ``"2021-02-10"`` for relative weekday expressions
+- date references such as ``"2021-02-10"``
 
-The ``expr`` grammar accepted by the current parser has three forms.
+All refs in one call must be of one kind (year, month or date); missing refs do
+not count. Mixing kinds, as in ``["2002-01", "2021-02-10"]``, raises
+``ValueError``.
 
-Simple expressions
+Expressions
+"""""""""""
+
+Format:
+
+.. code-block:: text
+
+   <position> <day>
+   <position> <day> <before|after> <position> <day>
+   previous <weekday>
+
+Positions:
+
+- ``next``, ``first``/``1st``, ``second``/``2nd``, ``third``/``3rd``, ``last``
+- ``<n>`` with the right English suffix: ``4th``, ``11th``, ``21st``, ``22nd``,
+  ``23rd``. A wrong suffix, such as ``2st``, raises ``ValueError``; so does
+  ``0th``.
+
+Days:
+
+- ``day``, ``bizday``
+- weekdays, as 3-letter or full English names: ``mon``/``monday`` ...
+  ``sun``/``sunday``
+
+Words are case-insensitive. Any other word raises ``ValueError``.
+
+Year or month refs
 """"""""""""""""""
 
-Format:
+- ``<n> <day>`` is the n-th day, business day or weekday inside the period;
+  ``last`` is the last one, and ``next`` means the first.
+- Composite expressions (``first day before 15th day``, ``1st bizday before 2nd
+  fri``) work with period refs only. In their first slot, ``last`` and ``next``
+  mean ``1st``. The result may leave the ref period, but not the calendar range.
+- A date that does not exist in its period, such as ``5th fri`` in a month with
+  four Fridays, raises ``ValueError``.
 
-.. code-block:: text
+Date refs
+"""""""""
 
-   <ordinal> <target>
-
-Examples:
-
-.. code-block:: text
-
-   first day
-   15th day
-   last bizday
-   third tue
-
-Composite expressions
-"""""""""""""""""""""
-
-Format:
-
-.. code-block:: text
-
-   <ordinal> <target> <before|after> <ordinal> <target>
-
-Examples:
-
-.. code-block:: text
-
-   first day before 15th day
-   second bizday after 15th day
-   1st bizday before 2nd fri
-   last mon before 30th day
-
-Date-relative expressions
-"""""""""""""""""""""""""
-
-Format:
-
-.. code-block:: text
-
-   <next|previous> <weekday>
-
-Examples:
-
-.. code-block:: text
-
-   next wed
-   previous mon
-
-Valid ``ordinal`` tokens:
-
-- named ordinals: ``first``, ``second``, ``third``, ``last``
-- numeric ordinals: ``1st``, ``2nd``, ``3rd``, ``4th``, ``15th``, and so on
-
-Valid ``target`` tokens:
-
-- ``day``
-- ``bizday``
-- weekday names matched by their first three letters, such as ``mon``, ``tue``,
-  ``wed``, ``thu``, ``fri``, ``sat``, ``sun``
-
-Reference-specific rules:
-
-- month refs (``YYYY-MM``) support simple and composite expressions
-- year refs (``YYYY`` or ``int``) support simple and composite expressions
-- date refs (``YYYY-MM-DD`` and date-like values) support only weekday-based
-  expressions, especially ``next <weekday>`` and ``previous <weekday>``
-
-Parser notes:
-
-- ``next`` and ``previous`` require a weekday target, not ``day`` or ``bizday``
-- composite expressions only accept the operators ``before`` and ``after``
-- expressions are whitespace-tokenized, so the supported forms are strictly the
-  2-token, 5-token, and ``next|previous`` 2-token patterns above
+- ``<n> day`` is the date plus n days; ``last day`` is the day before.
+- ``<n> bizday`` is ``offset(date, n)``; ``last bizday`` is ``offset(date, -1)``.
+- ``<n> <weekday>`` is the n-th such weekday strictly after the date;
+  ``last <weekday>`` and ``previous <weekday>`` are the one strictly before.
+- ``previous`` works with weekdays and date refs only.
 
 Examples:
 
@@ -388,5 +358,8 @@ Examples:
 
    cal.getdate("15th day", "2002-05")
    cal.getdate(["last day", "last bizday"], "2006")
-   cal.getdate("next wed", "2021-02-10")
+   cal.getdate("next wed", "2002-01")         # 2002-01-02, the first Wednesday
+   cal.getdate("next wed", "2021-02-10")      # 2021-02-17
+   cal.getdate("next bizday", "2022-06-18")   # 2022-06-20
+   cal.getdate("last mon", "2022-06-20")      # 2022-06-13
    cal.getdate("first bizday", ["2002-01", "2002-02"])

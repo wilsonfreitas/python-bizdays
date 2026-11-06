@@ -23,10 +23,12 @@ _ORDINALS = {
     "2nd": 2,
     "third": 3,
     "3rd": 3,
+    "next": 1,
     "last": -1,
 }
 
 _WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+_WEEKDAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
 @dataclass(frozen=True)
@@ -57,7 +59,7 @@ class CompositeGetDateExpression:
 @dataclass(frozen=True)
 class RelativeGetDateExpression:
     kind: Literal["relative"]
-    operator: Literal["next", "previous"]
+    operator: Literal["previous"]
     weekday: int
     text: str = field(default="", compare=False)
 
@@ -91,12 +93,16 @@ def _parse_ordinal(token: str, *, relative_offset: bool = False) -> int:
         if relative_offset and value < 0:
             return 1
         return value
-    match = re.fullmatch(r"(\d+)(st|nd|rd|th)", token)
+    match = re.fullmatch(r"([1-9]\d*|0)(st|nd|rd|th)", token)
     if match is None:
         raise ValueError(f"Invalid ordinal in getdate expression: {token}")
-    if int(match.group(1)) == 0:
+    n = int(match.group(1))
+    if n == 0:
         raise ValueError(f"Invalid ordinal in getdate expression: {token} (ordinals start at 1)")
-    return int(match.group(1))
+    suffix = "th" if n % 100 in (11, 12, 13) else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    if match.group(2) != suffix:
+        raise ValueError(f"Invalid ordinal in getdate expression: {token} (use {n}{suffix})")
+    return n
 
 
 def _parse_target(token: str) -> GetDateTarget:
@@ -105,9 +111,9 @@ def _parse_target(token: str) -> GetDateTarget:
         return GetDateTarget("day")
     if token == "bizday":
         return GetDateTarget("bizday")
-    key = token[:3]
-    if key in _WEEKDAYS:
-        return GetDateTarget("weekday", weekday=_WEEKDAYS.index(key))
+    for names in (_WEEKDAYS, _WEEKDAY_NAMES):
+        if token in names:
+            return GetDateTarget("weekday", weekday=names.index(token))
     raise ValueError(f"Invalid day token in getdate expression: {token}")
 
 
@@ -117,21 +123,11 @@ def parse_getdate_expression(expr: str) -> GetDateExpression:
 
 def _parse_expression(expr: str) -> GetDateExpression:
     tokens = expr.lower().split()
-    if len(tokens) == 2 and tokens[0] in {"next", "previous"}:
+    if len(tokens) == 2 and tokens[0] == "previous":
         target = _parse_target(tokens[1])
-        if target.kind != "weekday":
-            raise ValueError(
-                "Date-relative next/previous expressions require a "
-                "weekday target"
-            )
-        assert target.weekday is not None
-        if tokens[0] == "next":
-            return RelativeGetDateExpression(
-                "relative", "next", target.weekday
-            )
-        return RelativeGetDateExpression(
-            "relative", "previous", target.weekday
-        )
+        if target.weekday is None:
+            raise ValueError("previous expressions require a weekday target")
+        return RelativeGetDateExpression("relative", "previous", target.weekday)
     if len(tokens) == 2:
         return SimpleGetDateExpression(
             "simple",

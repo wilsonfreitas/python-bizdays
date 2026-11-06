@@ -763,10 +763,18 @@ class Calendar:
         ----------
 
         expr : str, list of str
-            String specifying the date to be returned.
+            String specifying the date to be returned, such as ``"first bizday"``,
+            ``"next wed"``, ``"last day"`` or ``"1st bizday before 2nd fri"``.
+            With a year or month ref it is the n-th day, business day or weekday
+            inside the period (``next`` means the first). With a date ref,
+            ``<n> day`` is the date plus n days, ``<n> bizday`` is
+            ``offset(date, n)`` and ``<n> <weekday>`` the n-th one strictly after
+            the date; ``last`` (or ``previous <weekday>``) is the one strictly
+            before. Composite expressions need a year or month ref.
 
         ref : int, str, datetime.date, datetime.datetime, numpy.datetime64
-            Reference used to resolve the expression.
+            Reference used to resolve the expression. All refs in one call must
+            be of one kind, otherwise ``ValueError``.
 
             - `YYYY-MM` strings refer to a month
             - `YYYY` strings and integers refer to a year
@@ -779,11 +787,22 @@ class Calendar:
         """
         _expr, vec_expr = to_exprs(expr)
         _ref, vec_ref = to_refs(ref)
+        kinds = {r.kind for r in _ref if r is not None}
+        if len(kinds) > 1:
+            raise ValueError(
+                f"getdate refs must all be of one kind (year, month or date); found: {', '.join(sorted(kinds))}"
+            )
         single_value = not (vec_expr or vec_ref)
         # refs are checked even where the expression is missing
         raw_ref = _ref
         raw_bad = np.array([r is not None and not self._index.ref_inrange(r) for r in raw_ref], dtype=np.bool_)
         _expr, _ref = broadcast_pair(_expr, _ref, "expr", "ref")
+        # before the range check, so this ValueError wins over DateOutOfRange
+        for e, r in zip(_expr, _ref):
+            if e is not None and r is not None and e.kind == "composite" and r.kind == "date":
+                raise ValueError(
+                    f"Composite getdate expressions need a year or month ref, not a date ref: expr={e.text!r}, ref={r}"
+                )
         if len(_ref) == 0 and raw_bad.any():
             raise DateOutOfRange(
                 f"ref={raw_ref[raw_bad][0]} is out of {self._range_text()} (the result is empty)",
