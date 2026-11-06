@@ -50,7 +50,7 @@ The public API is exactly `bizdays.__all__ == ["Calendar", "list_calendars", "Da
 
 - **`bizdays/getdate_parser.py`** — Parser for `getdate` expressions such as `"last bizday"` or `"1st bizday before 2nd fri"`; `DateIndex.getdate` resolves them.
 
-- **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `match()`, `broadcast_pair()`, `DateOutOfRange`.
+- **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `broadcast_pair()`, `DateOutOfRange`.
 
 ### Calendar data files
 

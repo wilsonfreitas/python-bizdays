@@ -210,3 +210,24 @@ The fix is mechanical: pass equal lengths, or repeat the shorter input with
 
    cal.bizdays(["2024-01-02", "2024-01-03"], ["2024-02-01"] * 4)  # v1: 4 numbers; v2: ValueError
    cal.bizdays(np.tile(["2024-01-02", "2024-01-03"], 2), ["2024-02-01"] * 4)  # explicit repeat
+
+9. Calendar range and construction
+----------------------------------
+
+In v1, some calls past the calendar ends wrapped around. On ANBIMA (range
+2000-01-01..2099-12-25), ``offset("2000-01-03", -3)`` returned 2099-12-22. In
+v2, any input or result outside ``startdate..enddate`` raises
+:class:`bizdays.DateOutOfRange`, a subclass of ``ValueError``. There are no
+partial results: one bad element fails the whole call, and the error's
+``positions`` attribute lists every bad element. Use
+:meth:`bizdays.Calendar.inrange` to check input dates before a call.
+
+``Calendar(...)`` now checks its arguments:
+
+- ``startdate`` after ``enddate`` raises ``ValueError``
+- a calendar without business days in its whole range raises ``ValueError``
+- weekday names must be English, full or 3-letter, in any case; numbers and
+  other words raise ``ValueError``, and duplicates are removed
+- holidays given with ``weekdays=None`` emit a ``UserWarning`` (as in R
+  bizdays); pass ``weekdays=[]`` for no nonworking weekdays
+- holidays outside an explicit ``startdate..enddate`` are dropped

@@ -1,6 +1,7 @@
-from collections.abc import Sequence
+import warnings
+from collections.abc import Callable, Sequence
 from datetime import date, datetime
-from typing import TypedDict, TypeAlias, overload
+from typing import Any, TypedDict, TypeAlias, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -25,7 +26,7 @@ from bizdays.external import (
     list_workalendar_calendar_names,
 )
 from bizdays.getdate_parser import to_exprs, to_refs
-from bizdays.utils import broadcast_pair
+from bizdays.utils import DateOutOfRange, broadcast_pair
 
 DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
@@ -75,6 +76,33 @@ def _constructor_holidays(holidays: object) -> DateArray:
     if np.isnat(dates).any():
         raise ValueError("holidays cannot contain missing values")
     return dates
+
+
+_WEEKDAY_NUMBERS = {
+    key: i
+    for i, name in enumerate(("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"))
+    for key in (name, name[:3])
+}
+
+
+def _parse_weekdays(weekdays: Sequence[object]) -> list[int]:
+    """Weekday numbers (Monday = 0) from full or 3-letter English names, any case, without duplicates."""
+    if isinstance(weekdays, str):
+        raise ValueError(f"weekdays must be a list of weekday names, not the string {weekdays!r}")
+    out = []
+    for item in weekdays:
+        key = item.lower() if isinstance(item, str) else None
+        if key not in _WEEKDAY_NUMBERS:
+            raise ValueError(f"Invalid weekday {item!r}; use English names such as 'Saturday' or 'sat'")
+        out.append(_WEEKDAY_NUMBERS[key])
+    return list(dict.fromkeys(out))
+
+
+def _format_value(value: object) -> str:
+    # counts arrive as float64; print them as the integers the caller passed
+    if isinstance(value, np.floating) and np.isfinite(value):
+        return str(int(value))
+    return str(value)
 
 
 def _finalize_date_result(result: DateArray, single_value: bool) -> np.datetime64 | DateArray:
@@ -190,12 +218,15 @@ class Calendar:
     ----------
     holidays : list with dates
         Dates can be ISO formated string, datetime.date or datetime.datetime.
+        Holidays outside ``startdate..enddate`` are ignored.
 
     weekdays : list
         A list with weekdays representing nonworking days.
 
-        Accepts: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
-                 'Saturday', 'Sunday'
+        Accepts full or 3-letter English names in any case, such as
+        'Saturday', 'sat' or 'SUN'. Duplicates are removed. Giving holidays
+        with ``weekdays=None`` emits a ``UserWarning``, as in R bizdays; pass
+        ``weekdays=[]`` for a calendar without nonworking weekdays.
 
     startdate : str or datetime.date
         Calendar's start date
@@ -208,6 +239,12 @@ class Calendar:
 
     financial : bool
         Defines a financial calendar
+
+    Raises
+    ------
+    ValueError
+        For an invalid weekday name, ``startdate`` after ``enddate``, or a
+        calendar without business days in its whole range.
     """
 
     _weekdays: tuple[str, str, str, str, str, str, str] = (
@@ -229,14 +266,16 @@ class Calendar:
         name: str = "",
         financial: bool = True,
     ) -> None:
-        if weekdays is None:
-            weekdays = []
         self.financial: bool = financial
         self.name: str = name
         self._holidays: DateArray = _constructor_holidays(holidays)
-        self._nonwork_weekdays: list[int] = [
-            [w[:3].lower() for w in self._weekdays].index(wd[:3].lower()) for wd in weekdays
-        ]
+        if weekdays is None and len(self._holidays):
+            warnings.warn(
+                "You provided holidays without set weekdays.\nThat setup leads to inconsistencies!",
+                UserWarning,
+                stacklevel=2,
+            )
+        self._nonwork_weekdays: list[int] = _parse_weekdays(weekdays or [])
         self._startdate: Date
         self._enddate: Date
         if len(self._holidays):
@@ -257,6 +296,16 @@ class Calendar:
                 self._enddate = Date(_constructor_date(enddate, "enddate").astype(object))
             else:
                 self._enddate = Date("2071-01-01")
+        start, end = np.datetime64(self._startdate.date, "D"), np.datetime64(self._enddate.date, "D")
+        if start > end:
+            defaults = [
+                f"{name} defaults to the {which} holiday"
+                for name, given, which in (("startdate", startdate, "first"), ("enddate", enddate, "last"))
+                if given is None and len(self._holidays)
+            ]
+            note = f" ({'; '.join(defaults)})" if defaults else ""
+            raise ValueError(f"startdate {start} is after enddate {end}{note}")
+        self._holidays = self._holidays[(self._holidays >= start) & (self._holidays <= end)]
         self._index: DateIndex = DateIndex(
             self._holidays,
             np.datetime64(self._startdate.date),
@@ -284,14 +333,71 @@ class Calendar:
 
     holidays = property(__get_holidays)
 
-    def _check_range(self, dates: DateArray) -> None:
-        self._index.check_range(dates[~np.isnat(dates)])
+    def _range_text(self) -> str:
+        return f"calendar range {self._index.startdate}..{self._index.enddate}"
 
-    def _dates(self, x: object, name: str) -> tuple[DateArray, bool]:
-        # shortcut: range is checked per argument before pairing; WIL-140 moves it after pairing for positions
-        dates, is_vector = to_dates(x, name)
-        self._check_range(dates)
-        return dates, is_vector
+    def _bad_inputs(
+        self, paired: dict[str, npt.NDArray[Any]], raw: dict[str, npt.NDArray[Any]] | None = None
+    ) -> BoolArray:
+        """Result-space mask of non-missing input dates outside the range.
+
+        ``raw`` holds the arguments before pairing: an empty result still raises
+        for an out-of-range date there, with ``positions == []``.
+        """
+        def outside(values: npt.NDArray[Any]) -> BoolArray:
+            if values.dtype.kind != "M":
+                return np.zeros(len(values), dtype=np.bool_)
+            return ~np.isnat(values) & ~self._index.inrange(values)
+
+        size = len(next(iter(paired.values())))
+        bad = np.zeros(size, dtype=np.bool_)
+        for values in paired.values():
+            bad |= outside(values)
+        if size == 0:
+            for name, values in (raw or {}).items():
+                dates = values[outside(values)]
+                if len(dates):
+                    raise DateOutOfRange(
+                        f"{name}={dates[0]} is out of {self._range_text()} (the result is empty)", positions=[]
+                    )
+        return bad
+
+    def _raise_range(self, bad: BoolArray, paired: dict[str, npt.NDArray[Any]]) -> None:
+        if not bad.any():
+            return
+        positions = np.flatnonzero(bad)
+        i = positions[0]
+        args = ", ".join(f"{name}={_format_value(values[i])}" for name, values in paired.items())
+        raise DateOutOfRange(
+            f"{len(positions)} of {len(bad)} elements out of {self._range_text()}; first at position {i}: {args}",
+            positions=positions,
+        )
+
+    def _apply(
+        self,
+        fn: Callable[..., npt.NDArray[Any]],
+        out: npt.NDArray[Any],
+        missing: BoolArray,
+        paired: dict[str, npt.NDArray[Any]],
+        raw: dict[str, npt.NDArray[Any]] | None = None,
+    ) -> npt.NDArray[Any]:
+        """Fill ``out`` with ``fn`` on the good elements; one ``DateOutOfRange`` covers bad inputs and results."""
+        bad = self._bad_inputs(paired, raw)
+        valid = ~missing & ~bad
+        bad_results = np.zeros_like(bad)
+        if valid.any():
+            try:
+                out[valid] = fn(*(values[valid] for values in paired.values()))
+            except DateOutOfRange as e:
+                bad_results[np.flatnonzero(valid)[e.positions]] = True
+        self._raise_range(bad | bad_results, paired)
+        return out
+
+    def _adjust(self, dt: DateInput, n: int, modified: bool = False) -> np.datetime64 | DateArray:
+        _dt, is_vector = to_dates(dt, "dt")
+        out = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
+        self._apply(lambda d: self._index.adjust(d, n, modified), out, np.isnat(_dt), {"dt": _dt})
+        return _finalize_date_result(out, not is_vector)
 
     @overload
     def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.float64: ...
@@ -322,21 +428,29 @@ class Calendar:
         -------
         numpy.float64 or numpy.ndarray
             The number of business days between ``date_from`` and ``date_to``,
-            as ``float64``. A missing input gives ``NaN``.
+            as ``float64``. A missing input gives ``NaN``. When no business day
+            lies between the two dates the count is 0, unlike R bizdays, which
+            returns -1 or +1.
         """
-        _date_from, vec_from = self._dates(date_from, "date_from")
-        _date_to, vec_to = self._dates(date_to, "date_to")
+        _date_from, vec_from = to_dates(date_from, "date_from")
+        _date_to, vec_to = to_dates(date_to, "date_to")
         single_value = not (vec_from or vec_to)
+        raw = {"date_from": _date_from, "date_to": _date_to}
         _date_from, _date_to = broadcast_pair(_date_from, _date_to, "date_from", "date_to")
-        missing = np.isnat(_date_from) | np.isnat(_date_to)
-        bdays = np.full(_date_from.shape, np.nan)
-        valid = ~missing
-        if np.any(valid):
-            counts = self._index.bizdays(_date_from[valid], _date_to[valid])
+
+        def count(d_from: DateArray, d_to: DateArray) -> npt.NDArray[np.int64]:
+            counts = self._index.bizdays(d_from, d_to)
             if not self.financial:
-                date_reverse = _date_from[valid] > _date_to[valid]
-                counts = counts + np.where(date_reverse, -1, 1)
-            bdays[valid] = counts
+                counts = counts + np.where(d_from > d_to, -1, 1)
+            return counts
+
+        bdays = self._apply(
+            count,
+            np.full(_date_from.shape, np.nan),
+            np.isnat(_date_from) | np.isnat(_date_to),
+            {"date_from": _date_from, "date_to": _date_to},
+            raw,
+        )
         return _finalize_count_result(bdays, single_value)
 
     @overload
@@ -363,14 +477,43 @@ class Calendar:
             A vector result is always a masked array with ``fill_value=False``;
             a missing scalar gives ``numpy.ma.masked``.
         """
-        _dt, is_vector = self._dates(dt, "dt")
-        single_value = not is_vector
+        _dt, is_vector = to_dates(dt, "dt")
         missing = np.isnat(_dt)
-        is_bizday = np.zeros(_dt.shape, dtype=np.bool_)
-        valid = ~missing
-        if np.any(valid):
-            is_bizday[valid] = self._index.is_bizday(_dt[valid])
-        return _finalize_flag_result(is_bizday, missing, single_value)
+        is_bizday = self._apply(self._index.is_bizday, np.zeros(_dt.shape, dtype=np.bool_), missing, {"dt": _dt})
+        return _finalize_flag_result(is_bizday, missing, not is_vector)
+
+    @overload
+    def inrange(self, dates: DateScalar) -> np.bool_ | MaskedConstant: ...
+
+    @overload
+    def inrange(self, dates: DateVector) -> np.ma.MaskedArray: ...
+
+    def inrange(self, dates: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
+        """
+        Checks if the given dates lie inside the calendar range.
+
+        Use it to check input dates before a call; it never raises
+        :class:`DateOutOfRange`. Results that leave the range (``offset``,
+        ``following``, ``getdate``) cannot be checked in advance: catch
+        :class:`DateOutOfRange` and read its ``positions`` instead.
+
+        Parameters
+        ----------
+
+        dates : datetime.date, datetime.datetime, pandas.Timestamp, str
+            Dates to be checked
+
+        Returns
+        -------
+
+        ``numpy.bool_`` or ``numpy.ma.MaskedArray``
+            ``True`` where the date lies inside ``startdate..enddate``, both ends
+            included. Output rules as for :meth:`isbizday`: a vector result is a
+            masked array with ``fill_value=False``; a missing scalar gives
+            ``numpy.ma.masked``.
+        """
+        _x, is_vector = to_dates(dates, "dates")
+        return _finalize_flag_result(self._index.inrange(_x), np.isnat(_x), not is_vector)
 
     @overload
     def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
@@ -398,14 +541,7 @@ class Calendar:
             Returns the next business day if the given date is not a business day.
 
         """
-        _dt, is_vector = self._dates(dt, "dt")
-        single_value = not is_vector
-        missing = np.isnat(_dt)
-        adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-        if np.any(valid):
-            adt[valid] = self._index.adjust(_dt[valid], 1)
-        return _finalize_date_result(adt, single_value)
+        return self._adjust(dt, 1)
 
     @overload
     def following(self, dt: DateScalar) -> np.datetime64: ...
@@ -444,20 +580,7 @@ class Calendar:
             Returns the next business day unless that would cross into the next month.
 
         """
-        _dt, is_vector = self._dates(dt, "dt")
-        single_value = not is_vector
-        missing = np.isnat(_dt)
-        adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-        if np.any(valid):
-            valid_dt = _dt[valid]
-            valid_adt = self._index.adjust(valid_dt, 1)
-            months_dt = valid_dt.astype("datetime64[M]").astype(int) % 12 + 1
-            months_adt = valid_adt.astype("datetime64[M]").astype(int) % 12 + 1
-            idx = months_dt != months_adt
-            valid_adt[idx] = self._index.adjust(valid_dt[idx], -1)
-            adt[valid] = valid_adt
-        return _finalize_date_result(adt, single_value)
+        return self._adjust(dt, 1, modified=True)
 
     @overload
     def adjust_previous(self, dt: DateScalar) -> np.datetime64: ...
@@ -485,14 +608,7 @@ class Calendar:
             Returns the previous business day if the given date is not a business day.
 
         """
-        _dt, is_vector = self._dates(dt, "dt")
-        single_value = not is_vector
-        missing = np.isnat(_dt)
-        adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-        if np.any(valid):
-            adt[valid] = self._index.adjust(_dt[valid], -1)
-        return _finalize_date_result(adt, single_value)
+        return self._adjust(dt, -1)
 
     @overload
     def preceding(self, dt: DateScalar) -> np.datetime64: ...
@@ -531,20 +647,7 @@ class Calendar:
             Returns the previous business day unless that would cross into the previous month.
 
         """
-        _dt, is_vector = self._dates(dt, "dt")
-        single_value = not is_vector
-        missing = np.isnat(_dt)
-        adt = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-        if np.any(valid):
-            valid_dt = _dt[valid]
-            valid_adt = self._index.adjust(valid_dt, -1)
-            months_dt = valid_dt.astype("datetime64[M]").astype(int) % 12 + 1
-            months_adt = valid_adt.astype("datetime64[M]").astype(int) % 12 + 1
-            idx = months_dt != months_adt
-            valid_adt[idx] = self._index.adjust(valid_dt[idx], 1)
-            adt[valid] = valid_adt
-        return _finalize_date_result(adt, single_value)
+        return self._adjust(dt, -1, modified=True)
 
     def seq(self, date_from: DateScalar, date_to: DateScalar) -> DateArray:
         """
@@ -571,6 +674,8 @@ class Calendar:
         _from, _to = from_arr[0], to_arr[0]
         if np.isnat(_from) or np.isnat(_to):
             raise ValueError("seq endpoints cannot be missing")
+        endpoints = {"date_from": from_arr, "date_to": to_arr}
+        self._raise_range(self._bad_inputs(endpoints), endpoints)
         reverse = False
         if _from > _to:
             _from, _to = _to, _from
@@ -609,15 +714,18 @@ class Calendar:
             Returns the given dates offset by the given amount of business days.
 
         """
-        _dt, vec_dt = self._dates(dt, "dt")
+        _dt, vec_dt = to_dates(dt, "dt")
         _n, vec_n = to_counts(n, "n")
         single_value = not (vec_dt or vec_n)
+        raw = {"dt": _dt, "n": _n}
         _dt, _n = broadcast_pair(_dt, _n, "dt", "n")
-        missing = np.isnat(_dt) | np.isnan(_n)
-        dts = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        valid = ~missing
-        if np.any(valid):
-            dts[valid] = self._index.offset(_dt[valid], _n[valid].astype(np.int64))
+        dts = self._apply(
+            lambda d, k: self._index.offset(d, k.astype(np.int64)),
+            np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]"),
+            np.isnat(_dt) | np.isnan(_n),
+            {"dt": _dt, "n": _n},
+            raw,
+        )
         return _finalize_date_result(dts, single_value)
 
     def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> FloatArray:
@@ -638,8 +746,9 @@ class Calendar:
             The number of business days between consecutive dates, as ``float64``
             with ``NaN`` for missing values.
         """
-        _dts, _ = self._dates(dts, "dts")
+        _dts, _ = to_dates(dts, "dts")
         if len(_dts) <= 1:
+            self._bad_inputs({"dts": _dts[:0]}, {"dts": _dts})
             return np.array([], dtype=np.float64)
         return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.float64)
 
@@ -674,16 +783,31 @@ class Calendar:
         """
         _expr, vec_expr = to_exprs(expr)
         _ref, vec_ref = to_refs(ref)
-        ref_dates = [r.date for r in _ref if r is not None and r.kind == "date"]
-        self._check_range(np.array(ref_dates, dtype="datetime64[D]"))
         single_value = not (vec_expr or vec_ref)
+        # refs are checked even where the expression is missing
+        raw_ref = _ref
+        raw_bad = np.array([r is not None and not self._index.ref_inrange(r) for r in raw_ref], dtype=np.bool_)
         _expr, _ref = broadcast_pair(_expr, _ref, "expr", "ref")
+        if len(_ref) == 0 and raw_bad.any():
+            raise DateOutOfRange(
+                f"ref={raw_ref[raw_bad][0]} is out of {self._range_text()} (the result is empty)",
+                positions=[],
+            )
+        bad = np.broadcast_to(raw_bad, _ref.shape).copy()
 
         missing = pd.isna(_expr) | pd.isna(_ref)
         dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
-        for idx in np.flatnonzero(~missing):
-            dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
+        for idx in np.flatnonzero(~missing & ~bad):
+            try:
+                dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
+            except DateOutOfRange:  # before ValueError: it is one
+                bad[idx] = True
+            except ValueError as e:
+                raise ValueError(f"{e}: expr={_expr[idx].text!r}, ref={_ref[idx]}") from e
 
+        if bad.any():
+            texts = np.array([repr(e.text) if e is not None else "None" for e in _expr], dtype=object)
+            self._raise_range(bad, {"expr": texts, "ref": np.array([str(r) for r in _ref], dtype=object)})
         return _finalize_date_result(dates, single_value)
 
     # def getbizdays(self, year, month=None):

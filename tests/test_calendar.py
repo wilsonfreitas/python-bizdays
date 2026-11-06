@@ -1,4 +1,5 @@
 import json
+import warnings
 from datetime import date
 
 import numpy as np
@@ -671,3 +672,88 @@ def test_calendar_constructor_rejects_bad_dates():
         Calendar(startdate=["2020-01-01"])
     with pytest.raises(ValueError, match="sequence of dates"):
         Calendar(holidays="2024-01-01")
+
+
+# --- construction checks (WIL-140) ---
+
+
+def test_calendar_startdate_after_enddate():
+    with pytest.raises(ValueError, match="after enddate") as e:
+        Calendar(startdate="2024-02-01", enddate="2024-01-01")
+    assert "defaults" not in str(e.value)
+    with pytest.raises(ValueError, match=r"\(enddate defaults to the last holiday\)"):
+        Calendar(holidays=["2024-01-01"], weekdays=[], startdate="2024-02-01")
+    with pytest.raises(ValueError, match=r"\(startdate defaults to the first holiday\)"):
+        Calendar(holidays=["2024-12-25"], weekdays=[], enddate="2024-01-01")
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"holidays": ["2024-01-01"], "weekdays": []},
+        {
+            "weekdays": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+            "startdate": "2024-01-01",
+            "enddate": "2024-01-10",
+        },
+    ],
+)
+def test_calendar_without_business_days(kwargs):
+    with pytest.raises(ValueError, match="no business days"):
+        Calendar(**kwargs)
+
+
+def test_calendar_load_single_holiday_json(tmp_path):
+    path = tmp_path / "one.json"
+    path.write_text(json.dumps({"name": "one", "holidays": ["2024-01-01"]}))
+    with pytest.raises(ValueError, match="no business days"):
+        Calendar.load(filename=str(path))
+
+
+def test_calendar_weekdays_validation():
+    for weekdays in ([5, 6], ["Saturnday"], ["sa"]):
+        with pytest.raises(ValueError, match="Invalid weekday"):
+            Calendar(weekdays=weekdays)
+    with pytest.raises(ValueError, match="weekdays must be a list of weekday names"):
+        Calendar(weekdays="Saturday")
+    assert Calendar(weekdays=["sat", "Saturday", "SUN"]).weekdays == ("Saturday", "Sunday")
+    assert Calendar(weekdays=["SATURDAY", "sun"]).weekdays == ("Saturday", "Sunday")
+
+
+def test_calendar_holidays_outside_explicit_range_ignored():
+    cal = Calendar(
+        holidays=["2023-12-25", "2024-12-25", "2025-01-01"],
+        weekdays=[],
+        startdate="2024-01-01",
+        enddate="2024-12-31",
+    )
+    assert cal.holidays == [date(2024, 12, 25)]
+    assert "Holidays: 1" in str(cal)
+    cal = Calendar(holidays=["2023-12-25", "2024-12-25"], weekdays=[], startdate="2024-01-01")
+    assert cal.holidays == [date(2024, 12, 25)]
+    assert cal.enddate == date(2024, 12, 25)
+
+
+def test_calendar_warns_holidays_without_weekdays():
+    # R test-calendar.R:317-323
+    holidays = Calendar.load(name="ANBIMA").holidays
+    message = "You provided holidays without set weekdays.\nThat setup leads to inconsistencies!"
+    with pytest.warns(UserWarning, match=message):
+        Calendar(holidays=holidays)
+
+
+def test_calendar_no_warning():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        Calendar(holidays=["2024-01-01", "2024-12-25"], weekdays=[])
+        Calendar()
+        Calendar(weekdays=["sat"])
+        for name in ("ANBIMA", "B3", "Actual"):
+            Calendar.load(name=name)
+
+
+def test_calendar_xcal_no_warning():
+    pytest.importorskip("exchange_calendars")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        Calendar.load(name="XCAL/XNYS")
