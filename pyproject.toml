@@ -56,8 +56,13 @@ package = true
 requires = ["hatchling>=1.27"]  # 1.27 is the first with PEP 639 license fields
 build-backend = "hatchling.build"
 
-[tool.hatchling.build]
-include = ["bizdays/**/*.py", "bizdays/data/*.json"]
+[tool.hatch.build.targets.wheel]
+packages = ["bizdays"]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["bizdays", "tests", "benchmarks", "README.md", "LICENSE.txt", "CHANGELOG.md"]
+exclude = ["__pycache__", "*.pyc", "tests/legacy"]
 
 [tool.ruff]
 target-version = "py310"
