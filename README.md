@@ -28,3 +28,10 @@ hand in such a huge library only to use the financial calendar.
 **bizdays** is a pure Python module without strong dependencies,
 what makes it appropriated for small projects.
 
+## Calendars
+
+bizdays comes with these calendars:
+
+* `ANBIMA`: 2000-01-01 to 2099-12-25, from ANBIMA's holiday list.
+* `B3`: 2000-01-01 to 2099-12-31. Up to 2026 the holidays are B3's official ones. From 2027 they are projected by a rule: ANBIMA holidays, plus December 24, plus the last weekday of the year. A projected year is replaced when B3 publishes its calendar.
+* `Actual`: no holidays and no weekends; every day is a business day.
