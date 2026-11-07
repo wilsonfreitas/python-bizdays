@@ -33,14 +33,15 @@ def _not_1d(name: str, ndim: int) -> ValueError:
 
 def to_1d(x: object, name: str) -> tuple[npt.NDArray[Any], BoolArray, bool]:
     """Return ``(values, missing, is_vector)`` for any accepted input."""
-    mask: object = False
+    mask: bool | BoolArray = False
+    values: npt.NDArray[Any]
     if isinstance(x, pd.DataFrame):
         raise ValueError(f"{name} must be 1-D, got a DataFrame")
     if isinstance(x, (pd.Series, pd.Index)):
         px: pd.Series | pd.Index = x
         if isinstance(px.dtype, pd.DatetimeTZDtype):
             # wall-clock date, as pandas .dt.date
-            px = px.dt.tz_localize(None) if isinstance(px, pd.Series) else px.tz_localize(None)
+            px = px.dt.tz_localize(None) if isinstance(px, pd.Series) else pd.DatetimeIndex(px).tz_localize(None)
         values = px.to_numpy() if isinstance(px.dtype, np.dtype) else px.to_numpy(dtype=object)
         is_vector = True
     elif isinstance(x, (list, tuple)):

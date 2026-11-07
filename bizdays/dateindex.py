@@ -177,7 +177,7 @@ class DateIndex(object):
     def ref_inrange(self, ref: NormalizedRef) -> bool:
         """A date ref inside the range, or a year or month ref whose whole period is inside it."""
         if ref.kind == "date":
-            return bool(self.startdate <= ref.date <= self.enddate)  # type: ignore[operator]
+            return ref.date is not None and bool(self.startdate <= ref.date <= self.enddate)
         lo, hi = self._period_bounds(ref)
         return lo >= 0 and hi <= len(self._dates)
 

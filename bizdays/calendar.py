@@ -870,6 +870,7 @@ class Calendar:
             ``getbizdays(2099)`` raise.
         """
         _year, vec_y = to_counts(year, "year")
+        _month: FloatArray
         if month is None:
             _month, vec_m = np.zeros(1), False  # month 0 = whole year, internal only
         else:
