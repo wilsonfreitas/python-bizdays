@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import bizdays
 from bizdays import Calendar
 
 BENCH = Path(__file__).parents[1] / "benchmarks" / "bench.py"
@@ -97,3 +98,51 @@ def test_load_in_fresh_process(bench, tmp_path, monkeypatch):
     (tmp_path / "pandas_market_calendars.py").write_text('raise ImportError("blocked")\n')
     monkeypatch.setenv("PYTHONPATH", str(tmp_path))
     assert bench.load_in_fresh_process("PMC/B3") is None
+
+
+OPERATIONS = ("bizdays", "bizdays[str]", "isbizday", "offset", "following", "modified_following", "getdate", "getbizdays")
+
+
+def test_cli_smoke_check_passes():
+    r = run_cli("--sizes", "1", "1000", "--calendars", "ANBIMA", "--check")
+    assert r.returncode == 0, r.stdout + r.stderr
+    first = r.stdout.splitlines()[0]
+    assert first.startswith("bizdays ")
+    assert str(Path(bizdays.__file__)) in first
+    assert "| case | n | seconds | peak MiB | budget s | budget MiB | status |" in r.stdout
+    for row in ("| load:ANBIMA | 1 |", "| index:ANBIMA | 1 |", "| seq | 1 |"):
+        assert row in r.stdout
+    for name in OPERATIONS:
+        for n in (1, 1000):
+            assert f"| {name} | {n} |" in r.stdout
+    assert "OVER" not in r.stdout
+
+
+def test_cli_check_fails_over_budget():
+    r = run_cli("--sizes", "1", "--calendars", "ANBIMA", "--check", "--scale", "0")
+    assert r.returncode == 1
+    assert "OVER" in r.stdout
+    assert run_cli("--sizes", "1", "--calendars", "ANBIMA", "--scale", "0").returncode == 0
+
+
+def test_cli_common_mode():
+    r = run_cli("--common", "--sizes", "10", "--calendars", "ANBIMA")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "bizdays[str]" not in r.stdout
+    assert "| getdate | 10 |" in r.stdout
+    assert "OVER" not in r.stdout
+    assert "| ok |" not in r.stdout
+    assert run_cli("--common", "--check").returncode == 2
+
+
+def test_cli_missing_provider_is_skipped(bench, monkeypatch, capsys):
+    monkeypatch.setattr(bench, "load_in_fresh_process", lambda name: None)
+    assert bench.main(["--sizes", "1", "--calendars", "XCAL/BVMF", "--check"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    for case in ("load:XCAL/BVMF", "index:XCAL/BVMF"):
+        assert any(line.startswith(f"| {case} |") and line.endswith("| skipped |") for line in lines)
+
+    bench.main(["--sizes", "1000", "--calendars", "ANBIMA"])
+    out = capsys.readouterr().out
+    assert "| seq | 1 |" in out
+    assert "| seq | 1000 |" not in out

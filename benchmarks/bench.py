@@ -120,3 +120,101 @@ def load_in_fresh_process(name: str) -> dict[str, float] | None:
         result[f"first_{unit}"] = float(first)
         result[f"second_{unit}"] = float(second)
     return result
+
+
+# Operation cases in report order: name -> call on (calendar, inputs).
+CASES: dict[str, Callable[[Any, dict[str, Any]], object]] = {
+    "bizdays": lambda cal, inp: cal.bizdays(inp["dates"], inp["dates_to"]),
+    "bizdays[str]": lambda cal, inp: cal.bizdays(inp["dates_str"], inp["dates_to_str"]),
+    "isbizday": lambda cal, inp: cal.isbizday(inp["dates"]),
+    "offset": lambda cal, inp: cal.offset(inp["dates"], inp["counts"]),
+    "following": lambda cal, inp: cal.following(inp["dates"]),
+    "modified_following": lambda cal, inp: cal.modified_following(inp["dates"]),
+    "seq": lambda cal, inp: cal.seq("2000-01-03", "2099-12-22"),
+    "getdate": lambda cal, inp: cal.getdate("last bizday", inp["months"]),
+    "getbizdays": lambda cal, inp: cal.getbizdays(inp["years"]),
+}
+
+
+def _cell(value: float | None, digits: int) -> str:
+    return "-" if value is None else f"{value:.{digits}f}"
+
+
+def _row(case: str, n: int, seconds: float | None, mib: float | None, common: bool, scale: float) -> tuple[str, bool]:
+    """Format one table row; return it and whether it is over budget."""
+    limits = None if common else budget(case, n)
+    limit_s, limit_mib = limits if limits else (None, None)
+    if seconds is None:
+        status = "skipped"
+    elif limits is None:
+        status = "-"
+    else:
+        over = seconds > limit_s * scale or (mib is not None and limit_mib is not None and mib > limit_mib * scale)
+        status = "OVER" if over else "ok"
+    cells = [case, str(n), _cell(seconds, 4), _cell(mib, 1), _cell(limit_s, 2), _cell(limit_mib, 0), status]
+    return "| " + " | ".join(cells) + " |", status == "OVER"
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    import importlib.metadata
+    import platform
+
+    import pandas
+
+    import bizdays
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--sizes", type=int, nargs="+", default=[1, 1000, 1_000_000])
+    parser.add_argument("--calendars", nargs="+")
+    parser.add_argument("--check", action="store_true", help="exit 1 if a row is over its budget")
+    parser.add_argument("--scale", type=float, default=1.0, help="multiply every budget by this factor")
+    parser.add_argument("--common", action="store_true", help="only the API and inputs that bizdays 1.0.19 also has")
+    args = parser.parse_args(argv)
+    if args.common and args.check:
+        parser.error("--check cannot be used with --common (no budgets apply)")
+    calendars = args.calendars or (
+        list(PACKAGED) if args.common else [*PACKAGED, "PMC/B3", "XCAL/BVMF", "WORK/BR"]
+    )
+
+    print(
+        f"bizdays {importlib.metadata.version('bizdays')} at {bizdays.__file__}; Python {platform.python_version()}; "
+        f"numpy {np.__version__}; pandas {pandas.__version__}; {platform.platform()}"
+    )
+    print()
+    print("| case | n | seconds | peak MiB | budget s | budget MiB | status |")
+    print("|---|---|---|---|---|---|---|")
+    failed = False
+
+    def emit(*row_args: Any) -> None:
+        nonlocal failed
+        line, over = _row(*row_args, args.common, args.scale)
+        print(line, flush=True)
+        failed = failed or over
+
+    for name in calendars:
+        loads = load_in_fresh_process(name)
+        emit(f"load:{name}", 1, loads and loads["first_s"], loads and loads["first_mib"])
+        emit(f"index:{name}", 1, loads and loads["second_s"], loads and loads["second_mib"])
+
+    cal = bizdays.Calendar.load(name="ANBIMA")
+    seq_done = False
+    for n in args.sizes:
+        inp = make_inputs(n, common=args.common)
+        if not args.common:
+            inp["dates_str"] = inp["dates"].astype(str)
+            inp["dates_to_str"] = inp["dates_to"].astype(str)
+        for case, call in CASES.items():
+            if (case == "bizdays[str]" and args.common) or (case == "seq" and seq_done):
+                continue
+            size = 1 if case == "seq" else n
+            seq_done = seq_done or case == "seq"
+            # tracing makes Python loops about 35x slower, so big traced runs would take minutes
+            memory = not ((case == "getdate" and size > 100_000) or (args.common and size >= 100_000))
+            seconds, mib = measure(lambda: call(cal, inp), repeat=3 if size < 100_000 else 1, memory=memory)
+            emit(case, size, seconds, mib)
+    return 1 if args.check and failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
