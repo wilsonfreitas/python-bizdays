@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Callable, Sequence
-from datetime import date, datetime
-from typing import Any, TypedDict, TypeAlias, overload
+from datetime import date
+from typing import TYPE_CHECKING, Any, TypedDict, TypeAlias, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -28,21 +28,24 @@ from bizdays.external import (
 from bizdays.getdate_parser import to_exprs, to_refs
 from bizdays.utils import DateOutOfRange, broadcast_pair
 
-DateScalar: TypeAlias = str | date | datetime | pd.Timestamp | np.datetime64
+if TYPE_CHECKING:
+    from pandas._libs.missing import NAType
+    from pandas._libs.tslibs.nattype import NaTType
+
+# strings: pd.Series[Any] cannot be subscripted at run time with pandas 2
+Missing: TypeAlias = "None | NaTType | NAType"
+# date covers datetime and pd.Timestamp
+DateScalar: TypeAlias = "str | date | np.datetime64 | Missing"
+CountScalar: TypeAlias = "int | float | np.integer[Any] | np.floating[Any] | Missing"
+# getdate ref: a year, "YYYY", "YYYY-MM" or a date
+RefScalar: TypeAlias = "CountScalar | DateScalar"
+ExprScalar: TypeAlias = "str | None"
+# the inputs that convert.to_1d accepts as vectors; element types are checked at run time
+Vector: TypeAlias = "list[Any] | tuple[Any, ...] | npt.NDArray[Any] | pd.Series[Any] | pd.Index[Any]"
 DateArray: TypeAlias = npt.NDArray[np.datetime64]
-DateSequence: TypeAlias = list[DateScalar] | tuple[DateScalar, ...]
-DateVector: TypeAlias = DateSequence | pd.DatetimeIndex | DateArray
-DateInput: TypeAlias = DateScalar | DateVector
-GetDateRefScalar: TypeAlias = int | DateScalar
-GetDateRefSequence: TypeAlias = list[GetDateRefScalar] | tuple[GetDateRefScalar, ...]
-GetDateRefVector: TypeAlias = GetDateRefSequence | pd.Index | npt.NDArray[np.object_]
-GetDateRefInput: TypeAlias = GetDateRefScalar | GetDateRefVector
-IntArray: TypeAlias = npt.NDArray[np.int_]
-IntSequence: TypeAlias = list[int] | tuple[int, ...]
-IntVector: TypeAlias = IntSequence | IntArray
-IntInput: TypeAlias = int | IntVector
-BoolArray: TypeAlias = npt.NDArray[np.bool_]
 FloatArray: TypeAlias = npt.NDArray[np.float64]
+BoolArray: TypeAlias = npt.NDArray[np.bool_]
+BoolMaskedArray: TypeAlias = "np.ma.MaskedArray[Any, np.dtype[np.bool_]]"
 
 
 class CalendarIntegrationListing(TypedDict):
@@ -313,25 +316,23 @@ class Calendar:
             self._nonwork_weekdays,
         )
 
-    def __get_weekdays(self) -> tuple[str, ...]:
+    @property
+    def weekdays(self) -> tuple[str, ...]:
         return tuple(self._weekdays[nwd] for nwd in self._nonwork_weekdays)
 
-    weekdays = property(__get_weekdays)
+    @property
+    def startdate(self) -> date:
+        assert self._startdate.date is not None
+        return self._startdate.date
 
-    def __get_startdate(self) -> date:
-        return self._startdate.date  # type: ignore
+    @property
+    def enddate(self) -> date:
+        assert self._enddate.date is not None
+        return self._enddate.date
 
-    startdate = property(__get_startdate)
-
-    def __get_enddate(self) -> date:
-        return self._enddate.date  # type: ignore
-
-    enddate = property(__get_enddate)
-
-    def __get_holidays(self) -> list[date]:
+    @property
+    def holidays(self) -> list[date]:
         return [d.astype("O") for d in self._holidays]
-
-    holidays = property(__get_holidays)
 
     def _range_text(self) -> str:
         return f"calendar range {self._index.startdate}..{self._index.enddate}"
@@ -398,7 +399,7 @@ class Calendar:
         self._raise_range(bad | bad_results, paired)
         return out
 
-    def _adjust(self, dt: DateInput, n: int, modified: bool = False) -> np.datetime64 | DateArray:
+    def _adjust(self, dt: DateScalar | Vector, n: int, modified: bool = False) -> np.datetime64 | DateArray:
         _dt, is_vector = to_dates(dt, "dt")
         out = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
         self._apply(lambda d: self._index.adjust(d, n, modified), out, np.isnat(_dt), {"dt": _dt})
@@ -408,12 +409,12 @@ class Calendar:
     def bizdays(self, date_from: DateScalar, date_to: DateScalar) -> np.float64: ...
 
     @overload
-    def bizdays(self, date_from: DateVector, date_to: DateInput) -> FloatArray: ...
+    def bizdays(self, date_from: Vector, date_to: DateScalar | Vector) -> FloatArray: ...
 
     @overload
-    def bizdays(self, date_from: DateScalar, date_to: DateVector) -> FloatArray: ...
+    def bizdays(self, date_from: DateScalar, date_to: Vector) -> FloatArray: ...
 
-    def bizdays(self, date_from: DateInput, date_to: DateInput) -> np.float64 | FloatArray:
+    def bizdays(self, date_from: DateScalar | Vector, date_to: DateScalar | Vector) -> np.float64 | FloatArray:
         """
         Calculate the amount of business days between two dates
 
@@ -458,9 +459,9 @@ class Calendar:
     def isbizday(self, dt: DateScalar) -> np.bool_ | MaskedConstant: ...
 
     @overload
-    def isbizday(self, dt: DateVector) -> np.ma.MaskedArray: ...
+    def isbizday(self, dt: Vector) -> BoolMaskedArray: ...
 
-    def isbizday(self, dt: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
+    def isbizday(self, dt: DateScalar | Vector) -> np.bool_ | MaskedConstant | BoolMaskedArray:
         """
         Checks if the given dates are business days.
 
@@ -487,9 +488,9 @@ class Calendar:
     def inrange(self, dates: DateScalar) -> np.bool_ | MaskedConstant: ...
 
     @overload
-    def inrange(self, dates: DateVector) -> np.ma.MaskedArray: ...
+    def inrange(self, dates: Vector) -> BoolMaskedArray: ...
 
-    def inrange(self, dates: DateInput) -> np.bool_ | MaskedConstant | np.ma.MaskedArray:
+    def inrange(self, dates: DateScalar | Vector) -> np.bool_ | MaskedConstant | BoolMaskedArray:
         """
         Checks if the given dates lie inside the calendar range.
 
@@ -520,9 +521,9 @@ class Calendar:
     def adjust_next(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def adjust_next(self, dt: DateVector) -> DateArray: ...
+    def adjust_next(self, dt: Vector) -> DateArray: ...
 
-    def adjust_next(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def adjust_next(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the next business day
 
@@ -548,18 +549,18 @@ class Calendar:
     def following(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def following(self, dt: DateVector) -> DateArray: ...
+    def following(self, dt: Vector) -> DateArray: ...
 
-    def following(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def following(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         return self.adjust_next(dt)
 
     @overload
     def modified_following(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def modified_following(self, dt: DateVector) -> DateArray: ...
+    def modified_following(self, dt: Vector) -> DateArray: ...
 
-    def modified_following(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def modified_following(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the next business day with a small
         difference.
@@ -587,9 +588,9 @@ class Calendar:
     def adjust_previous(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def adjust_previous(self, dt: DateVector) -> DateArray: ...
+    def adjust_previous(self, dt: Vector) -> DateArray: ...
 
-    def adjust_previous(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def adjust_previous(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the previous business day
 
@@ -615,18 +616,18 @@ class Calendar:
     def preceding(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def preceding(self, dt: DateVector) -> DateArray: ...
+    def preceding(self, dt: Vector) -> DateArray: ...
 
-    def preceding(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def preceding(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         return self.adjust_previous(dt)
 
     @overload
     def modified_preceding(self, dt: DateScalar) -> np.datetime64: ...
 
     @overload
-    def modified_preceding(self, dt: DateVector) -> DateArray: ...
+    def modified_preceding(self, dt: Vector) -> DateArray: ...
 
-    def modified_preceding(self, dt: DateInput) -> np.datetime64 | DateArray:
+    def modified_preceding(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
         """
         Adjusts the given dates to the previous business day with a small
         difference.
@@ -650,7 +651,7 @@ class Calendar:
         """
         return self._adjust(dt, -1, modified=True)
 
-    def seq(self, date_from: DateScalar, date_to: DateScalar) -> DateArray:
+    def seq(self, date_from: str | date | np.datetime64, date_to: str | date | np.datetime64) -> DateArray:
         """
         Sequence of business days.
 
@@ -685,15 +686,15 @@ class Calendar:
         return _seq[::-1] if reverse else _seq
 
     @overload
-    def offset(self, dt: DateScalar, n: int) -> np.datetime64: ...
+    def offset(self, dt: DateScalar, n: CountScalar) -> np.datetime64: ...
 
     @overload
-    def offset(self, dt: DateVector, n: IntInput) -> DateArray: ...
+    def offset(self, dt: Vector, n: CountScalar | Vector) -> DateArray: ...
 
     @overload
-    def offset(self, dt: DateScalar, n: IntVector) -> DateArray: ...
+    def offset(self, dt: DateScalar, n: Vector) -> DateArray: ...
 
-    def offset(self, dt: DateInput, n: IntInput) -> np.datetime64 | DateArray:
+    def offset(self, dt: DateScalar | Vector, n: CountScalar | Vector) -> np.datetime64 | DateArray:
         """
         Offsets the given dates by n business days.
 
@@ -729,7 +730,7 @@ class Calendar:
         )
         return _finalize_date_result(dts, single_value)
 
-    def diff(self, dts: Sequence[DateScalar] | pd.DatetimeIndex | DateArray) -> FloatArray:
+    def diff(self, dts: Vector) -> FloatArray:
         """
         Compute the number of business days between dates in a given vector
         of dates.
@@ -753,11 +754,16 @@ class Calendar:
             return np.array([], dtype=np.float64)
         return np.asarray(self.bizdays(_dts[:-1], _dts[1:]), dtype=np.float64)
 
-    def getdate(
-        self,
-        expr: str | Sequence[str] | npt.NDArray[np.object_],
-        ref: GetDateRefInput,
-    ) -> np.datetime64 | DateArray:
+    @overload
+    def getdate(self, expr: ExprScalar, ref: RefScalar) -> np.datetime64: ...
+
+    @overload
+    def getdate(self, expr: Vector, ref: RefScalar | Vector) -> DateArray: ...
+
+    @overload
+    def getdate(self, expr: ExprScalar, ref: Vector) -> DateArray: ...
+
+    def getdate(self, expr: ExprScalar | Vector, ref: RefScalar | Vector) -> np.datetime64 | DateArray:
         """
         Get dates using a month, year, or date reference.
 
@@ -831,16 +837,16 @@ class Calendar:
         return _finalize_date_result(dates, single_value)
 
     @overload
-    def getbizdays(self, year: int | float, month: int | float | None = None) -> np.float64: ...
+    def getbizdays(self, year: CountScalar, month: CountScalar = None) -> np.float64: ...
 
     @overload
-    def getbizdays(self, year: IntVector, month: int | float | IntVector | None = None) -> FloatArray: ...
+    def getbizdays(self, year: Vector, month: CountScalar | Vector = None) -> FloatArray: ...
 
     @overload
-    def getbizdays(self, year: int | float, month: IntVector) -> FloatArray: ...
+    def getbizdays(self, year: CountScalar, month: Vector) -> FloatArray: ...
 
     def getbizdays(
-        self, year: int | float | IntVector, month: int | float | IntVector | None = None
+        self, year: CountScalar | Vector, month: CountScalar | Vector = None
     ) -> np.float64 | FloatArray:
         """
         Business days in a whole year, or in one month.
