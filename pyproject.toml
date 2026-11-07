@@ -1,9 +1,27 @@
 [project]
 name = "bizdays"
-version = "1.0.20"
+version = "2.0.0"
 description = "Functions to handle business days calculations"
-authors = [{ name = "wilsonfreitas", email = "wilson.freitas@gmail.com" }]
+authors = [{ name = "Wilson Freitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+keywords = ["business days", "calendar", "holidays", "finance", "bizdays"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24", "pandas>=2,<3"]
 
@@ -24,11 +42,18 @@ dev = [
 ]
 docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 
+[project.urls]
+Homepage = "https://github.com/wilsonfreitas/python-bizdays"
+Documentation = "https://wilsonfreitas.github.io/python-bizdays/"
+Source = "https://github.com/wilsonfreitas/python-bizdays"
+Issues = "https://github.com/wilsonfreitas/python-bizdays/issues"
+Changelog = "https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md"
+
 [tool.uv]
 package = true
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]  # 1.27 is the first with PEP 639 license fields
 build-backend = "hatchling.build"
 
 [tool.hatchling.build]
