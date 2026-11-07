@@ -8,7 +8,8 @@ from bizdays import Calendar, list_calendars
 from bizdays.calendarfile import load_packaged_calendar_definition
 
 # When B3 publishes year Y: replace Y's entries in B3.json with the official
-# list, set B3_OFFICIAL_LAST_YEAR = Y and update the hash in test_b3_official_years_unchanged.
+# list, set B3_OFFICIAL_LAST_YEAR = Y and update the count, last date and hash
+# in test_b3_official_years_unchanged.
 B3_OFFICIAL_LAST_YEAR = 2026
 PROJECTED_LAST_YEAR = 2099
 
