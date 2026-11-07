@@ -38,9 +38,11 @@ cal.getdate("15th day", "2002-05")
 
 ## Calendars that come with the package
 
-- `ANBIMA`
-- `B3`
-- `Actual`
+- `ANBIMA`: 2000-2099, ANBIMA's own holiday list.
+- `B3`: official B3 holidays for 2000-2026. Years 2027-2099 are projected:
+  ANBIMA holidays, plus December 24, plus the last weekday of the year.
+  Projected years are replaced when B3 publishes them.
+- `Actual`: no holidays, every day is a business day; 1970-01-01 to 2071-01-01.
 
 You can discover them programmatically with `list_calendars()`:
 
