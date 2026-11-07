@@ -72,13 +72,15 @@ def make_inputs(n: int, common: bool = False) -> dict[str, Any]:
     years = rng.integers(2001, 2099, n)
     inp: dict[str, Any] = {
         "dates": dates,
-        "dates_to": dates + 30,
+        "dates_to": dates + np.timedelta64(30, "D"),
         "counts": counts,
         "months": years if common else months,
         "years": years,
     }
     if common:
-        inp = {key: value.astype(str).tolist() if key.startswith("dates") else value.tolist() for key, value in inp.items()}
+        inp = {
+            key: value.astype(str).tolist() if key.startswith("dates") else value.tolist() for key, value in inp.items()
+        }
     if n == 1:
         inp = {key: value[0] for key, value in inp.items()}
         if not common:
@@ -173,9 +175,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.common and args.check:
         parser.error("--check cannot be used with --common (no budgets apply)")
-    calendars = args.calendars or (
-        list(PACKAGED) if args.common else [*PACKAGED, "PMC/B3", "XCAL/BVMF", "WORK/BR"]
-    )
+    calendars = args.calendars or (list(PACKAGED) if args.common else [*PACKAGED, "PMC/B3", "XCAL/BVMF", "WORK/BR"])
 
     print(
         f"bizdays {importlib.metadata.version('bizdays')} at {bizdays.__file__}; Python {platform.python_version()}; "

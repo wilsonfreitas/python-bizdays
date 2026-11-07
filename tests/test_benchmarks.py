@@ -100,7 +100,16 @@ def test_load_in_fresh_process(bench, tmp_path, monkeypatch):
     assert bench.load_in_fresh_process("PMC/B3") is None
 
 
-OPERATIONS = ("bizdays", "bizdays[str]", "isbizday", "offset", "following", "modified_following", "getdate", "getbizdays")
+OPERATIONS = (
+    "bizdays",
+    "bizdays[str]",
+    "isbizday",
+    "offset",
+    "following",
+    "modified_following",
+    "getdate",
+    "getbizdays",
+)
 
 
 def test_cli_smoke_check_passes():
