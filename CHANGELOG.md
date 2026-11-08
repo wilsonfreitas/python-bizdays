@@ -16,13 +16,13 @@ Read the [migration guide](https://wilsonfreitas.github.io/python-bizdays/migrat
 
 #### Breaking changes
 
-* v1 ran on Python 3.9 and pandas 2 only; v2 needs Python 3.10 or newer, and names `numpy>=1.24` as a dependency ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-python-and-dependencies)).
+* v1 needed Python 3.9 or newer and pandas 2 (not 3); v2 needs Python 3.10 or newer, and names `numpy>=1.24` as a dependency ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-python-and-dependencies)).
 * v1 always installed `pandas_market_calendars`; v2 makes each provider an optional extra (`pmc`, `xcal`, `work`), and loading a provider calendar without its extra raises `ImportError` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-optional-providers)).
 * v1 exported many helpers at the top level (`Date`, `load_holidays`, `isseq`, ...); v2 exports only `Calendar`, `list_calendars` and `DateOutOfRange` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-removed-top-level-names)).
 * v1 had `get_option` and `set_option` with pandas and ISO modes; v2 removes them and always returns NumPy values ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-options-and-modes)).
 * v1 used `cal.vec` for vector calls; v2 removes it, and every method takes a single value or a vector ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-vec-removed)).
 * v1 `DateOutOfRange` was a plain `Exception`; v2 makes it a `ValueError` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-date-out-of-range)).
-* v1 `Calendar(...)` accepted bad setups and raised `KeyError` for `startdate > enddate`; v2 changes some defaults and raises `ValueError` for bad arguments, such as unknown weekday names or a calendar with no business days ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-constructor)).
+* v1 `Calendar(...)` accepted bad setups; v2 changes some defaults and raises `ValueError` for bad arguments, such as unknown weekday names or a calendar with no business days ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-constructor)).
 * v1 `Calendar.load("ANBIMA")` worked by position; v2 takes keywords only: `name=` or `filename=` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-load-keyword-only)).
 * v1 read text `.cal` files; v2 reads only JSON calendar files ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-cal-files)).
 * v1 raised a plain `Exception` for an unknown calendar or a missing file; v2 raises `ValueError` or `FileNotFoundError` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-load-errors)).
@@ -83,9 +83,9 @@ See the [API reference](https://wilsonfreitas.github.io/python-bizdays/api.html)
 * Wilson Freitas (@wilsonfreitas)
 * @RichardDale, for reporting [#31](https://github.com/wilsonfreitas/python-bizdays/issues/31)
 
-### version 1.0.20 (YYYY-MM-DD)
+### version 1.0.20 (unreleased, 1.x branch)
 
-* B3 calendar extended to 2099-12-31. Holidays up to 2026 are B3's official ones. From 2027 they are projected: ANBIMA holidays, plus December 24, plus the last weekday of the year. Projected years will be replaced when B3 publishes its official calendar (WIL-228).
+* B3 calendar: projected holidays for 2027 to 2099 (ANBIMA holidays + December 24 + the last weekday of the year). Official B3 data ends in 2026.
 
 ### version 1.0.19 (2026-01-04)
 

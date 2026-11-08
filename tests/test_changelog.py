@@ -103,6 +103,12 @@ def test_1_0_20_entry_is_b3_only() -> None:
         assert word not in text, word
 
 
+def test_no_placeholder_dates() -> None:
+    headings = re.findall(r"^### version .*$", CHANGELOG.read_text(encoding="utf-8"), re.M)
+    for heading in headings:
+        assert "YYYY" not in heading, heading
+
+
 def test_supported_environments_match_metadata() -> None:
     env = subsection(entry("2.0.0"), "Supported environments")
     meta = importlib.metadata.metadata("bizdays")
