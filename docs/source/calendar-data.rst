@@ -47,9 +47,9 @@ raises :class:`bizdays.DateOutOfRange`.
 
 Official and projected years:
 
-- ``ANBIMA``: official holidays as published by ANBIMA, up to 2099. They
-  follow the national holiday rule (days based on Easter, fixed days, and
-  20 November from 2024).
+- ``ANBIMA``: official holidays as published by ANBIMA up to 2079-01-01.
+  Later years, up to 2099, are projected with the national holiday rule
+  (days based on Easter, fixed days, and 20 November from 2024).
 - ``B3``: official for 2000-2026. Years 2027-2099 are projected: ANBIMA
   holidays, plus December 24, plus the last weekday of the year. See the
   packaged calendar list in :doc:`api`.
