@@ -1,4 +1,4 @@
-### version 2.0.0 (unreleased)
+### version 2.0.0 (2026-11-07)
 
 bizdays 2.0.0 is a major release with breaking changes, compared with 1.0.19 (1.0.20 has the same API and only adds B3 data).
 Read the [migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html) before you upgrade.
