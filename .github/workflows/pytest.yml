@@ -147,6 +147,7 @@ jobs:
           uv venv "$v"
           uv pip install --python "$v" "$a" pytest
           mkdir -p "$t" && cp -r tests pyproject.toml "$t"/
+          mkdir -p "$t/docs/source" && cp README.md "$t"/ && cp docs/source/api.rst "$t/docs/source"/  # WIL-147: run the doc examples against the installed artifact
           (cd "$t" && "$v/bin/python" -c "import bizdays, sys; sys.exit(not bizdays.__file__.startswith(sys.argv[1]))" "$v" \
                    && "$v/bin/python" -m pytest -q -rs -p no:cacheprovider)
         done
