@@ -3,6 +3,7 @@ import json
 import re
 from datetime import date, timedelta
 from importlib import resources
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,7 @@ from dateutil.easter import easter
 
 from bizdays import Calendar, list_calendars
 from bizdays.calendarfile import PACKAGED_CALENDARS, load_packaged_calendar_definition
+from bizdays.utils import DateOutOfRange
 
 # When B3 publishes year Y: replace Y's entries in B3.json with the official
 # list, set B3_OFFICIAL_LAST_YEAR = Y and update the count, last date and hash
@@ -212,3 +214,59 @@ def test_representative_days(calendar: str, day: str, expected: bool) -> None:
 def test_packaged_ranges(anbima: Calendar, b3: Calendar) -> None:
     assert (anbima.startdate, anbima.enddate) == (date(2000, 1, 1), date(2099, 12, 25))
     assert b3.startdate == date(2000, 1, 1)
+
+
+def test_actual_range() -> None:
+    cal = Calendar.load(name="Actual")
+    assert (cal.startdate, cal.enddate) == (date(1900, 1, 1), date(2199, 12, 31))
+    assert cal.weekdays == ()
+    assert cal.bizdays("2071-01-01", "2100-01-01") == 10592
+
+
+def test_default_range_matches_r() -> None:
+    # R test-calendar.R "default calendar"
+    cal = Calendar(weekdays=["Saturday", "Sunday"])
+    assert (cal.startdate, cal.enddate) == (date(1970, 1, 1), date(2071, 1, 1))
+    ends = ["2013-01-03", "2013-01-04", "2013-01-05", "2013-01-06", "2013-01-07"]
+    assert [cal.bizdays("2013-01-02", d) for d in ends] == [1, 2, 2, 2, 3]
+    with pytest.raises(DateOutOfRange):
+        cal.bizdays("2013-01-02", "2090-01-07")
+    with pytest.raises(DateOutOfRange):
+        cal.bizdays("1700-01-02", "2013-01-07")
+
+
+def test_actual_default_range_matches_r() -> None:
+    # R test-calendar.R "Actual Calendar"
+    cal = Calendar(weekdays=[])
+    assert (cal.startdate, cal.enddate) == (date(1970, 1, 1), date(2071, 1, 1))
+    assert cal.bizdays("2013-01-02", "2013-02-03") == 32
+
+
+def _write_calendar(tmp_path: Path, **fields: Any) -> str:
+    payload = {"name": "X", "weekdays": ["Saturday", "Sunday"], "holidays": ["2023-06-01", "2024-12-25"]}
+    path = tmp_path / "X.json"
+    path.write_text(json.dumps({**payload, **fields}), encoding="utf-8")
+    return str(path)
+
+
+def test_json_range_fields(tmp_path: Path) -> None:
+    cal = Calendar.load(filename=_write_calendar(tmp_path, **{"start.date": "2024-01-01", "end.date": "2024-12-31"}))
+    assert cal.startdate == date(2024, 1, 1)
+    assert cal.enddate == date(2024, 12, 31)
+    assert cal.holidays == [date(2024, 12, 25)]
+
+
+@pytest.mark.parametrize(
+    "fields, match",
+    [({"start.date": 20240101}, "start.date"), ({"end.date": "2024-13-01"}, None)],
+    ids=["start", "end"],
+)
+def test_json_range_field_errors(tmp_path: Path, fields: dict[str, Any], match: str | None) -> None:
+    with pytest.raises(ValueError, match=match):
+        Calendar.load(filename=_write_calendar(tmp_path, **fields))
+
+
+def test_calendar_holidays_sorted_unique() -> None:
+    cal = Calendar(["2024-01-03", "2024-01-01", "2024-01-01"], weekdays=["Sat", "Sun"])
+    assert cal.holidays == [date(2024, 1, 1), date(2024, 1, 3)]
+    assert len(Calendar.load(name="ANBIMA").holidays) == 1275

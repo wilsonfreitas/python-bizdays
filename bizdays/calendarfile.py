@@ -13,6 +13,8 @@ class CalendarDefinition:
     weekdays: list[str]
     holidays: list[str]
     financial: bool
+    startdate: str | None = None
+    enddate: str | None = None
 
 
 def _as_string_list(value: Any, field_name: str) -> list[str]:
@@ -56,6 +58,8 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
         weekdays=_as_string_list(payload.get("weekdays"), "weekdays"),
         holidays=_as_string_list(payload.get("holidays"), "holidays"),
         financial=_as_bool(payload.get("financial", True), "financial"),
+        startdate=_as_optional_string(payload.get("start.date"), "start.date"),
+        enddate=_as_optional_string(payload.get("end.date"), "end.date"),
     )
 
 
