@@ -15,7 +15,7 @@ import pytest
 import bizdays
 from bizdays import Calendar
 
-from .v1_matrix_cases import CASES, decode, normalize, run_case
+from .v1_matrix_cases import CASES, decode, make_calendar, normalize, run_case
 
 FIXTURE = json.loads((Path(__file__).parent / "v1_matrix.json").read_text())
 
@@ -169,3 +169,29 @@ def test_every_public_member_is_covered():
 def test_v1_top_level_names():
     # §4: v1 `date` was datetime.date; in v2 it is the internal submodule bizdays.date.
     assert {n for n in FIXTURE["names"] if hasattr(bizdays, n)} == {"Calendar", "DateOutOfRange", "date"}
+
+
+@pytest.mark.parametrize(
+    ("case_id", "v1_type", "v2_class", "v2_dtype", "ndim"),
+    [
+        ("bizdays-anbima-year", "int", np.float64, "float64", 0),
+        ("bizdays-anbima-vector", "list", np.ndarray, "float64", 1),
+        ("isbizday-anbima-weekday", "bool", np.bool_, "bool", 0),
+        ("isbizday-anbima-vector", "list", np.ma.MaskedArray, "bool", 1),
+        ("following-anbima-bizday", "date", np.datetime64, "datetime64[D]", 0),
+        ("seq-anbima-week", "list", np.ndarray, "datetime64[D]", 1),
+        ("diff-anbima", "list", np.ndarray, "float64", 1),
+        ("getbizdays-anbima-2024", "int", np.float64, "float64", 0),
+        ("bizdays-anbima-series", "list", np.ndarray, "float64", 1),
+    ],
+)
+def test_return_types_changed_on_purpose(case_id, v1_type, v2_class, v2_dtype, ndim):
+    """§6 NumPy outputs; §3 list: "is True" no longer holds. Checked on raw results, not normalized ones."""
+    case = next(c for c in CASES if c["id"] == case_id)
+    assert FIXTURE["cases"][case_id]["type"] == v1_type
+    r = getattr(make_calendar(bizdays, case["cal"]), case["method"])(*decode(case["v2_args"] or case["args"]))
+    assert isinstance(r, v2_class)
+    assert r.dtype == np.dtype(v2_dtype)
+    assert np.ndim(r) == ndim
+    if case_id == "isbizday-anbima-weekday":
+        assert not isinstance(r, bool)  # v1 gave a Python bool
