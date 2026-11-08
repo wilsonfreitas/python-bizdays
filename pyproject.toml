@@ -1,29 +1,88 @@
-[tool.poetry]
+[project]
 name = "bizdays"
-version = "1.0.19"
+version = "2.0.0"
 description = "Functions to handle business days calculations"
-authors = ["wilsonfreitas <wilson.freitas@gmail.com>"]
+authors = [{ name = "Wilson Freitas", email = "wilson.freitas@gmail.com" }]
 readme = "README.md"
-include = ["bizdays/*.cal"]
+license = "MIT"
+license-files = ["LICENSE.txt"]
+keywords = ["business days", "calendar", "holidays", "finance", "bizdays"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pandas>=2"]
 
-[tool.poetry.dependencies]
-python = ">=3.9"
-pandas-market-calendars = "^4"
-pandas = "^2"
+[project.optional-dependencies]
+pmc = ["pandas-market-calendars>=4,<5"]
+xcal = ["exchange-calendars>=4,<5"]
+work = ["workalendar>=17,<18"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pycodestyle",
+    "ipykernel",
+    "ruff",
+    "mypy",
+    "pandas-stubs",
+    "pre-commit",
+    "pandas-market-calendars>=4,<5",
+    "exchange-calendars>=4,<5",
+    "workalendar>=17,<18",
+]
+docs = ["Sphinx", "nbsphinx", "matplotlib", "lxml", "alabaster", "ipywidgets"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
-pycodestyle = "*"
-ipykernel = "*"
+[project.urls]
+Homepage = "https://github.com/wilsonfreitas/python-bizdays"
+Documentation = "https://wilsonfreitas.github.io/python-bizdays/"
+Source = "https://github.com/wilsonfreitas/python-bizdays"
+Issues = "https://github.com/wilsonfreitas/python-bizdays/issues"
+Changelog = "https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md"
 
-[tool.poetry.group.docs.dependencies]
-Sphinx = "*"
-nbsphinx = "*"
-matplotlib = "*"
-lxml = "*"
-alabaster = "*"
-ipywidgets = "*"
+[tool.uv]
+package = true
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling>=1.27"]  # 1.27 is the first with PEP 639 license fields
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bizdays"]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["bizdays", "tests", "benchmarks", "README.md", "LICENSE.txt", "CHANGELOG.md"]
+exclude = ["__pycache__", "*.pyc", "tests/legacy"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = ["tests/legacy"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E712"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["bizdays", "tests/test_typing.py"]
+warn_unused_configs = true
+show_error_codes = true
+pretty = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning:bizdays"]

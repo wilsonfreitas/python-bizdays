@@ -4,73 +4,58 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+This project uses `uv` for dependency and environment management.
+
 ```bash
-# Install dependencies
-poetry install
+# Install dependencies (including dev tools like pytest)
+uv sync --extra dev
 
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run a single test file
-poetry run pytest test_bizdays.py
+uv run pytest tests/test_calendar.py
 
-# Run a single test
-poetry run pytest test_bizdays.py::test_name -v
+# Run a specific test
+uv run pytest tests/test_calendar.py::test_Calendar_seq
 
-# Build distribution
-poetry build
+# Run tests with verbose output
+uv run pytest -v
+
+# Run Ruff checks
+uv run ruff check .
+
+# Run mypy checks
+uv run mypy
+
+# Run all pre-commit checks
+uv run pre-commit run --all-files
 ```
 
 ## Architecture
 
-This is a pure Python library for financial market business day calculations, focused on Brazilian markets (B3, ANBIMA).
+**bizdays** is a Python library for financial business day calculations.
 
-**Package layout** (restructured in v1.0.19 from single-file to package):
-- `bizdays/__init__.py` — all core logic (~1137 lines)
-- `bizdays/*.cal` — bundled holiday calendar files (B3, ANBIMA, Actual)
-- `test_*.py` — tests at repo root (legacy location, not in `tests/`)
+### Public surface
 
-**Core classes** (all in `bizdays/__init__.py`):
+The public API is exactly `bizdays.__all__ == ["Calendar", "list_calendars", "DateOutOfRange"]`. Every submodule is internal. `DateOutOfRange` (in `bizdays/utils.py`) subclasses `ValueError`. The legacy `bizdays/bizdays.py` and `get_option`/`set_option` were removed in 2.0.0.
 
-| Class | Purpose |
-|---|---|
-| `Calendar` | Public API — wraps `DateIndex` and exposes business day methods |
-| `DateIndex` | Internal index structure for O(1) business day lookups |
-| `Date` | Flexible date input wrapper (accepts str, date, datetime, Date) |
-| `VectorizedOps` | Enables batch operations; handles pandas.DatetimeIndex and lists |
+- **`bizdays/calendar.py`** — NumPy-based `Calendar` implementation that wraps the numpy `DateIndex` from `dateindex.py`. Uses `np.datetime64` arrays throughout for vectorized operations. Methods handle both scalar and array inputs via `isseq()` detection and `broadcast_pair()`. This is the public `bizdays.Calendar`: `bizdays/__init__.py` exports `Calendar` and `list_calendars` from here.
 
-**Data flow:**
-1. `Calendar` is created with a list of holidays and non-working weekdays
-2. `Calendar` constructs a `DateIndex` over a fixed date range
-3. `DateIndex` builds sorted arrays and positional mappings for fast lookups
-4. Scalar calls go directly to `DateIndex`; vectorized calls go through `VectorizedOps`
-5. Return type is controlled by the global `options` dict (`mode`, `mode.datetype`)
+### Supporting modules
 
-**Calendar file format** (`.cal`):
-```
-Saturday
-Sunday
-2000-01-01
-2000-03-06
-```
-First lines are non-working weekday names; subsequent ISO dates are holidays.
+- **`bizdays/dateindex.py`** — Numpy-based `DateIndex`: builds forward/reverse cumulative sum indices (`_fwd_index`, `_rev_index`) over the date range for O(1) bizday lookups, offsets, and sequences.
 
-**Loading calendars:**
-```python
-Calendar.load("B3")                         # built-in
-Calendar.load(filename="/path/to/file.cal") # custom file
-Calendar.load("PMC/NYSE")                   # pandas_market_calendars
-```
+- **`bizdays/date.py`** — `Date` wrapper supporting `str`, `datetime.date`, `datetime.datetime`, `np.datetime64`, and `None`.
 
-**Output mode configuration:**
-```python
-set_option("mode", "pandas")           # return pd.Timestamp
-set_option("mode.datetype", "iso")     # return ISO strings
-```
+- **`bizdays/getdate_parser.py`** — Parser for `getdate` expressions such as `"last bizday"` or `"1st bizday before 2nd fri"`; `DateIndex.getdate` resolves them.
 
-## Key Conventions
+- **`bizdays/utils.py`** — Shared utilities: `isseq()`, `isstr()`, `broadcast_pair()`, `DateOutOfRange`.
 
-- All public `Calendar` methods support both scalar and vectorized (list/DatetimeIndex) inputs via `VectorizedOps`.
-- The `@daterangecheck` / `@daterangecheck2` decorators enforce that dates fall within the calendar's built range and raise `DateOutOfRange`.
-- Pandas is an optional dependency — code guards with `PANDAS_INSTALLED` flag. Tests for pandas integration live in `test_bizdays_pandas.py`.
-- The `tests/` directory exists but is empty; all tests are at the repo root.
+### Calendar data files
+
+Built-in JSON files (in `bizdays/data/`) for **B3**, **ANBIMA**, and **Actual** calendars, using the R-bizdays-style schema (parsed by `bizdays/calendarfile.py`). `Calendar.load()` is keyword-only: `name=` for built-in calendars, `filename=` for a custom JSON file. External calendars use name prefixes, each behind an optional extra, with adapters in `bizdays/external.py`: `name="PMC/<name>"` (`pandas_market_calendars`, extra `pmc`), `name="XCAL/<name>"` (`exchange_calendars`, extra `xcal`) and `name="WORK/<code>"` (`workalendar`, extra `work`).
+
+### Key design pattern
+
+All public Calendar methods handle scalar vs. sequence inputs uniformly: detect with `isseq()`, convert to `np.atleast_1d`, apply vectorized numpy ops, then return scalar if input was scalar (`result[0]`) or array otherwise.

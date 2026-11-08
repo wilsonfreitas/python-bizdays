@@ -1,0 +1,8 @@
+{
+  "name": "Actual",
+  "financial": true,
+  "adjust.from": "following",
+  "adjust.to": "preceding",
+  "start.date": "1900-01-01",
+  "end.date": "2199-12-31"
+}

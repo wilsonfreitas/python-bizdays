@@ -1,21 +1,43 @@
 name: Sphinx build
 
-on: push
+on:
+  workflow_call:
+  push:
+    branches: [ master ]
+  pull_request:
+    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
+    branches: [ master, feature/typing ]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  docs:
     runs-on: ubuntu-latest
+    permissions:
+      # the deploy step pushes to gh-pages
+      contents: write
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: uv sync --locked --extra dev --extra docs
+    - name: Install pandoc
+      # nbsphinx needs pandoc to convert the notebooks' Markdown cells
+      run: sudo apt-get update && sudo apt-get install -y pandoc
     - name: Build HTML
-      uses: wilsonfreitas/sphinx-action@master
+      run: make -C docs clean html SPHINXOPTS="-W --keep-going"
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: html-docs
         path: docs/build/html/
     - name: Deploy
-      uses: peaceiris/actions-gh-pages@v4
+      uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/build/html

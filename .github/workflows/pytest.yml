@@ -1,32 +1,167 @@
-name: Test Python package with Poetry
+name: Test Python package
 
-on: 
+on:
+  workflow_call:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
+    branches: [ master, feature/typing ]
+
+permissions:
+  contents: read
 
 jobs:
-  pytest:
+  quality:
+    runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: uv sync --locked --extra dev
+    - name: Run pre-commit checks
+      run: uv run pre-commit run --all-files
+
+  pytest:
+    runs-on: ubuntu-latest
+    needs: quality
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: uv sync --locked --extra dev
+    - name: Provider import check
+      # importorskip must not hide a broken provider
+      run: uv run python -c "import pandas_market_calendars, exchange_calendars, workalendar"
+    - name: Run tests with coverage
+      run: uv run pytest -q -rs --cov=bizdays --cov-branch --cov-report=term-missing --cov-report=xml --cov-fail-under=95
+    - name: Upload coverage
+      if: matrix.python-version == '3.12'
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage
+        path: coverage.xml
+
+  newest:
+    # not frozen on purpose: catches breakage from new releases (design section 3)
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11", "3.14"]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
-      run: |
-        pip install poetry
-    - name: Install dependencies
-      run: |
-        poetry install
+    - name: Install newest dependencies
+      run: uv sync --extra dev --upgrade
+    - name: Show versions
+      run: uv run python -c "import numpy, pandas; print(numpy.__version__, pandas.__version__)"
+    - name: Assert pandas 3
+      run: uv run python -c "import pandas, sys; sys.exit(int(pandas.__version__.split('.')[0]) < 3)"
+    - name: Provider import check
+      run: uv run python -c "import pandas_market_calendars, exchange_calendars, workalendar"
     - name: Run tests
+      run: uv run pytest -q -rs
+
+  core:
+    runs-on: ubuntu-latest
+    env:
+      # uv run must not put the providers back
+      UV_NO_SYNC: "1"
+
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.14"
+            deps: locked
+          - python-version: "3.10"
+            deps: minimum
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: uv sync --locked --extra dev
+    - name: Remove providers
+      run: uv pip uninstall pandas-market-calendars exchange-calendars workalendar
+    - name: Install minimum versions
+      if: matrix.deps == 'minimum'
+      # the floors in pyproject.toml; tests/test_dependencies.py
+      run: uv pip install "numpy==1.24.0" "pandas==2.0.0"
+    - name: Assert no provider
+      run: uv run python -c "import importlib.util as u, sys; sys.exit(any(u.find_spec(m) for m in ('pandas_market_calendars', 'exchange_calendars', 'workalendar')))"
+    - name: Run tests
+      run: uv run pytest -q -rs
+
+  build:
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: "3.12"
+    - name: Build
+      run: uv build
+    - name: Check artifact contents
+      run: uv run --no-project python tests/check_dist.py dist --version "$(uv version --short)"
+    - name: Check metadata
+      run: uvx twine==7.0.0 check --strict dist/*
+    - name: Install artifacts in clean environments
       run: |
-        poetry run pytest
+        V="$(uv version --short)"
+        N=0
+        for A in "$PWD"/dist/*.whl "$PWD"/dist/*.tar.gz; do
+          N=$((N+1))
+          uv venv "$RUNNER_TEMP/venv$N"
+          uv pip install --python "$RUNNER_TEMP/venv$N" "$A"
+          (cd "$RUNNER_TEMP" && "$RUNNER_TEMP/venv$N/bin/python" -c "import importlib.metadata as m, importlib.resources as r; from bizdays import Calendar; assert m.version('bizdays') == '$V'; assert r.files('bizdays').joinpath('py.typed').is_file(); assert Calendar.load(name='B3').isbizday('2024-01-02')")
+          echo "$(basename "$A"): OK"
+        done
+    - name: Run the suite against each artifact
+      # tests run from a temp folder, so bizdays and its data come from the installed artifact
+      run: |
+        for a in dist/*.whl dist/*.tar.gz; do
+          v="$RUNNER_TEMP/venv-$(basename "$a")"; t="$RUNNER_TEMP/tests-$(basename "$a")"
+          uv venv "$v"
+          uv pip install --python "$v" "$a" pytest
+          mkdir -p "$t" && cp -r tests pyproject.toml "$t"/
+          mkdir -p "$t/docs/source" && cp README.md "$t"/ && cp docs/source/api.rst "$t/docs/source"/  # WIL-147: run the doc examples against the installed artifact
+          (cd "$t" && "$v/bin/python" -c "import bizdays, sys; sys.exit(not bizdays.__file__.startswith(sys.argv[1]))" "$v" \
+                   && "$v/bin/python" -m pytest -q -rs -p no:cacheprovider)
+        done
+    - name: Upload dist
+      uses: actions/upload-artifact@v7
+      with:
+        name: dist
+        path: dist/
+
+  ci-ok:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [quality, pytest, newest, core, build]
+
+    steps:
+    - name: All needed jobs passed
+      run: test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = false
