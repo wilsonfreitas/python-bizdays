@@ -217,14 +217,18 @@ def test_main_fails_on_bad_dist(tmp_path, capsys):
     assert not (w / "venvs").exists()
 
 
-def test_main_rejects_dirty_source(tmp_path, monkeypatch):
+def test_main_rejects_dirty_source(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(validate_rc, "check_dist", lambda d, v: [])
     monkeypatch.setattr(validate_rc, "sha256sums", lambda d: "")
     dist = _fake_dist(tmp_path / "dist")
     src = tmp_path / "src"
     src.mkdir()
     subprocess.run(["git", "init", "-q", str(src)], check=True)
+    # one commit, so only the dirty check (not "no commit") can make main fail
+    git_id = ["-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "-C", str(src), *git_id, "commit", "-q", "--allow-empty", "-m", "init"], check=True)
     (src / "untracked.txt").write_text("x")
     w = tmp_path / "w"
     assert validate_rc.main([str(dist), "--version", "2.0.0", "--source", str(src), "--work", str(w)]) == 1
+    assert "is not a clean git tree" in capsys.readouterr().out
     assert not (w / "venvs").exists()
