@@ -140,7 +140,7 @@ Packaged calendars shipped with the project:
 - ``B3``: official B3 holidays for 2000-2026. Years 2027-2099 are projected:
   ANBIMA holidays, plus December 24, plus the last weekday of the year.
   Projected years are replaced when B3 publishes them.
-- ``Actual``: no holidays, every day is a business day; 1970-01-01 to 2071-01-01.
+- ``Actual``: no holidays, every day is a business day; 1900-01-01 to 2199-12-31.
 
 Optional integration with ``pandas_market_calendars`` remains available through
 the ``PMC/`` prefix, for example ``Calendar.load(name="PMC/NYSE")`` when the

@@ -32,6 +32,7 @@ Documentation map
 - :doc:`quick` introduces the core workflow.
 - :doc:`calendars` shows packaged calendars, constructor-based calendars, and
   JSON calendar files.
+- :doc:`calendar-data` lists every calendar source, its range and how the data is updated.
 - :doc:`pandas` focuses on pandas inputs and NumPy-backed outputs.
 - :doc:`getdate` documents date-expression lookups.
 - :doc:`api` is the method-by-method reference.
@@ -46,6 +47,7 @@ Contents
    quick
    pandas
    calendars
+   calendar-data
    getdate
    migration
    api
