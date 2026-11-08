@@ -155,7 +155,9 @@ Optional calendar providers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **v1:** ``pandas_market_calendars`` was a required dependency, so
-``Calendar.load("PMC/B3")`` worked after a plain install.
+``Calendar.load("PMC/B3")`` worked after a plain install. There was no
+missing-provider error; a bad ``PMC/`` name raised the provider's own
+``RuntimeError``.
 
 **v2:** each external provider is an optional extra: ``pmc`` for
 ``PMC/<name>`` (``pandas_market_calendars``), ``xcal`` for ``XCAL/<name>``
@@ -464,24 +466,25 @@ when you mean "no weekend", and check that ``startdate`` comes before
 ``Calendar.load`` takes keywords only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**v1:** ``Calendar.load("ANBIMA")`` worked, and the same argument could be
-a calendar name or a file name. If both ``name`` and ``filename`` were
-given, ``filename`` won.
+**v1:** ``Calendar.load("ANBIMA")`` worked by position, because the first
+parameter was ``name``. A file needed ``filename=``: a file path passed by
+position raised ``Exception: Invalid calendar``. If both ``name`` and
+``filename`` were given, ``filename`` won.
 
 **v2:** use ``Calendar.load(name=...)`` for packaged and provider calendars,
 and ``Calendar.load(filename=...)`` for your own JSON files. A positional
 argument raises ``TypeError``. Exactly one of the two keywords must be
 given; both, or neither, raise ``ValueError``.
 
-**Why:** one argument with two meanings made it unclear whether a name or a
-file was loaded.
+**Why:** keywords make the call clear, and each call names exactly one
+source, so no argument is silently ignored.
 
 Before (1.0.19):
 
 .. code-block:: python
 
    Calendar.load("ANBIMA")
-   Calendar.load("custom-calendar.json")
+   Calendar.load(filename="custom-calendar.json")
    Calendar.load(name="B3", filename="x.json")   # loads x.json
 
 After (2.0):
@@ -659,7 +662,7 @@ Strict date strings
 ``ValueError``, including ``""`` and ``"NaT"``. A ``numpy.datetime64`` with
 unit ``Y``, ``M`` or ``W`` is not a date and raises ``ValueError``. A
 string such as ``"2024-01"`` was already an error for dates; now it is only
-accepted as a month ref in ``getdate`` and ``getbizdays``.
+accepted as a month ref in ``getdate``.
 
 **Why:** a loose parser can read a wrong value as a valid date without any
 error.
@@ -1067,7 +1070,8 @@ month.
 
 - ordinals with a wrong suffix worked: ``"2st bizday"`` was the 2nd
   business day;
-- ``previous`` worked with ``bizday`` and ``day``;
+- ``previous`` was not supported: every ``previous ...`` expression raised
+  ``ValueError``;
 - ``next <weekday>`` with a year or month ref raised ``ValueError``;
 - only year and month refs existed;
 - all refs in one vector call could mix any kind.
@@ -1076,7 +1080,8 @@ month.
 
 - ordinals need the right English suffix: ``1st``, ``2nd``, ``3rd``,
   ``4th``, ``11th``, ``21st``; ``2st`` raises ``ValueError``;
-- ``previous`` works with weekdays only;
+- ``previous <weekday>`` is new and needs a date ref; ``previous bizday``
+  and ``previous day`` still raise ``ValueError``;
 - ``next <weekday>`` (and ``next day``, ``next bizday``) with a year or
   month ref is the first one in the period;
 - date refs accept the forms of R bizdays: ``<n> day`` is the date plus
@@ -1130,8 +1135,8 @@ After (2.0):
    >>> print(cal.getdate(["first bizday", "last bizday"], ["2024-01", "2024-02"]))
    ['2024-01-02' '2024-02-29']
 
-**Migration:** manual. Fix ordinal suffixes, replace ``previous bizday``
-with ``last bizday`` on a date ref, and split calls that mix ref kinds.
+**Migration:** manual. Fix ordinal suffixes and split calls that mix ref
+kinds.
 
 .. _migrate-getdate-year-ref:
 
@@ -1142,7 +1147,8 @@ with ``last bizday`` on a date ref, and split calls that mix ref kinds.
 2024-01-02. This was a bug: the business day before 1 January is in the
 year before.
 
-**v2:** the same call gives 2023-12-29, as in R bizdays.
+**v2:** the same call gives 2023-12-29, the business day before
+1 January.
 
 **Why:** the old result was wrong.
 
@@ -1278,6 +1284,7 @@ These are new features, not breaking changes. See :doc:`api` for details.
   ``numpy.datetime64`` with a ``ValueError``).
 - ``XCAL/<name>`` and ``WORK/<code>`` calendar providers.
 - ``getdate`` date refs and vectors of expressions and refs.
+- ``getdate`` ``previous <weekday>`` with a date ref.
 - Empty inputs give empty results (1.0.19 raised ``ZeroDivisionError``).
 
 What did not change
