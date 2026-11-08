@@ -74,3 +74,35 @@ def test_docs_cross_links():
     assert ":doc:`migration`" in text
     assert "CHANGELOG.md" in text
     assert ":doc:`calendar-data`" in _section(text, "Loading calendars")
+
+
+def test_readme_cross_links():
+    text = _text(README)
+    for url in (
+        "https://wilsonfreitas.github.io/python-bizdays/migration.html",
+        "https://wilsonfreitas.github.io/python-bizdays/api.html",
+        "https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md",
+    ):
+        assert url in text
+    layout = text.split("## JSON calendar layout", 1)[1].split("\n## ", 1)[0]
+    assert "start.date" in layout
+    assert "end.date" in layout
+
+
+def test_readme_links_are_absolute():
+    # README is the PyPI description, where relative links break
+    targets = re.findall(r"\]\(([^)\s]+)", _text(README))
+    assert [t for t in targets if not t.startswith(("https://", "#"))] == []
+
+
+def test_readme_install_line():
+    assert "pip install bizdays" in _text(README)
+
+
+STALE = ["schema compatibility", "current public API", "current NumPy-backed", "get_option", "set_option"]
+
+
+@pytest.mark.parametrize("path", ["README.md", "docs/source/index.rst", "docs/source/api.rst"])
+def test_no_stale_wording(path):
+    text = _text(ROOT / path)
+    assert [s for s in STALE if s in text] == []

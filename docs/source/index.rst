@@ -6,7 +6,7 @@ bizdays documentation
 Python sequences, NumPy arrays, and pandas date-like inputs, while returning
 NumPy scalars or arrays for consistent vectorized behavior.
 
-This documentation is intentionally focused on the current public API:
+This site documents bizdays 2.0:
 
 - build calendars directly with :class:`bizdays.Calendar`
 - load packaged calendars with ``Calendar.load(name=...)``
