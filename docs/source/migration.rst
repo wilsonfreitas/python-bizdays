@@ -911,8 +911,397 @@ counts, ``np.isnat`` for dates and ``.mask`` for flags. Use
 ``.filled(False)`` to turn a masked flag array into a plain ``bool`` array.
 Drop ``NaN`` before ``.astype(int)``.
 
+Vectors and calendar range
+--------------------------
+
+.. _migrate-vector-lengths:
+
+Vector lengths
+~~~~~~~~~~~~~~
+
+**v1:** ``bizdays`` recycled a shorter vector when its length divided the
+longer one (lengths 2 and 4 gave 4 results), and raised a plain
+``Exception`` otherwise (lengths 2 and 3). ``offset``, ``getdate`` and
+``getbizdays`` recycled any lengths silently (lengths 3 and 2 gave 3
+results). An empty vector raised ``ZeroDivisionError``.
+
+**v2:** two vector arguments must have equal lengths, or one of them must
+have length 1. Any other combination raises ``ValueError``. An empty
+argument gives an empty array when the other argument is empty or has
+length 1.
+
+**Why:** silent recycling hid bugs where two columns were not aligned.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.bizdays(["2024-01-02", "2024-01-03"], ["2024-02-01"] * 4)  # [22, 21, 22, 21]
+   cal.bizdays(["2024-01-02", "2024-01-03"], ["2024-02-01"] * 3)  # Exception
+   cal.bizdays([], "2024-01-02")                                   # ZeroDivisionError
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.bizdays(["2024-01-02", "2024-01-03"], ["2024-02-01"] * 4)
+   Traceback (most recent call last):
+   ...
+   ValueError: date_from has length 2 and date_to has length 4; ...
+   >>> print(cal.bizdays(np.tile(["2024-01-02", "2024-01-03"], 2), ["2024-02-01"] * 4))
+   [22. 21. 22. 21.]
+   >>> print(cal.bizdays([], "2024-01-02"))
+   []
+
+**Migration:** mechanical. Pass equal lengths, or repeat the shorter input
+with ``np.tile`` or ``np.repeat``.
+
+.. _migrate-calendar-range:
+
+Calendar range
+~~~~~~~~~~~~~~
+
+**v1:** some calls past the calendar ends wrapped around. On ANBIMA (range
+2000-01-01..2099-12-25), ``offset("2000-01-03", -3)`` returned 2099-12-22.
+
+**v2:** any input or result outside ``startdate..enddate`` raises
+:class:`bizdays.DateOutOfRange`. There are no partial results: one bad
+element fails the whole call, and the error's ``positions`` attribute lists
+every bad element. For ``getdate`` and ``getbizdays`` the whole period
+(month or year) must be inside the range, so
+``getdate("last bizday", "2099-12")`` on ANBIMA raises. Use
+:meth:`bizdays.Calendar.inrange` to check input dates before a call.
+
+**Why:** a wrapped date is a wrong answer that looks right.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.offset("2000-01-03", -3)   # datetime.date(2099, 12, 22)
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.offset("2000-01-03", -3)
+   Traceback (most recent call last):
+   ...
+   DateOutOfRange: 1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...
+   >>> try:
+   ...     cal.offset(["2024-01-02", "2099-12-24"], 5)
+   ... except DateOutOfRange as err:
+   ...     print(err.positions)
+   [1]
+   >>> print(cal.inrange(["1999-01-01", "2024-01-02"]))
+   [False True]
+   >>> cal.getdate("last bizday", "2099-12")
+   Traceback (most recent call last):
+   ...
+   DateOutOfRange: 1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...
+
+**Migration:** manual. Filter inputs with ``inrange`` before the call, or
+catch ``DateOutOfRange`` and use ``positions``. Code that needs partial
+results has no direct replacement yet; ``errors="coerce"`` is planned for
+2.1.
+
+getdate
+-------
+
+.. _migrate-getdate-signature:
+
+``getdate(expr, ref)``
+~~~~~~~~~~~~~~~~~~~~~~
+
+**v1:** ``getdate(expr, year, month=None)``, for example
+``cal.getdate("last bizday", 2024, 2)`` gave 2024-02-29.
+
+**v2:** ``getdate(expr, ref)``. The ref is a year (``2024``), a month
+(``"2024-02"`` or a ``numpy.datetime64`` with unit ``M``) or a date. The
+old call with three arguments raises ``TypeError``.
+
+**Why:** one ref argument, as in R bizdays, also allows date refs and
+vectors of refs.
+
+**Day refs are not month refs.** A ``pd.Timestamp``, a ``datetime.date`` or
+a ``"YYYY-MM-DD"`` string is a date ref, even on the first day of a month.
+``"last bizday"`` with a date ref is the business day before that date. To
+get the last business day of a month from dates, convert them to months
+with ``.astype("datetime64[M]")``.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.getdate("last bizday", 2024, 2)    # datetime.date(2024, 2, 29)
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> year, month = 2024, 2
+   >>> print(cal.getdate("last bizday", f"{year}-{month:02d}"))
+   2024-02-29
+   >>> cal.getdate("last bizday", 2024, 2)
+   Traceback (most recent call last):
+   ...
+   TypeError: Calendar.getdate() takes 3 positional arguments but 4 were given
+   >>> print(cal.getdate("last bizday", pd.Timestamp("2024-02-01")))
+   2024-01-31
+   >>> print(cal.getdate("last bizday", np.datetime64("2024-02")))
+   2024-02-29
+   >>> days = pd.to_datetime(["2024-02-01", "2024-03-15"]).values
+   >>> print(cal.getdate("last bizday", days.astype("datetime64[M]")))
+   ['2024-02-29' '2024-03-28']
+
+**Migration:** mechanical. Replace ``year, month`` with
+``f"{year}-{month:02d}"``, and ``year`` alone with ``year``. If your refs are
+dates, convert them with ``.astype("datetime64[M]")`` when you mean the
+month.
+
+.. _migrate-getdate-grammar:
+
+``getdate`` expressions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**v1:**
+
+- ordinals with a wrong suffix worked: ``"2st bizday"`` was the 2nd
+  business day;
+- ``previous`` worked with ``bizday`` and ``day``;
+- ``next <weekday>`` with a year or month ref raised ``ValueError``;
+- only year and month refs existed;
+- all refs in one vector call could mix any kind.
+
+**v2:**
+
+- ordinals need the right English suffix: ``1st``, ``2nd``, ``3rd``,
+  ``4th``, ``11th``, ``21st``; ``2st`` raises ``ValueError``;
+- ``previous`` works with weekdays only;
+- ``next <weekday>`` (and ``next day``, ``next bizday``) with a year or
+  month ref is the first one in the period;
+- date refs accept the forms of R bizdays: ``<n> day`` is the date plus
+  ``n`` days, ``last day`` the day before, ``<n> bizday`` is
+  ``offset(date, n)``, ``last bizday`` is ``offset(date, -1)``, and
+  ``next``/``last <weekday>`` the next or previous one;
+- expressions with ``before`` or ``after`` need a year or month ref;
+- all refs in one call must be of one kind (year, month or date).
+- weekday words must be full or 3-letter English names (``tues`` raises
+  ``ValueError``, as in 1.0.19).
+
+**Why:** the grammar now follows R bizdays, the reference implementation.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.getdate("2st bizday", 2024, 1)    # datetime.date(2024, 1, 3)
+   cal.getdate("next wed", 2002, 1)      # ValueError
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.getdate("2st bizday", "2024-01")
+   Traceback (most recent call last):
+   ...
+   ValueError: Invalid ordinal in getdate expression: 2st (use 2nd)
+   >>> print(cal.getdate("2nd bizday", "2024-01"))
+   2024-01-03
+   >>> cal.getdate("first tues", "2024-01")
+   Traceback (most recent call last):
+   ...
+   ValueError: Invalid day token in getdate expression: tues
+   >>> cal.getdate("previous bizday", "2024-01")
+   Traceback (most recent call last):
+   ...
+   ValueError: previous expressions require a weekday target
+   >>> print(cal.getdate("next wed", "2002-01"))
+   2002-01-02
+   >>> print(cal.getdate("next bizday", "2022-06-18"))
+   2022-06-20
+   >>> cal.getdate("first bizday before first day", "2024-01-10")
+   Traceback (most recent call last):
+   ...
+   ValueError: Composite getdate expressions need a year or month ref, ...
+   >>> cal.getdate(["first day", "next wed"], ["2002-01", "2021-02-10"])
+   Traceback (most recent call last):
+   ...
+   ValueError: getdate refs must all be of one kind (year, month or date); found: date, month
+   >>> print(cal.getdate(["first bizday", "last bizday"], ["2024-01", "2024-02"]))
+   ['2024-01-02' '2024-02-29']
+
+**Migration:** manual. Fix ordinal suffixes, replace ``previous bizday``
+with ``last bizday`` on a date ref, and split calls that mix ref kinds.
+
+.. _migrate-getdate-year-ref:
+
+``getdate`` with a year ref
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**v1:** ``cal.getdate("first bizday before first day", 2024)`` gave
+2024-01-02. This was a bug: the business day before 1 January is in the
+year before.
+
+**v2:** the same call gives 2023-12-29, as in R bizdays.
+
+**Why:** the old result was wrong.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.getdate("first bizday before first day", 2024)   # datetime.date(2024, 1, 2)
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> print(cal.getdate("first bizday before first day", 2024))
+   2023-12-29
+
+**Migration:** nothing to change. The call still runs, but check results
+that you stored with 1.0.19.
+
+getbizdays
+----------
+
+.. _migrate-getbizdays:
+
+``getbizdays``
+~~~~~~~~~~~~~~
+
+**v1:** ``getbizdays(year, month=None)`` returned an ``int`` (or a list of
+``int``). A period that went past the calendar end gave a partial count: on
+ANBIMA, ``getbizdays(2099)`` gave 245. ``getbizdays(year, 0)`` meant the
+whole year.
+
+**v2:**
+
+- results are ``float64`` (``NaN`` where ``year`` or ``month`` is missing);
+- the whole period must lie inside the calendar range, or
+  ``DateOutOfRange`` is raised;
+- ``month`` must be between 1 and 12; ``0`` raises ``ValueError`` (leave
+  ``month`` out, or pass ``month=None``, for the whole year);
+- vectors follow the length rules of :ref:`migrate-vector-lengths`.
+
+**Why:** a partial count looks like a full one, and ``0`` is not a month.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.getbizdays(2024)            # 253
+   cal.getbizdays(2099)            # 245 (partial)
+   cal.getbizdays(2024, 0)         # 253
+   cal.getbizdays([2023, 2024])    # [249, 253]
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> print(cal.getbizdays(2024))
+   253.0
+   >>> print(cal.getbizdays(2024, 12))
+   21.0
+   >>> cal.getbizdays(2099)
+   Traceback (most recent call last):
+   ...
+   DateOutOfRange: 1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...
+   >>> cal.getbizdays(2024, 0)
+   Traceback (most recent call last):
+   ...
+   ValueError: month must be between 1 and 12 (got 0)
+   >>> print(cal.getbizdays([2023, 2024]))
+   [249. 253.]
+
+**Migration:** manual. Replace ``month=0`` with no month, use ``int(...)``
+where you need integers, and check periods near the calendar ends.
+
+Calendar data
+-------------
+
+.. _migrate-calendar-data:
+
+Calendar data
+~~~~~~~~~~~~~
+
+**v1:** the B3 calendar ended on 2026-12-31, so
+``Calendar.load("B3").bizdays("2026-12-01", "2027-01-10")`` raised
+``DateOutOfRange``. The Actual calendar covered 1970-01-01..2071-01-01.
+
+**v2:** B3 is official for 2000-2026. Years 2027-2099 are projected: ANBIMA
+holidays, plus December 24, plus the last weekday of the year. Actual
+covers 1900-01-01..2199-12-31. The range of ``Calendar()`` without holidays
+or dates does not change (1970-01-01..2071-01-01). See :doc:`calendar-data`
+for every range and the update policy.
+
+**Why:** a B3 calendar that ends next year breaks long-dated contracts.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   b3 = Calendar.load("B3")
+   b3.enddate                                  # datetime.date(2026, 12, 31)
+   b3.bizdays("2026-12-01", "2027-01-10")      # DateOutOfRange
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> b3 = Calendar.load(name="B3")
+   >>> print(b3.enddate)
+   2099-12-31
+   >>> print(b3.bizdays("2026-12-01", "2027-01-10"))
+   24.0
+   >>> actual = Calendar.load(name="Actual")
+   >>> print(actual.startdate, actual.enddate)
+   1900-01-01 2199-12-31
+   >>> print(Calendar().startdate, Calendar().enddate)
+   1970-01-01 2071-01-01
+
+**Migration:** nothing to change. Calls that raised ``DateOutOfRange`` now
+work. Projected B3 years can change when B3 publishes its official
+calendar.
+
 New in 2.0
 ----------
 
+These are new features, not breaking changes. See :doc:`api` for details.
+
+- :func:`bizdays.list_calendars` lists the packaged and provider calendars.
+- :meth:`bizdays.Calendar.inrange` tells which dates are inside the
+  calendar range.
+- :class:`bizdays.DateOutOfRange` has a ``positions`` attribute.
+- ``numpy.datetime64`` values and pandas ``Timestamp``, ``Series`` and
+  ``DatetimeIndex`` inputs work everywhere (1.0.19 rejected
+  ``numpy.datetime64`` with a ``ValueError``).
+- ``XCAL/<name>`` and ``WORK/<code>`` calendar providers.
+- ``getdate`` date refs and vectors of expressions and refs.
+- Empty inputs give empty results (1.0.19 raised ``ZeroDivisionError``).
+
 What did not change
 -------------------
+
+- Method names, and both alias pairs: ``following`` / ``adjust_next`` and
+  ``preceding`` / ``adjust_previous``.
+- Property types: ``holidays``, ``startdate`` and ``enddate`` are still
+  Python ``datetime.date`` values.
+- Counting rules, including ends that are not business days
+  (``bizdays(a, b) == bizdays(following(a), preceding(b))``) and
+  ``financial=False``.
+- ``offset(d, 0)`` returns ``d`` adjusted to a business day.
+- ``seq`` with the start after the end gives a descending sequence.
+- Time-zone-aware values use the wall-clock date: 2024-01-06 23:00 at
+  -03:00 is 2024-01-06.
+- ``seq`` with a vector raises ``ValueError``.
+- ``getdate`` with an unknown weekday word, such as ``tues``, ``wedn`` or
+  ``monkey``, raises ``ValueError``.
+- ANBIMA and B3 holidays up to 2026 are the same.
+
+.. code-block:: pycon
+
+   >>> print(cal.bizdays("2024-01-02", "2024-06-15"),
+   ...       cal.bizdays(cal.following("2024-01-02"), cal.preceding("2024-06-15")))
+   113.0 113.0
