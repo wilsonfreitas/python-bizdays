@@ -130,4 +130,4 @@ Example:
 - [Documentation site](https://wilsonfreitas.github.io/python-bizdays/)
 - [API reference](https://wilsonfreitas.github.io/python-bizdays/api.html)
 - [Migration guide from bizdays 1.x](https://wilsonfreitas.github.io/python-bizdays/migration.html)
-- [Release notes](https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md)
+- [Release notes](https://github.com/wilsonfreitas/python-bizdays/blob/main/CHANGELOG.md)

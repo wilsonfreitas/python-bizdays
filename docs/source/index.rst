@@ -44,7 +44,7 @@ Documentation map
 - :doc:`api` is the method-by-method reference.
 - :doc:`migration` is the only page that discusses older documentation patterns.
 - Release notes:
-  `CHANGELOG.md <https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md>`_.
+  `CHANGELOG.md <https://github.com/wilsonfreitas/python-bizdays/blob/main/CHANGELOG.md>`_.
 
 Contents
 --------

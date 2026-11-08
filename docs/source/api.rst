@@ -23,7 +23,7 @@ See also:
 
 - :doc:`migration`, for code written for bizdays 1.x.
 - The release notes:
-  `CHANGELOG.md <https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md>`_.
+  `CHANGELOG.md <https://github.com/wilsonfreitas/python-bizdays/blob/main/CHANGELOG.md>`_.
 
 Public API
 ----------

@@ -19,7 +19,7 @@ This section is for the maintainer. The workflow is `.github/workflows/release.y
    SHA-256 values again.
 
 Rehearsal tags (any version that is not `X.Y.Z`, for example `v2.0.0rc1`) stop after the smoke job: the `pypi` job
-is skipped. Final tags (`v2.0.0`) must point to a commit on `master`, or the build fails.
+is skipped. Final tags (`v2.0.0`) must point to a commit on `main`, or the build fails.
 
 Publishing uses trusted publishing: GitHub gives the job a short-lived identity token, and PyPI trusts it for this
 repository, workflow and environment. No password or API token is stored. PyPI also gets attestations (signed records
@@ -56,7 +56,7 @@ Never merge a rehearsal branch.
 
 ### Release
 
-1. Merge the release branch into `master` and switch to it: `git switch master && git pull`.
+1. Merge the release branch into `main` and switch to it: `git switch main && git pull`.
 2. Check the version: `uv version --short` must print `2.0.0`.
 3. Tag and push: `git tag -a v2.0.0 -m "bizdays 2.0.0" && git push origin v2.0.0`.
 4. When the `build` job ends, read `SHA256SUMS` in its job summary.
