@@ -23,7 +23,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24", "pandas>=2,<3"]
+dependencies = ["numpy>=1.24", "pandas>=2"]
 
 [project.optional-dependencies]
 pmc = ["pandas-market-calendars>=4,<5"]
@@ -31,6 +31,7 @@ xcal = ["exchange-calendars>=4,<5"]
 work = ["workalendar>=17,<18"]
 dev = [
     "pytest",
+    "pytest-cov",
     "pycodestyle",
     "ipykernel",
     "ruff",
@@ -81,3 +82,7 @@ warn_unused_configs = true
 show_error_codes = true
 pretty = true
 warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning:bizdays"]

@@ -403,7 +403,7 @@ class Calendar:
 
     def _adjust(self, dt: DateScalar | Vector, n: int, modified: bool = False) -> np.datetime64 | DateArray:
         _dt, is_vector = to_dates(dt, "dt")
-        out = np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]")
+        out = np.full(_dt.shape, np.datetime64("NaT", "D"), dtype="datetime64[D]")
         self._apply(lambda d: self._index.adjust(d, n, modified), out, np.isnat(_dt), {"dt": _dt})
         return _finalize_date_result(out, not is_vector)
 
@@ -725,7 +725,7 @@ class Calendar:
         _dt, _n = broadcast_pair(_dt, _n, "dt", "n")
         dts = self._apply(
             lambda d, k: self._index.offset(d, k.astype(np.int64)),
-            np.full(_dt.shape, np.datetime64("NaT"), dtype="datetime64[D]"),
+            np.full(_dt.shape, np.datetime64("NaT", "D"), dtype="datetime64[D]"),
             np.isnat(_dt) | np.isnan(_n),
             {"dt": _dt, "n": _n},
             raw,
@@ -824,7 +824,7 @@ class Calendar:
         bad = np.broadcast_to(raw_bad, _ref.shape).copy()
 
         missing = pd.isna(_expr) | pd.isna(_ref)
-        dates = np.full(_expr.shape, np.datetime64("NaT"), dtype="datetime64[D]")
+        dates = np.full(_expr.shape, np.datetime64("NaT", "D"), dtype="datetime64[D]")
         for idx in np.flatnonzero(~missing & ~bad):
             try:
                 dates[idx] = self._index.getdate(_expr[idx], _ref[idx])
@@ -904,7 +904,8 @@ class Calendar:
             y_int = np.clip(y, y0 - 1, y1 + 1).astype(np.int64)
             m_int = np.zeros(len(y), dtype=np.int64) if m is None else np.nan_to_num(m, nan=1).astype(np.int64)
             first = ((y_int - 1970) * 12 + np.maximum(m_int, 1) - 1).astype("datetime64[M]")
-            last = (first + np.where(m_int == 0, 12, 1)).astype("datetime64[D]") - 1
+            months = np.where(m_int == 0, 12, 1).astype("timedelta64[M]")
+            last = (first + months).astype("datetime64[D]") - np.timedelta64(1, "D")
             return self._index.count_bizdays(first.astype("datetime64[D]"), last)
 
         # a non-missing year is range-checked even when its month is missing
