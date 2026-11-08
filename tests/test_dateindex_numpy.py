@@ -1,3 +1,4 @@
+import importlib.resources
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +9,7 @@ from bizdays.calendarfile import load_calendar_definition
 from bizdays.dateindex import DateIndex
 from bizdays.utils import DateOutOfRange
 
-_DATA_DIR = Path(__file__).parent.parent / "bizdays" / "data"
+_DATA_DIR = Path(str(importlib.resources.files("bizdays") / "data"))
 
 _weekdays: tuple[str, str, str, str, str, str, str] = (
     "Monday",
