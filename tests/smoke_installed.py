@@ -168,8 +168,8 @@ def main(argv: list[str] | None = None) -> int:
     values: dict[str, str] = {}
     try:
         values = run_checks(extras)
-    except AssertionError as e:
-        problems.append(f"run_checks: {e}")
+    except Exception as e:  # any failure must still give one JSON line
+        problems.append(f"run_checks: {type(e).__name__}: {e}")
     try:
         pandas_version = importlib.metadata.version("pandas")
     except importlib.metadata.PackageNotFoundError:

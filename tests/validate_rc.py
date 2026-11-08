@@ -154,6 +154,12 @@ def _fresh(path: Path) -> Path:
     return path
 
 
+def install_spec(job: Job, artifact: Path) -> str:
+    # bizdays has no "all" extra: "all" means the three provider extras
+    names = {"core": "", "all": "pmc,xcal,work"}.get(job.extras, job.extras)
+    return f"bizdays{f'[{names}]' if names else ''} @ {artifact.resolve().as_uri()}"
+
+
 def run_job(job: Job, dist: Mapping[str, Path], version: str, source: Path | None, work: Path) -> dict[str, Any]:
     env = _clean_env()
     venv = work / "venvs" / job.name
@@ -168,9 +174,7 @@ def run_job(job: Job, dist: Mapping[str, Path], version: str, source: Path | Non
     if proc.returncode:
         result["detail"] = f"uv venv failed: {_tail(proc)}"
         return result
-    extras = "" if job.extras == "core" else f"[{job.extras}]"
-    spec = f"bizdays{extras} @ {dist[job.artifact].resolve().as_uri()}"
-    cmd = ["uv", "pip", "install", "--no-config", "--python", python, spec]
+    cmd = ["uv", "pip", "install", "--no-config", "--python", python, install_spec(job, dist[job.artifact])]
     proc = _run(cmd + ([job.requirement] if job.requirement else []), env)
     if proc.returncode:
         result["detail"] = f"install failed: {_tail(proc)}"

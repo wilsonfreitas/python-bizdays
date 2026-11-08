@@ -83,6 +83,17 @@ def test_main_prints_one_json_line(capsys, monkeypatch):
     assert (leak in data["problems"]) == (leak is not None)
 
 
+def test_main_reports_run_checks_error_as_json(capsys, monkeypatch):
+    def broken(extras):
+        raise ImportError("no provider")
+
+    monkeypatch.setattr(smoke_installed, "run_checks", broken)
+    monkeypatch.setattr(smoke_installed, "providers_absent", lambda: [])
+    rc = smoke_installed.main(["--version", importlib.metadata.version("bizdays")])
+    data = json.loads(capsys.readouterr().out)
+    assert rc == 1 and any("ImportError: no provider" in p for p in data["problems"])
+
+
 @pytest.mark.skipif(
     not Path(bizdays.__file__).resolve().is_relative_to(ROOT),
     reason="bizdays is installed, not imported from the repo",
@@ -131,6 +142,15 @@ def test_build_jobs_no_suite():
     assert len(jobs) == 50
     assert not any(j.suite for j in jobs)
     assert len(build_jobs(["3.10"], suite=True)) == 12
+
+
+def test_install_spec_extras(tmp_path):
+    whl = tmp_path / WHL
+    uri = whl.resolve().as_uri()
+    assert validate_rc.install_spec(Job("3.12", "wheel", "core"), whl) == f"bizdays @ {uri}"
+    assert validate_rc.install_spec(Job("3.12", "wheel", "pmc"), whl) == f"bizdays[pmc] @ {uri}"
+    assert validate_rc.install_spec(Job("3.12", "wheel", "all"), whl) == f"bizdays[pmc,xcal,work] @ {uri}"
+    assert validate_rc.install_spec(Job("3.12", "wheel", "dev", suite=True), whl) == f"bizdays[dev] @ {uri}"
 
 
 def test_sha256sums_format(tmp_path):
