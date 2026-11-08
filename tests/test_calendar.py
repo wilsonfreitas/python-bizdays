@@ -862,3 +862,22 @@ def test_calendar_xcal_no_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         Calendar.load(name="XCAL/XNYS")
+
+
+def test_constructor_name_none_is_empty_string():
+    # 1.0.19 had name=None as the default, so v1 code may still pass it
+    assert Calendar(weekdays=["sat", "sun"], startdate="2024-01-01", enddate="2024-12-31", name=None).name == ""
+
+
+@pytest.mark.parametrize("weekdays", [np.array(["sat", "sun"]), pd.Series(["sat", "sun"])])
+def test_constructor_weekdays_array_like(weekdays):
+    cal = Calendar(weekdays=weekdays, startdate="2024-01-01", enddate="2024-12-31")
+    assert not cal.isbizday("2024-01-06")
+    assert cal.isbizday("2024-01-08")
+
+
+def test_load_json_with_utf8_bom(tmp_path):
+    path = tmp_path / "bom.json"
+    path.write_bytes(b'\xef\xbb\xbf{"weekdays": ["Saturday", "Sunday"], "holidays": ["2024-01-01", "2024-12-25"]}')
+    cal = Calendar.load(filename=str(path))
+    assert not cal.isbizday("2024-01-01")

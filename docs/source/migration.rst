@@ -384,7 +384,8 @@ Building and loading calendars
 
 **v2:**
 
-- ``Calendar().name`` is ``""``.
+- ``Calendar().name`` is ``""``. Passing ``name=None`` still works and
+  also gives ``""``.
 - ``Calendar(holidays=[...])`` without ``weekdays`` emits a ``UserWarning``
   (as R bizdays does). Pass ``weekdays=[]`` for a calendar without weekend.
 - A calendar without any business day in its range raises ``ValueError``,

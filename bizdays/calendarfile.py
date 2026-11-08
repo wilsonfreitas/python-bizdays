@@ -67,7 +67,7 @@ def load_calendar_definition(filename: str) -> CalendarDefinition:
     path = Path(filename)
     if not path.is_file():
         raise FileNotFoundError(f"Calendar file not found: {filename}")
-    with path.open(encoding="utf-8") as calendar_file:
+    with path.open(encoding="utf-8-sig") as calendar_file:
         try:
             payload = json.load(calendar_file)
         except json.JSONDecodeError as exc:

@@ -76,6 +76,7 @@ See the [API reference](https://wilsonfreitas.github.io/python-bizdays/api.html)
 * Results are NumPy values only, and a pandas `Series` input does not keep its index.
 * Counts are `float64`, with `NaN` for missing values.
 * In JSON calendar files, `adjust.from` and `adjust.to` accept only the defaults (`following` and `preceding`). Other values are planned.
+* ANBIMA holidays after 2079 are projected with the national holiday rule.
 * B3 holidays after 2026 are projected, and may change when B3 publishes its official calendar.
 
 #### Contributors
