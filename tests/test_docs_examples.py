@@ -1,6 +1,7 @@
 """The examples in README.md and docs/source/api.rst run as doctests (WIL-147)."""
 
 import doctest
+import inspect
 import re
 from pathlib import Path
 
@@ -106,3 +107,46 @@ STALE = ["schema compatibility", "current public API", "current NumPy-backed", "
 def test_no_stale_wording(path):
     text = _text(ROOT / path)
     assert [s for s in STALE if s in text] == []
+
+
+def _documented_parameters(doc: str) -> list[str]:
+    m = re.search(r"Parameters\n-+\n(.*?)(?:\n\S[^\n]*\n-{3,}\n|\Z)", doc, re.S)
+    return re.findall(r"^(\w+)\s*:", m.group(1), re.M) if m else []
+
+
+@pytest.mark.parametrize("name", PUBLIC_METHODS)
+def test_docstring_parameters_match_signature(name):
+    method = getattr(Calendar, name)
+    expected = [p for p in inspect.signature(method).parameters if p not in ("self", "cls")]
+    assert _documented_parameters(inspect.getdoc(method) or "") == expected
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "bizdays",
+        "isbizday",
+        "offset",
+        "following",
+        "preceding",
+        "modified_following",
+        "modified_preceding",
+        "adjust_next",
+        "adjust_previous",
+        "seq",
+        "diff",
+        "getdate",
+        "getbizdays",
+    ],
+)
+def test_docstrings_name_their_errors(name):
+    doc = inspect.getdoc(getattr(Calendar, name)) or ""
+    assert "Raises" in doc
+    assert "DateOutOfRange" in doc
+    assert "ValueError" in doc
+
+
+def test_load_docstring_names_its_errors():
+    doc = inspect.getdoc(Calendar.load) or ""
+    for word in ("Raises", "FileNotFoundError", "ImportError", "ValueError"):
+        assert word in doc

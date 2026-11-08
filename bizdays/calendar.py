@@ -208,21 +208,21 @@ class Calendar:
 
     name : str
 
-    holidays : list of dates
+    holidays : list of datetime.date
 
-    enddate : date
+    enddate : datetime.date
 
-    startdate : date
+    startdate : datetime.date
 
-    weekdays : list of str
+    weekdays : tuple of str
 
     financial : bool
 
 
     Parameters
     ----------
-    holidays : list with dates
-        Dates can be ISO formated string, datetime.date or datetime.datetime.
+    holidays : 1-D sequence of str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
+        Holidays; missing values are not allowed.
         Holidays outside ``startdate..enddate`` are ignored.
 
     weekdays : list
@@ -233,10 +233,10 @@ class Calendar:
         with ``weekdays=None`` emits a ``UserWarning``, as in R bizdays; pass
         ``weekdays=[]`` for a calendar without nonworking weekdays.
 
-    startdate : str or datetime.date
+    startdate : str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
         Calendar's start date
 
-    enddate : str or datetime.date
+    enddate : str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
         Calendar's end date
 
     name : str
@@ -426,10 +426,10 @@ class Calendar:
         Parameters
         ----------
 
-        date_from : datetime.date, datetime.datetime, pandas.Timestamp, str
+        date_from : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Start date
 
-        date_to : datetime.date, datetime.datetime, pandas.Timestamp, str
+        date_to : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             End date
 
         Returns
@@ -441,6 +441,15 @@ class Calendar:
             returns -1 or +1. With ``financial=False`` the count is the number
             of business days in the closed interval [``date_from``, ``date_to``],
             both ends included, negative when ``date_from > date_to``.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number
+            given as a date; or vector lengths that do not match, when neither is 1.
         """
         _date_from, vec_from = to_dates(date_from, "date_from")
         _date_to, vec_to = to_dates(date_to, "date_to")
@@ -470,7 +479,7 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be checked
 
         Returns
@@ -480,6 +489,14 @@ class Calendar:
             Returns ``True`` if the given date is a business day and ``False`` otherwise.
             A vector result is always a masked array with ``fill_value=False``;
             a missing scalar gives ``numpy.ma.masked``.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         _dt, is_vector = to_dates(dt, "dt")
         missing = np.isnat(_dt)
@@ -504,7 +521,7 @@ class Calendar:
         Parameters
         ----------
 
-        dates : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dates : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be checked
 
         Returns
@@ -535,7 +552,7 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be adjusted
 
         Returns
@@ -544,6 +561,13 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns the next business day if the given date is not a business day.
 
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         return self._adjust(dt, 1)
 
@@ -554,6 +578,29 @@ class Calendar:
     def following(self, dt: Vector) -> DateArray: ...
 
     def following(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
+        """
+        Alias of :meth:`adjust_next`.
+
+        Parameters
+        ----------
+
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        numpy.datetime64 or numpy.ndarray
+            Returns the next business day if the given date is not a business day.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
+        """
         return self.adjust_next(dt)
 
     @overload
@@ -574,7 +621,7 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be adjusted
 
         Returns
@@ -583,6 +630,13 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns the next business day unless that would cross into the next month.
 
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         return self._adjust(dt, 1, modified=True)
 
@@ -602,7 +656,7 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be adjusted
 
         Returns
@@ -611,6 +665,13 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns the previous business day if the given date is not a business day.
 
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         return self._adjust(dt, -1)
 
@@ -621,6 +682,29 @@ class Calendar:
     def preceding(self, dt: Vector) -> DateArray: ...
 
     def preceding(self, dt: DateScalar | Vector) -> np.datetime64 | DateArray:
+        """
+        Alias of :meth:`adjust_previous`.
+
+        Parameters
+        ----------
+
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
+            Dates to be adjusted
+
+        Returns
+        -------
+
+        numpy.datetime64 or numpy.ndarray
+            Returns the previous business day if the given date is not a business day.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
+        """
         return self.adjust_previous(dt)
 
     @overload
@@ -641,7 +725,7 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be adjusted
 
         Returns
@@ -650,6 +734,13 @@ class Calendar:
         numpy.datetime64 or numpy.ndarray
             Returns the previous business day unless that would cross into the previous month.
 
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         return self._adjust(dt, -1, modified=True)
 
@@ -660,16 +751,25 @@ class Calendar:
         Parameters
         ----------
 
-        date_from : datetime.date, datetime.datetime, pandas.Timestamp, str
+        date_from : str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
             Start date
 
-        date_to : datetime.date, datetime.datetime, pandas.Timestamp, str
+        date_to : str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
             End date
 
         Returns
         -------
         numpy.ndarray
             Returns a NumPy array containing business days only.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number
+            given as a date; a vector; or a missing end.
         """
         from_arr, vec_from = to_dates(date_from, "date_from")
         to_arr, vec_to = to_dates(date_to, "date_to")
@@ -706,17 +806,27 @@ class Calendar:
         Parameters
         ----------
 
-        dt : datetime.date, datetime.datetime, pandas.Timestamp, str
+        dt : str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Dates to be offset
 
-        n : int, list of int
-            the amount of business days to offset
+        n : int, numpy integer or float with a whole value, or a 1-D sequence of them
+            The number of business days to move; negative moves back. ``NaN``
+            is missing and gives ``NaT``.
 
         Returns
         -------
         numpy.datetime64 or numpy.ndarray
             Returns the given dates offset by the given amount of business days.
 
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number
+            given as a date; a count with a fraction; or vector lengths that do not
+            match, when neither is 1.
         """
         _dt, vec_dt = to_dates(dt, "dt")
         _n, vec_n = to_counts(n, "n")
@@ -740,7 +850,7 @@ class Calendar:
         Parameters
         ----------
 
-        dts : list of date
+        dts : 1-D sequence of str, datetime.date, datetime.datetime, pandas.Timestamp or numpy.datetime64
             Sequence containing the dates to be differenced.
 
         Returns
@@ -749,6 +859,14 @@ class Calendar:
         numpy.ndarray
             The number of business days between consecutive dates, as ``float64``
             with ``NaN`` for missing values.
+
+        Raises
+        ------
+        DateOutOfRange
+            An input date, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            Invalid input, such as a string that is not a full ISO date, or a number given as a date.
         """
         _dts, _ = to_dates(dts, "dts")
         if len(_dts) <= 1:
@@ -797,6 +915,17 @@ class Calendar:
         -------
         numpy.datetime64 or numpy.ndarray
             Returns dates according to the given reference.
+
+        Raises
+        ------
+        DateOutOfRange
+            A ref period, or a result, lies outside ``startdate..enddate``;
+            its ``positions`` attribute gives the index of every bad element.
+        ValueError
+            An invalid expression or ref, refs of more than one kind, a date that does not
+            exist in its period (such as ``5th fri`` in a month with four Fridays), a
+            composite expression with a date ref, or vector lengths that do not
+            match, when neither is 1.
         """
         _expr, vec_expr = to_exprs(expr)
         _ref, vec_ref = to_refs(ref)
@@ -859,10 +988,10 @@ class Calendar:
         Parameters
         ----------
 
-        year : int, list of int
+        year : int, numpy integer or float with a whole value, or a 1-D sequence of them
             Year
 
-        month : int, list of int, optional
+        month : int, numpy integer or float with a whole value, or a 1-D sequence of them, optional
             Month, 1 to 12. The default ``None`` counts the whole year. Only the
             single value ``None`` means "whole year"; a missing value inside a
             vector, or any other missing scalar, gives ``NaN``.
@@ -876,6 +1005,15 @@ class Calendar:
             otherwise ``DateOutOfRange``: on ANBIMA, which ends on 2099-12-25,
             ``getbizdays(2099, 11)`` works while ``getbizdays(2099, 12)`` and
             ``getbizdays(2099)`` raise.
+
+        Raises
+        ------
+        DateOutOfRange
+            A period is not fully inside ``startdate..enddate``; its
+            ``positions`` attribute gives the index of every bad element.
+        ValueError
+            A year or month that is not a whole number, a month outside 1 to 12, or
+            vector lengths that do not match, when neither is 1.
         """
         _year, vec_y = to_counts(year, "year")
         _month: FloatArray
@@ -930,7 +1068,9 @@ class Calendar:
         filename: str | None = None,
     ) -> "Calendar":
         """
-        Load calendars from a file.
+        Load a packaged, provider or JSON calendar.
+
+        Give exactly one of ``name`` and ``filename``, as keywords.
 
         Parameters
         ----------
@@ -961,6 +1101,19 @@ class Calendar:
         Calendar
             A Calendar object.
 
+        Raises
+        ------
+        ValueError
+            Both or neither of ``name`` and ``filename``; an unknown packaged
+            or provider calendar; a v1 ``.cal`` file; invalid JSON content,
+            including a value other than the default for ``adjust.from``
+            (``"following"``) or ``adjust.to`` (``"preceding"``).
+        FileNotFoundError
+            ``filename`` does not exist.
+        ImportError
+            The provider package for a ``PMC/``, ``XCAL/`` or ``WORK/`` name is
+            not installed. The message names the extra to install:
+            ``bizdays[pmc]``, ``bizdays[xcal]`` or ``bizdays[work]``.
         """
         if (name is None) == (filename is None):
             raise ValueError("Provide exactly one of 'name' or 'filename'")
