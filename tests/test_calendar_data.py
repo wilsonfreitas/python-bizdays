@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from dateutil.easter import easter
 
 from bizdays import Calendar, list_calendars
 from bizdays.calendarfile import PACKAGED_CALENDARS, load_packaged_calendar_definition
@@ -126,3 +127,88 @@ def test_packaged_holiday_sets_match_v1_0_19() -> None:
 def test_load_rejects_non_packaged_name() -> None:
     with pytest.raises(ValueError, match="Unknown calendar: 'Test'"):
         Calendar.load(name="Test")
+
+
+# R bizdays 1.0.17: getbizdays(2001:2078, "Brazil/ANBIMA")
+ANBIMA_YEARS_R = [
+    250, 253, 253, 252, 251, 249, 250, 254, 250, 251, 251, 251, 253, 253, 250, 251, 249, 250, 253, 251,
+    251, 251, 249, 253, 252, 249, 251, 248, 249, 252, 252, 252, 251, 248, 249, 253, 249, 251, 251, 250,
+    252, 252, 249, 251, 248, 249, 252, 250, 251, 251, 248, 253, 252, 249, 251, 248, 249, 252, 252, 252,
+    251, 248, 249, 253, 249, 251, 251, 250, 252, 252, 249, 251, 248, 249, 252, 250, 251, 251,
+]  # fmt: skip
+
+
+@pytest.fixture(scope="module")
+def anbima() -> Calendar:
+    return Calendar.load(name="ANBIMA")
+
+
+def test_anbima_year_counts_match_r(anbima: Calendar) -> None:
+    assert anbima.getbizdays(list(range(2001, 2079))).tolist() == ANBIMA_YEARS_R
+    assert anbima.bizdays("2001-01-02", "2078-12-30") == 19553
+
+
+def _national_holidays(y: int) -> set[str]:
+    e = easter(y)
+    days = {e - timedelta(days=48), e - timedelta(days=47), e - timedelta(days=2), e + timedelta(days=60)}
+    days |= {date(y, m, d) for m, d in ((1, 1), (4, 21), (5, 1), (9, 7), (10, 12), (11, 2), (11, 15), (12, 25))}
+    if y >= 2024:
+        days.add(date(y, 11, 20))
+    return {d.isoformat() for d in days}
+
+
+def test_anbima_follows_national_holiday_rule() -> None:
+    for y in range(2001, 2100):
+        assert {h for h in ANBIMA_HOLIDAYS if h[:4] == str(y)} == _national_holidays(y), y
+    year_2000 = {h for h in ANBIMA_HOLIDAYS if h[:4] == "2000"}
+    assert year_2000 - _national_holidays(2000) == {"2000-04-23"}
+    assert _national_holidays(2000) - year_2000 == set()
+
+
+def test_b3_year_counts_match_r_2024_2025(b3: Calendar) -> None:
+    assert b3.getbizdays([2024, 2025]).tolist() == [251, 250]
+
+
+def test_b3_2026_holidays(b3: Calendar) -> None:
+    # B3 trading calendar 2026 as published by B3 (checked 2026-11-07)
+    expected = [
+        "2026-01-01", "2026-02-16", "2026-02-17", "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04",
+        "2026-09-07", "2026-10-12", "2026-11-02", "2026-11-20", "2026-12-24", "2026-12-25", "2026-12-31",
+    ]  # fmt: skip
+    assert [h for h in B3_HOLIDAYS if h[:4] == "2026"] == expected
+    assert b3.getbizdays(2026) == 247
+
+
+_BOTH = [
+    ("2024-02-29", True),  # leap day
+    ("2024-02-12", False),  # Carnival
+    ("2024-02-13", False),
+    ("2024-02-14", True),
+    ("2024-03-29", False),  # Good Friday
+    ("2023-11-20", True),  # national holiday from 2024
+    ("2024-11-20", False),
+    ("2024-01-06", False),  # weekend
+    ("2024-01-07", False),
+    ("2000-01-03", True),  # first Monday of the range
+]
+
+
+@pytest.mark.parametrize(
+    "calendar, day, expected",
+    [(c, d, e) for c in ("ANBIMA", "B3") for d, e in _BOTH]
+    + [
+        ("ANBIMA", "2024-12-24", True),
+        ("ANBIMA", "2024-12-31", True),
+        ("B3", "2024-12-24", False),
+        ("B3", "2024-12-31", False),
+        ("ANBIMA", "2099-12-24", True),
+        ("ANBIMA", "2099-12-25", False),  # last day of the range
+    ],
+)
+def test_representative_days(calendar: str, day: str, expected: bool) -> None:
+    assert Calendar.load(name=calendar).isbizday(day) == expected
+
+
+def test_packaged_ranges(anbima: Calendar, b3: Calendar) -> None:
+    assert (anbima.startdate, anbima.enddate) == (date(2000, 1, 1), date(2099, 12, 25))
+    assert b3.startdate == date(2000, 1, 1)
