@@ -92,8 +92,8 @@ Never merge a rehearsal branch.
 
 ### When something fails
 
-1. Use "Re-run failed jobs", never "Re-run all jobs". "Re-run all jobs" builds again, and the new sdist has different
-   bytes, so it cannot be uploaded under the same file name.
+1. Use "Re-run failed jobs", never "Re-run all jobs". "Re-run all jobs" builds again, possibly with a newer hatchling,
+   so the files may differ and PyPI would refuse them under the same file name.
 2. Uploading an identical file again is accepted, so a re-run after a half-done upload is safe.
 3. PyPI never lets you reuse a file name, even after you delete the file.
 4. A wrong tag that has not reached PyPI: reject the `pypi` approval, delete the tag with
