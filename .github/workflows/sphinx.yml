@@ -3,10 +3,9 @@ name: Sphinx build
 on:
   workflow_call:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
-    branches: [ master, feature/typing ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -37,7 +36,7 @@ jobs:
         path: docs/build/html/
     - name: Deploy
       uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/build/html

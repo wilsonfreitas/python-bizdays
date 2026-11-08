@@ -3,10 +3,9 @@ name: Test Python package
 on:
   workflow_call:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    # shortcut: only the v2 branch gets PR checks besides master; drop it once v2 is merged
-    branches: [ master, feature/typing ]
+    branches: [ main ]
 
 permissions:
   contents: read

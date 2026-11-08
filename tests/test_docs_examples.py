@@ -83,7 +83,7 @@ def test_readme_cross_links():
     for url in (
         "https://wilsonfreitas.github.io/python-bizdays/migration.html",
         "https://wilsonfreitas.github.io/python-bizdays/api.html",
-        "https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md",
+        "https://github.com/wilsonfreitas/python-bizdays/blob/main/CHANGELOG.md",
     ):
         assert url in text
     layout = text.split("## JSON calendar layout", 1)[1].split("\n## ", 1)[0]

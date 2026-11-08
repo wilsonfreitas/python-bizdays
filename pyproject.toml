@@ -49,7 +49,7 @@ Homepage = "https://github.com/wilsonfreitas/python-bizdays"
 Documentation = "https://wilsonfreitas.github.io/python-bizdays/"
 Source = "https://github.com/wilsonfreitas/python-bizdays"
 Issues = "https://github.com/wilsonfreitas/python-bizdays/issues"
-Changelog = "https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/wilsonfreitas/python-bizdays/blob/main/CHANGELOG.md"
 
 [tool.uv]
 package = true

@@ -151,10 +151,10 @@ def test_tag_check_step(tmp_path, tag, files, final):
         assert f"final={final}" in out.read_text()
 
 
-def test_master_check_only_for_final():
-    step = next(s for s in steps("build") if s.get("name") == "Final releases must be on master")
+def test_main_check_only_for_final():
+    step = next(s for s in steps("build") if s.get("name") == "Final releases must be on main")
     assert step["if"] == "steps.tag.outputs.final == 'true'"
-    assert step["run"] == "git merge-base --is-ancestor HEAD origin/master"
+    assert step["run"] == "git merge-base --is-ancestor HEAD origin/main"
 
 
 @pytest.mark.parametrize("name", ["pytest.yml", "sphinx.yml"])
@@ -201,4 +201,4 @@ def test_sphinx_deploy_is_master_only():
     assert deploys
     for s in deploys:
         assert "github.event_name == 'push'" in s["if"]
-        assert "github.ref == 'refs/heads/master'" in s["if"]
+        assert "github.ref == 'refs/heads/main'" in s["if"]
