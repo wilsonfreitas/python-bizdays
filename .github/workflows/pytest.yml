@@ -1,6 +1,7 @@
 name: Test Python package
 
 on:
+  workflow_call:
   push:
     branches: [ master ]
   pull_request:

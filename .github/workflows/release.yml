@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    uses: ./.github/workflows/pytest.yml
+
+  docs:
+    uses: ./.github/workflows/sphinx.yml
+    permissions:
+      contents: write # sphinx.yml asks for it for its master-only deploy step; skipped on tags
+
+  build:
+    needs: [tests, docs]
+    runs-on: ubuntu-latest
+    outputs:
+      final: ${{ steps.tag.outputs.final }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: false
+      - name: Build sdist and wheel
+        run: uv build --no-sources
+      - name: Check tag and version
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          test "$(ls dist)" = "$(printf 'bizdays-%s-py3-none-any.whl\nbizdays-%s.tar.gz' "$version" "$version")"
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then final=true; else final=false; fi
+          echo "final=$final" >> "$GITHUB_OUTPUT"
+      - name: Final releases must be on master
+        if: steps.tag.outputs.final == 'true'
+        run: git merge-base --is-ancestor HEAD origin/master
+      - name: Check artifact contents
+        env:
+          TAG: ${{ github.ref_name }}
+        run: uv run --no-project python tests/check_dist.py dist --version "${TAG#v}"
+      - name: Check metadata
+        run: uvx twine check --strict dist/*
+      - name: Write checksums
+        run: |
+          cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+
+  testpypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/bizdays
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - name: Keep the checksums out of the upload
+        run: mv dist/SHA256SUMS .
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+      - name: Compare checksums with TestPyPI
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            curl -fsS "https://test.pypi.org/pypi/bizdays/${TAG#v}/json" \
+              | jq -r '.urls[] | "\(.digests.sha256)  \(.filename)"' | sort > published.txt && \
+              sort SHA256SUMS | diff - published.txt && exit 0
+            sleep 30
+          done
+          exit 1
+
+  smoke:
+    needs: testpypi
+    permissions: {}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: expected/
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: false
+      - name: Install the wheel and smoke test
+        run: |
+          uv venv /tmp/smoke
+          uv pip install --python /tmp/smoke expected/*.whl
+          cd /tmp && /tmp/smoke/bin/python -c "import bizdays; c = bizdays.Calendar.load(name='B3'); print(c.bizdays('2026-01-02', '2026-12-31'))"
+
+  pypi:
+    needs: [build, smoke]
+    if: needs.build.outputs.final == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bizdays
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - name: Keep the checksums out of the upload
+        run: mv dist/SHA256SUMS .
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+      - name: Compare checksums with PyPI
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            curl -fsS "https://pypi.org/pypi/bizdays/${TAG#v}/json" \
+              | jq -r '.urls[] | "\(.digests.sha256)  \(.filename)"' | sort > published.txt && \
+              sort SHA256SUMS | diff - published.txt && exit 0
+            sleep 30
+          done
+          exit 1

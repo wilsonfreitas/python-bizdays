@@ -1,5 +1,6 @@
 import importlib.metadata
 import io
+import re
 import tarfile
 import zipfile
 
@@ -9,7 +10,8 @@ from tests.check_dist import check_dist, main
 
 
 def test_installed_version_is_2_0_0():
-    assert importlib.metadata.version("bizdays") == "2.0.0"
+    # rehearsal builds (2.0.0rc1) must pass too
+    assert re.match(r"\d+\.\d+\.\d+", importlib.metadata.version("bizdays")).group() == "2.0.0"
 
 
 def test_project_metadata():
