@@ -4,6 +4,7 @@ from datetime import date
 from importlib import import_module
 from typing import TypedDict
 
+import numpy as np
 import pandas as pd
 
 
@@ -38,7 +39,10 @@ def load_pandas_market_calendar(name: str) -> ExternalCalendarData:
     hol = cal.holidays()
     return {
         "holidays": [pd.Timestamp(d).date() for d in hol.holidays],
-        "weekdays": ["Saturday", "Sunday"],
+        # busdaycalendar accepts both "Sun Mon Tue Wed Thu" and "1111100"
+        "weekdays": [
+            WEEKDAY_NAMES[i] for i, open_ in enumerate(np.busdaycalendar(weekmask=cal.weekmask).weekmask) if not open_
+        ],
         "startdate": None,
         "enddate": None,
     }
@@ -83,17 +87,25 @@ def load_workalendar_calendar(name: str) -> ExternalCalendarData:
 
     cal = calendar_class()
     weekend_days = tuple(cal.get_weekend_days())
-    holidays = sorted(
-        {
-            holiday
-            for year in range(WORKALENDAR_START_YEAR, WORKALENDAR_END_YEAR + 1)
-            for holiday, _ in cal.holidays(year)
-        }
-    )
+    run: list[int] = []
+    holidays: set[date] = set()
+    for year in range(WORKALENDAR_END_YEAR, WORKALENDAR_START_YEAR - 1, -1):
+        try:
+            year_holidays = cal.holidays(year)
+        except Exception:  # workalendar raises its own types for years it does not know
+            if run:
+                break
+            continue
+        run.append(year)
+        holidays.update(holiday for holiday, _ in year_holidays)
+    if not run:
+        raise ValueError(
+            f"workalendar calendar {name!r} has no computable year in {WORKALENDAR_START_YEAR}..{WORKALENDAR_END_YEAR}"
+        )
 
     return {
-        "holidays": holidays,
+        "holidays": sorted(holidays),
         "weekdays": [WEEKDAY_NAMES[weekday] for weekday in weekend_days],
-        "startdate": date(WORKALENDAR_START_YEAR, 1, 1),
-        "enddate": date(WORKALENDAR_END_YEAR, 12, 31),
+        "startdate": date(run[-1], 1, 1),
+        "enddate": date(run[0], 12, 31),
     }

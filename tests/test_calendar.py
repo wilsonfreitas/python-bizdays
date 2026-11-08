@@ -178,6 +178,36 @@ def test_calendar_load_work():
     assert not cal.isbizday("2024-01-01")
     assert cal.isbizday("2024-01-02")
     assert not cal.isbizday("2024-01-07")
+    assert (cal.startdate, cal.enddate) == (date(1991, 1, 1), date(2051, 12, 31))
+
+
+def test_calendar_load_pmc_tase_weekmask():
+    pytest.importorskip("pandas_market_calendars")
+    assert set(Calendar.load(name="PMC/TASE").weekdays) == {"Friday", "Saturday"}
+
+
+def test_calendar_load_pmc_b3_matches_b3_2024():
+    pytest.importorskip("pandas_market_calendars")
+    assert Calendar.load(name="PMC/B3").getbizdays(2024) == Calendar.load(name="B3").getbizdays(2024) == 251
+
+
+def test_calendar_load_work_partial_years():
+    pytest.importorskip("workalendar")
+    cal = Calendar.load(name="WORK/CN")
+    assert cal.startdate > date(1991, 1, 1)
+
+
+def test_calendar_load_xcal_range_follows_today():
+    pytest.importorskip("exchange_calendars")
+    cal = Calendar.load(name="XCAL/XNYS")
+    assert cal.startdate < date.today() <= cal.enddate
+
+
+def test_calendar_load_xcal_session_semantics():
+    pytest.importorskip("exchange_calendars")
+    cal = Calendar.load(name="XCAL/XNYS")
+    assert cal.isbizday("2024-11-29")  # early close
+    assert not cal.isbizday("2025-01-09")  # closure
 
 
 def test_public_import():

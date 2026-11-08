@@ -80,7 +80,7 @@ def _constructor_holidays(holidays: object) -> DateArray:
         raise ValueError("holidays must be a sequence of dates")
     if np.isnat(dates).any():
         raise ValueError("holidays cannot contain missing values")
-    return dates
+    return np.unique(dates)
 
 
 _WEEKDAY_NUMBERS = {
@@ -1005,6 +1005,8 @@ class Calendar:
         return cls(
             definition.holidays,
             weekdays=definition.weekdays,
+            startdate=definition.startdate,
+            enddate=definition.enddate,
             name=definition.name,
             financial=definition.financial,
         )

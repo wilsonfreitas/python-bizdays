@@ -13,6 +13,8 @@ class CalendarDefinition:
     weekdays: list[str]
     holidays: list[str]
     financial: bool
+    startdate: str | None = None
+    enddate: str | None = None
 
 
 def _as_string_list(value: Any, field_name: str) -> list[str]:
@@ -56,6 +58,8 @@ def _parse_calendar_payload(payload: Any, fallback_name: str) -> CalendarDefinit
         weekdays=_as_string_list(payload.get("weekdays"), "weekdays"),
         holidays=_as_string_list(payload.get("holidays"), "holidays"),
         financial=_as_bool(payload.get("financial", True), "financial"),
+        startdate=_as_optional_string(payload.get("start.date"), "start.date"),
+        enddate=_as_optional_string(payload.get("end.date"), "end.date"),
     )
 
 
@@ -77,7 +81,7 @@ def load_calendar_definition(filename: str) -> CalendarDefinition:
 
 def load_packaged_calendar_definition(name: str) -> CalendarDefinition:
     resource = resources.files("bizdays.data").joinpath(f"{name}.json")
-    if not resource.is_file():
+    if name not in PACKAGED_CALENDARS or not resource.is_file():
         raise ValueError(f"Unknown calendar: {name!r}; packaged calendars are {', '.join(PACKAGED_CALENDARS)}")
     with resource.open("r", encoding="utf-8") as calendar_file:
         return _parse_calendar_payload(json.load(calendar_file), name)
