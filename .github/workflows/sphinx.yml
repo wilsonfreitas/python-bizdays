@@ -1,6 +1,7 @@
 name: Sphinx build
 
 on:
+  workflow_call:
   push:
     branches: [ master ]
   pull_request:
