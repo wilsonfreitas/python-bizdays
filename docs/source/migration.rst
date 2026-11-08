@@ -646,6 +646,271 @@ After (2.0):
 **Migration:** mechanical. Catch ``ValueError`` or ``FileNotFoundError``
 instead of ``Exception``.
 
+Inputs
+------
+
+.. _migrate-strict-date-strings:
+
+Strict date strings
+~~~~~~~~~~~~~~~~~~~
+
+**v1:** date strings without zero padding, such as ``"2024-1-2"``, worked.
+
+**v2:** a date string must be ``YYYY-MM-DD``. Other strings raise
+``ValueError``, including ``""`` and ``"NaT"``. A ``numpy.datetime64`` with
+unit ``Y``, ``M`` or ``W`` is not a date and raises ``ValueError``. A
+string such as ``"2024-01"`` was already an error for dates; now it is only
+accepted as a month ref in ``getdate`` and ``getbizdays``.
+
+**Why:** a loose parser can read a wrong value as a valid date without any
+error.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.isbizday("2024-1-2")   # True
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.isbizday("2024-1-2")
+   Traceback (most recent call last):
+   ...
+   ValueError: dt: invalid date string np.str_('2024-1-2'); expected YYYY-MM-DD
+   >>> cal.isbizday("")
+   Traceback (most recent call last):
+   ...
+   ValueError: dt: invalid date string np.str_(''); expected YYYY-MM-DD
+   >>> cal.isbizday(np.datetime64("2024-01"))
+   Traceback (most recent call last):
+   ...
+   ValueError: dt: numpy.datetime64 with unit 'M' is not a date; use unit 'D' or finer
+   >>> values = ["2024-1-2", "2024-1-6"]
+   >>> print(cal.isbizday(pd.to_datetime(values)))
+   [True False]
+   >>> print(cal.isbizday(pd.to_datetime(values).strftime("%Y-%m-%d")))
+   [True False]
+
+**Migration:** manual. Find where your date strings come from. Parse loose
+strings with ``pd.to_datetime`` and pass the result directly, or format them
+with ``.strftime("%Y-%m-%d")``.
+
+.. _migrate-input-containers:
+
+Input containers
+~~~~~~~~~~~~~~~~
+
+**v1:** any iterable worked as a vector: ``cal.isbizday({"2024-01-02"})``
+gave ``[True]``, and generators worked too.
+
+**v2:** vectors are lists, tuples, NumPy arrays and pandas ``Series`` or
+``Index`` objects. Sets, generators, ``range`` and dicts raise
+``ValueError``. 2-D input, such as a ``DataFrame`` or a list of lists, also
+raises ``ValueError``.
+
+**Why:** sets and dicts have no fixed order, and a generator can be read
+only once, so results could not be matched to inputs.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.isbizday({"2024-01-02"})                # [True]
+   cal.isbizday(d for d in ["2024-01-02"])     # [True]
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.isbizday({"2024-01-02"})
+   Traceback (most recent call last):
+   ...
+   ValueError: dt: set is not a supported sequence; use a list, tuple, NumPy array or pandas Series/Index
+   >>> cal.isbizday(d for d in ["2024-01-02"])
+   Traceback (most recent call last):
+   ...
+   ValueError: dt: generator is not a supported sequence; ...
+   >>> df = pd.DataFrame({"day": ["2024-01-02", "2024-01-06"]})
+   >>> cal.isbizday(df)
+   Traceback (most recent call last):
+   ...
+   ValueError: dt must be 1-D, got a DataFrame
+   >>> print(cal.isbizday(list(d for d in ["2024-01-02"])))
+   [True]
+   >>> print(cal.isbizday(df["day"]))
+   [True False]
+
+**Migration:** mechanical. Wrap the input in ``list(...)``, or pass one
+column (``df["col"]``) instead of a ``DataFrame``.
+
+.. _migrate-whole-counts:
+
+Whole-number counts
+~~~~~~~~~~~~~~~~~~~
+
+**v1:** ``cal.offset("2013-01-02", True)`` was read as ``offset(..., 1)``
+and gave 2013-01-03. ``cal.offset("2013-01-02", 1.5)`` raised
+``TypeError``.
+
+**v2:** the count must be a whole number. ``True``, ``False`` and ``1.5``
+raise ``ValueError``. Whole floats such as ``3.0`` now work.
+
+**Why:** a ``bool`` count is almost always a bug, and whole floats are
+common when counts come from pandas.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.offset("2013-01-02", True)   # datetime.date(2013, 1, 3)
+   cal.offset("2013-01-02", 1.5)    # TypeError
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> cal.offset("2013-01-02", True)
+   Traceback (most recent call last):
+   ...
+   ValueError: n must be whole numbers or missing (got True)
+   >>> cal.offset("2013-01-02", 1.5)
+   Traceback (most recent call last):
+   ...
+   ValueError: n must be whole numbers or missing (got 1.5)
+   >>> print(cal.offset("2013-01-02", 3.0))
+   2013-01-07
+
+**Migration:** mechanical. Pass ``int(n)``.
+
+Outputs and missing values
+--------------------------
+
+.. _migrate-return-types:
+
+Return types
+~~~~~~~~~~~~
+
+**v1:** results were Python values: ``datetime.date`` for dates, ``int``
+for counts, ``bool`` for flags, and lists for vectors.
+
+**v2:** results are NumPy values:
+
+- dates are ``numpy.datetime64`` (unit ``D``);
+- counts are ``numpy.float64``, even when the value is whole;
+- flags are ``numpy.bool_``, so ``cal.isbizday(d) is True`` is ``False``;
+- vectors are ``numpy.ndarray`` (and masked arrays for ``isbizday``, see
+  :ref:`migrate-missing-values`);
+- a ``numpy.datetime64`` is not found in a ``set`` or ``dict`` of
+  ``datetime.date`` values;
+- a pandas ``Series`` input does not keep its index in the result.
+
+**Why:** NumPy values make vector calls fast, and the same call returns the
+same type for one value and for many.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.following("2015-12-25")                 # datetime.date(2015, 12, 28)
+   cal.bizdays("2024-01-02", "2024-06-14")     # 113
+   cal.isbizday("2024-01-02") is True          # True
+   cal.seq("2014-01-02", "2014-01-07")         # list of datetime.date
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> type(cal.following("2015-12-25")).__name__
+   'datetime64'
+   >>> print(cal.bizdays("2024-01-02", "2024-06-14"))
+   113.0
+   >>> cal.isbizday("2024-01-02") is True
+   False
+   >>> bool(cal.isbizday("2024-01-02"))
+   True
+   >>> cal.following("2015-12-25") in {datetime.date(2015, 12, 28)}
+   False
+   >>> cal.following("2015-12-25").item()
+   datetime.date(2015, 12, 28)
+   >>> cal.seq("2014-01-02", "2014-01-07").tolist()
+   [datetime.date(2014, 1, 2), datetime.date(2014, 1, 3), datetime.date(2014, 1, 6), datetime.date(2014, 1, 7)]
+   >>> df = pd.DataFrame({"day": ["2024-01-02", "2024-03-01"]}, index=[10, 20])
+   >>> df["count"] = cal.bizdays(df["day"], "2024-06-14")
+   >>> print(df["count"].to_dict())
+   {10: 113.0, 20: 72.0}
+
+**Migration:** manual. Use ``bool(...)`` or ``==`` instead of ``is True``.
+Use ``.item()`` for one Python value and ``.tolist()`` for a list. Use
+``int(...)`` or ``.astype(int)`` where you need integers (drop ``NaN``
+first). Assign results to a ``DataFrame`` column, or build a ``Series`` with
+``index=``; never ``pd.Series(result)`` alone, which gets a new index.
+
+.. _migrate-missing-values:
+
+Missing values
+~~~~~~~~~~~~~~
+
+**v1:** a missing input (``None``) gave ``None`` inside the result list,
+for example ``cal.bizdays(["2024-01-02", None], "2024-06-14")`` gave
+``[113, None]``. In pandas mode it gave ``pd.NA``. ``cal.seq(None, ...)``
+raised ``TypeError``.
+
+**v2:**
+
+- counts use ``NaN``;
+- dates use ``NaT`` (not a time);
+- ``isbizday`` with a vector always returns a ``numpy.ma.MaskedArray``,
+  with missing entries masked; a missing scalar gives ``numpy.ma.masked``;
+- ``diff`` gives ``NaN`` for each step that touches a missing date;
+- ``seq`` with a missing end raises ``ValueError``.
+
+**Why:** ``None`` inside a list forces Python objects; ``NaN``, ``NaT`` and
+masks keep NumPy arrays fast and typed.
+
+Before (1.0.19):
+
+.. code-block:: python
+
+   cal.bizdays(["2024-01-02", None], "2024-06-14")   # [113, None]
+   cal.isbizday(["2024-01-02", None])                # [True, None]
+   cal.seq(None, "2014-01-07")                       # TypeError
+
+After (2.0):
+
+.. code-block:: pycon
+
+   >>> counts = cal.bizdays(["2024-01-02", None], "2024-06-14")
+   >>> print(counts)
+   [113.  nan]
+   >>> print(np.isnan(counts))
+   [False  True]
+   >>> print(counts[~np.isnan(counts)].astype(int))
+   [113]
+   >>> flags = cal.isbizday(["2024-01-02", None])
+   >>> print(flags)
+   [True --]
+   >>> type(flags).__name__
+   'MaskedArray'
+   >>> print(flags.mask)
+   [False  True]
+   >>> print(flags.filled(False))
+   [ True False]
+   >>> print(np.isnat(cal.following(["2015-12-25", None])))
+   [False  True]
+   >>> print(cal.diff(["2014-01-02", None, "2014-01-10"]))
+   [nan nan]
+   >>> cal.seq(None, "2014-01-07")
+   Traceback (most recent call last):
+   ...
+   ValueError: seq endpoints cannot be missing
+
+**Migration:** manual. Replace ``x is None`` checks with ``np.isnan`` for
+counts, ``np.isnat`` for dates and ``.mask`` for flags. Use
+``.filled(False)`` to turn a masked flag array into a plain ``bool`` array.
+Drop ``NaN`` before ``.astype(int)``.
+
 New in 2.0
 ----------
 
