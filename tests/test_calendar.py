@@ -156,12 +156,14 @@ def test_calendar_load_json_file(tmp_path):
 
 
 def test_calendar_load_pmc():
+    pytest.importorskip("pandas_market_calendars")
     cal = Calendar.load(name="PMC/B3")
     assert cal.name == "PMC/B3"
     assert len(cal.holidays) > 4000
 
 
 def test_calendar_load_xcal():
+    pytest.importorskip("exchange_calendars")
     cal = Calendar.load(name="XCAL/XNYS")
     assert cal.name == "XCAL/XNYS"
     assert cal.isbizday("2024-01-02")
@@ -170,6 +172,7 @@ def test_calendar_load_xcal():
 
 
 def test_calendar_load_work():
+    pytest.importorskip("workalendar")
     cal = Calendar.load(name="WORK/FR")
     assert cal.name == "WORK/FR"
     assert not cal.isbizday("2024-01-01")
@@ -214,6 +217,7 @@ def test_list_calendars_reports_workalendar_metadata():
 
 
 def test_list_calendars_reports_available_pmc_names():
+    pytest.importorskip("pandas_market_calendars")
     result = list_calendars()
     pmc = result["pandas_market_calendars"]
     assert pmc["available"] is True
@@ -221,6 +225,7 @@ def test_list_calendars_reports_available_pmc_names():
 
 
 def test_list_calendars_reports_available_xcal_names():
+    pytest.importorskip("exchange_calendars")
     result = list_calendars()
     xcal = result["exchange_calendars"]
     assert xcal["available"] is True
@@ -228,6 +233,7 @@ def test_list_calendars_reports_available_xcal_names():
 
 
 def test_list_calendars_reports_available_workalendar_names():
+    pytest.importorskip("workalendar")
     result = list_calendars()
     work = result["workalendar"]
     assert work["available"] is True
