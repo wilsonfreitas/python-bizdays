@@ -1,0 +1,786 @@
+{
+ "bizdays": "1.0.19",
+ "cases": {
+  "adjust_next-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "adjust_next-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-26"
+  },
+  "adjust_next-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "adjust_next-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "adjust_next-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "adjust_next-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-26",
+    "2024-12-30"
+   ]
+  },
+  "adjust_previous-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "adjust_previous-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-24"
+  },
+  "adjust_previous-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "adjust_previous-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "adjust_previous-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "adjust_previous-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-24",
+    "2024-12-27"
+   ]
+  },
+  "bizdays-actual-leap": {
+   "type": "int",
+   "value": 2
+  },
+  "bizdays-anbima-at-end": {
+   "type": "int",
+   "value": 17
+  },
+  "bizdays-anbima-at-start": {
+   "type": "int",
+   "value": 5
+  },
+  "bizdays-anbima-bad-string": {
+   "error": "ValueError"
+  },
+  "bizdays-anbima-before-start": {
+   "error": "DateOutOfRange"
+  },
+  "bizdays-anbima-date": {
+   "type": "int",
+   "value": 22
+  },
+  "bizdays-anbima-datetime": {
+   "type": "int",
+   "value": 22
+  },
+  "bizdays-anbima-empty": {
+   "error": "ZeroDivisionError"
+  },
+  "bizdays-anbima-holiday-ends": {
+   "type": "int",
+   "value": 0
+  },
+  "bizdays-anbima-len-2-4": {
+   "type": "list",
+   "value": [
+    252,
+    229,
+    250,
+    227
+   ]
+  },
+  "bizdays-anbima-len-3-2": {
+   "error": "Exception"
+  },
+  "bizdays-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "bizdays-anbima-none-in-vector": {
+   "type": "list",
+   "value": [
+    252,
+    null
+   ]
+  },
+  "bizdays-anbima-np": {
+   "error": "ValueError"
+  },
+  "bizdays-anbima-number": {
+   "error": "ValueError"
+  },
+  "bizdays-anbima-reversed": {
+   "type": "int",
+   "value": -252
+  },
+  "bizdays-anbima-same": {
+   "type": "int",
+   "value": 0
+  },
+  "bizdays-anbima-sat-end": {
+   "type": "int",
+   "value": 113
+  },
+  "bizdays-anbima-series": {
+   "type": "list",
+   "value": [
+    252,
+    230
+   ]
+  },
+  "bizdays-anbima-str-series": {
+   "type": "list",
+   "value": [
+    252,
+    null
+   ]
+  },
+  "bizdays-anbima-ts": {
+   "type": "int",
+   "value": 22
+  },
+  "bizdays-anbima-tuple": {
+   "type": "list",
+   "value": [
+    252,
+    230
+   ]
+  },
+  "bizdays-anbima-tz-ts": {
+   "type": "int",
+   "value": 22
+  },
+  "bizdays-anbima-unpadded": {
+   "type": "int",
+   "value": 252
+  },
+  "bizdays-anbima-vector": {
+   "type": "list",
+   "value": [
+    252,
+    211
+   ]
+  },
+  "bizdays-anbima-year": {
+   "type": "int",
+   "value": 252
+  },
+  "bizdays-b3-2023": {
+   "type": "int",
+   "value": 247
+  },
+  "bizdays-pmc-nyse": {
+   "type": "int",
+   "value": 251
+  },
+  "bizdays-we-nf-mon-tue": {
+   "type": "int",
+   "value": 2
+  },
+  "bizdays-we-nf-same-bizday": {
+   "type": "int",
+   "value": 1
+  },
+  "bizdays-we-nf-sat-same": {
+   "type": "int",
+   "value": 0
+  },
+  "bizdays-we-nf-sat-sat": {
+   "type": "int",
+   "value": 5
+  },
+  "bizdays-we-nf-sat-sun": {
+   "type": "int",
+   "value": 0
+  },
+  "bizdays-we-nf-sun-sat": {
+   "type": "int",
+   "value": 0
+  },
+  "ctor-holidays-only": {
+   "type": "Calendar",
+   "value": [
+    1,
+    [],
+    "2024-01-01",
+    "2024-01-01"
+   ]
+  },
+  "ctor-holidays-weekdays": {
+   "type": "Calendar",
+   "value": [
+    2,
+    [
+     "Saturday",
+     "Sunday"
+    ],
+    "2024-01-01",
+    "2024-12-25"
+   ]
+  },
+  "ctor-start-after-end": {
+   "error": "KeyError"
+  },
+  "ctor-weekday-numbers": {
+   "error": "TypeError"
+  },
+  "ctor-weekdays": {
+   "type": "Calendar",
+   "value": [
+    0,
+    [
+     "Saturday",
+     "Sunday"
+    ],
+    "2024-01-01",
+    "2024-12-31"
+   ]
+  },
+  "diff-anbima": {
+   "type": "list",
+   "value": [
+    22,
+    19
+   ]
+  },
+  "diff-anbima-none": {
+   "type": "list",
+   "value": [
+    null,
+    null
+   ]
+  },
+  "diff-anbima-one": {
+   "type": "list",
+   "value": []
+  },
+  "diff-we-nf": {
+   "type": "list",
+   "value": [
+    0,
+    5
+   ]
+  },
+  "following-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "following-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-26"
+  },
+  "following-anbima-last-day": {
+   "error": "DateOutOfRange"
+  },
+  "following-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "following-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "following-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "following-anbima-tz-ts": {
+   "type": "date",
+   "value": "2024-12-24"
+  },
+  "following-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-26",
+    "2024-12-30"
+   ]
+  },
+  "getbizdays-actual-2024": {
+   "type": "int",
+   "value": 366
+  },
+  "getbizdays-actual-2024-02": {
+   "type": "int",
+   "value": 29
+  },
+  "getbizdays-actual-vector": {
+   "type": "list",
+   "value": [
+    31,
+    28
+   ]
+  },
+  "getbizdays-anbima-2024": {
+   "type": "int",
+   "value": 253
+  },
+  "getbizdays-anbima-2024-01": {
+   "type": "int",
+   "value": 22
+  },
+  "getbizdays-anbima-2024-02": {
+   "type": "int",
+   "value": 19
+  },
+  "getbizdays-anbima-2024-12": {
+   "type": "int",
+   "value": 21
+  },
+  "getbizdays-anbima-2099": {
+   "type": "int",
+   "value": 245
+  },
+  "getbizdays-anbima-2099-11": {
+   "type": "int",
+   "value": 19
+  },
+  "getbizdays-anbima-month-0": {
+   "type": "int",
+   "value": 253
+  },
+  "getbizdays-anbima-month-13": {
+   "type": "int",
+   "value": 0
+  },
+  "getbizdays-b3-2023": {
+   "type": "int",
+   "value": 248
+  },
+  "getdate-anbima-10th-day": {
+   "type": "date",
+   "value": "2024-02-10"
+  },
+  "getdate-anbima-2099-12": {
+   "type": "date",
+   "value": "2099-12-24"
+  },
+  "getdate-anbima-3rd-wed": {
+   "type": "date",
+   "value": "2024-05-15"
+  },
+  "getdate-anbima-5th-fri": {
+   "error": "IndexError"
+  },
+  "getdate-anbima-before-first-day-month": {
+   "type": "date",
+   "value": "2001-12-31"
+  },
+  "getdate-anbima-before-first-day-year": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "getdate-anbima-composite": {
+   "error": "ValueError"
+  },
+  "getdate-anbima-first-bizday-month": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "getdate-anbima-last-bizday-month": {
+   "type": "date",
+   "value": "2024-12-31"
+  },
+  "getdate-anbima-last-bizday-year": {
+   "type": "date",
+   "value": "2024-12-31"
+  },
+  "getdate-anbima-last-fri": {
+   "type": "date",
+   "value": "2024-05-31"
+  },
+  "getdate-anbima-monkey": {
+   "error": "ValueError"
+  },
+  "getdate-anbima-vector-years": {
+   "type": "list",
+   "value": [
+    "2023-12-29",
+    "2024-12-31"
+   ]
+  },
+  "isbizday-actual-number": {
+   "error": "ValueError"
+  },
+  "isbizday-actual-sunday": {
+   "type": "bool",
+   "value": true
+  },
+  "isbizday-anbima-holiday": {
+   "type": "bool",
+   "value": false
+  },
+  "isbizday-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "isbizday-anbima-none-in-vector": {
+   "type": "list",
+   "value": [
+    true,
+    null
+   ]
+  },
+  "isbizday-anbima-out": {
+   "error": "DateOutOfRange"
+  },
+  "isbizday-anbima-str-series": {
+   "type": "list",
+   "value": [
+    true,
+    false
+   ]
+  },
+  "isbizday-anbima-tz-series": {
+   "type": "list",
+   "value": [
+    true,
+    false
+   ]
+  },
+  "isbizday-anbima-vector": {
+   "type": "list",
+   "value": [
+    true,
+    false,
+    false
+   ]
+  },
+  "isbizday-anbima-weekday": {
+   "type": "bool",
+   "value": true
+  },
+  "isbizday-anbima-weekend": {
+   "type": "bool",
+   "value": false
+  },
+  "isbizday-b3-dec24": {
+   "type": "bool",
+   "value": false
+  },
+  "isbizday-pmc-nyse-july4": {
+   "type": "bool",
+   "value": false
+  },
+  "load-cal-file": {
+   "type": "Calendar",
+   "value": [
+    2,
+    [
+     "Saturday",
+     "Sunday"
+    ],
+    "2024-01-01",
+    "2024-12-25"
+   ]
+  },
+  "load-json-file": {
+   "type": "Calendar",
+   "value": [
+    0,
+    [],
+    "1970-01-01",
+    "2071-01-01"
+   ]
+  },
+  "load-missing-file": {
+   "error": "Exception"
+  },
+  "load-name-kw": {
+   "type": "Calendar",
+   "value": [
+    1275,
+    [
+     "Saturday",
+     "Sunday"
+    ],
+    "2000-01-01",
+    "2099-12-25"
+   ]
+  },
+  "load-name-positional": {
+   "type": "Calendar",
+   "value": [
+    1275,
+    [
+     "Saturday",
+     "Sunday"
+    ],
+    "2000-01-01",
+    "2099-12-25"
+   ]
+  },
+  "load-unknown": {
+   "error": "Exception"
+  },
+  "modified_following-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "modified_following-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-26"
+  },
+  "modified_following-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "modified_following-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "modified_following-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "modified_following-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-26",
+    "2024-12-30"
+   ]
+  },
+  "modified_following-b3-last-day": {
+   "error": "DateOutOfRange"
+  },
+  "modified_preceding-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "modified_preceding-anbima-first-day": {
+   "error": "DateOutOfRange"
+  },
+  "modified_preceding-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-24"
+  },
+  "modified_preceding-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "modified_preceding-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-09-02"
+  },
+  "modified_preceding-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "modified_preceding-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-24",
+    "2024-12-27"
+   ]
+  },
+  "offset-actual-leap": {
+   "type": "date",
+   "value": "2024-02-29"
+  },
+  "offset-anbima-before-start": {
+   "type": "date",
+   "value": "2099-12-22"
+  },
+  "offset-anbima-float-n": {
+   "error": "TypeError"
+  },
+  "offset-anbima-len-3-2": {
+   "type": "list",
+   "value": [
+    "2024-01-03",
+    "2024-02-05",
+    "2024-03-04"
+   ]
+  },
+  "offset-anbima-n0-holiday": {
+   "type": "date",
+   "value": "2013-01-01"
+  },
+  "offset-anbima-n1": {
+   "type": "date",
+   "value": "2013-01-02"
+  },
+  "offset-anbima-n2": {
+   "type": "date",
+   "value": "2013-01-03"
+  },
+  "offset-anbima-nm1": {
+   "type": "date",
+   "value": "2012-12-31"
+  },
+  "offset-anbima-nm2": {
+   "type": "date",
+   "value": "2012-12-28"
+  },
+  "offset-anbima-none-date": {
+   "type": "NoneType",
+   "value": null
+  },
+  "offset-anbima-npint": {
+   "type": "list",
+   "value": [
+    "2024-01-03",
+    "2024-01-04"
+   ]
+  },
+  "offset-anbima-past-end": {
+   "error": "IndexError"
+  },
+  "offset-anbima-vector-both": {
+   "type": "list",
+   "value": [
+    "2024-01-03",
+    "2024-01-31"
+   ]
+  },
+  "offset-anbima-vector-n": {
+   "type": "list",
+   "value": [
+    "2024-01-03",
+    "2024-01-09",
+    "2024-01-16"
+   ]
+  },
+  "offset-anbima-whole-float-n": {
+   "error": "TypeError"
+  },
+  "preceding-anbima-bizday": {
+   "type": "date",
+   "value": "2024-01-02"
+  },
+  "preceding-anbima-first-day": {
+   "error": "DateOutOfRange"
+  },
+  "preceding-anbima-holiday": {
+   "type": "date",
+   "value": "2024-12-24"
+  },
+  "preceding-anbima-month-end-sat": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "preceding-anbima-month-start-sun": {
+   "type": "date",
+   "value": "2024-08-30"
+  },
+  "preceding-anbima-none": {
+   "type": "NoneType",
+   "value": null
+  },
+  "preceding-anbima-vector": {
+   "type": "list",
+   "value": [
+    "2024-12-24",
+    "2024-12-27"
+   ]
+  },
+  "prop-anbima-enddate": {
+   "value": "2099-12-25"
+  },
+  "prop-anbima-financial": {
+   "value": true
+  },
+  "prop-anbima-n-holidays": {
+   "value": 1275
+  },
+  "prop-anbima-name": {
+   "value": "ANBIMA"
+  },
+  "prop-anbima-startdate": {
+   "value": "2000-01-01"
+  },
+  "prop-anbima-weekdays": {
+   "value": [
+    "Saturday",
+    "Sunday"
+   ]
+  },
+  "prop-default-name": {
+   "value": null
+  },
+  "prop-pmc-nyse-weekdays": {
+   "value": [
+    "Saturday",
+    "Sunday"
+   ]
+  },
+  "prop-we-nf-financial": {
+   "value": false
+  },
+  "seq-anbima-none-start": {
+   "error": "TypeError"
+  },
+  "seq-anbima-out": {
+   "error": "DateOutOfRange"
+  },
+  "seq-anbima-reversed": {
+   "type": "list",
+   "value": [
+    "2024-12-31",
+    "2024-12-30",
+    "2024-12-27",
+    "2024-12-26",
+    "2024-12-24",
+    "2024-12-23"
+   ]
+  },
+  "seq-anbima-same-holiday": {
+   "type": "list",
+   "value": []
+  },
+  "seq-anbima-week": {
+   "type": "list",
+   "value": [
+    "2024-12-23",
+    "2024-12-24",
+    "2024-12-26",
+    "2024-12-27",
+    "2024-12-30",
+    "2024-12-31"
+   ]
+  }
+ },
+ "names": [
+  "Calendar",
+  "D1",
+  "Date",
+  "DateIndex",
+  "DateOutOfRange",
+  "Dict",
+  "PANDAS_INSTALLED",
+  "StringIO",
+  "TextIO",
+  "VectorizedOps",
+  "cycle",
+  "date",
+  "daterangecheck",
+  "daterangecheck2",
+  "datetime",
+  "find_date_pos",
+  "get_option",
+  "isnull",
+  "isseq",
+  "isstr",
+  "load_holidays",
+  "np",
+  "options",
+  "os",
+  "pd",
+  "re",
+  "recseq",
+  "retdate",
+  "return_none",
+  "set_option",
+  "timedelta"
+ ],
+ "numpy": "2.5.4",
+ "pandas": "2.3.3",
+ "python": "3.12"
+}
