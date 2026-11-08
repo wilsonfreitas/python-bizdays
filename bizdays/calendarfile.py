@@ -77,7 +77,7 @@ def load_calendar_definition(filename: str) -> CalendarDefinition:
 
 def load_packaged_calendar_definition(name: str) -> CalendarDefinition:
     resource = resources.files("bizdays.data").joinpath(f"{name}.json")
-    if not resource.is_file():
+    if name not in PACKAGED_CALENDARS or not resource.is_file():
         raise ValueError(f"Unknown calendar: {name!r}; packaged calendars are {', '.join(PACKAGED_CALENDARS)}")
     with resource.open("r", encoding="utf-8") as calendar_file:
         return _parse_calendar_payload(json.load(calendar_file), name)
