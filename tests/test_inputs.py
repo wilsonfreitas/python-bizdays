@@ -277,3 +277,28 @@ def test_offset_rejects_time_and_huge_counts(anbima):
     for n in [1e20, 2**63, np.uint64(2**64 - 1), [2**70]]:
         with pytest.raises(ValueError, match="too large"):
             anbima.offset("2024-01-02", n)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({"weekdays": 5}, id="weekdays_int"),
+        pytest.param({"weekdays": [], "name": 5}, id="name_int"),
+        pytest.param({"weekdays": [], "financial": "x"}, id="financial_str"),
+        pytest.param({"weekdays": [], "financial": 1}, id="financial_int"),
+    ],
+)
+def test_constructor_wrong_type_raises_value_error(kwargs):
+    with pytest.raises(ValueError):
+        Calendar(**kwargs)
+
+
+@pytest.mark.parametrize("kwargs", [{"name": 5}, {"filename": 5}], ids=["name_int", "filename_int"])
+def test_load_wrong_type_raises_value_error(kwargs):
+    with pytest.raises(ValueError):
+        Calendar.load(**kwargs)
+
+
+def test_load_accepts_path(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        Calendar.load(filename=tmp_path / "nope.json")
