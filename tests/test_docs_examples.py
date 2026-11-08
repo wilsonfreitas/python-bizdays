@@ -2,6 +2,7 @@
 
 import doctest
 import inspect
+import json
 import re
 from pathlib import Path
 
@@ -103,9 +104,17 @@ def test_readme_install_line():
 STALE = ["schema compatibility", "current public API", "current NumPy-backed", "get_option", "set_option"]
 
 
-@pytest.mark.parametrize("path", ["README.md", "docs/source/index.rst", "docs/source/api.rst"])
+NOTEBOOKS = ["quick", "pandas", "calendars", "getdate"]
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["README.md", "docs/source/index.rst", "docs/source/api.rst", *(f"docs/source/{n}.ipynb" for n in NOTEBOOKS)],
+)
 def test_no_stale_wording(path):
     text = _text(ROOT / path)
+    if path.endswith(".ipynb"):
+        text = "\n".join("".join(cell["source"]) for cell in json.loads(text)["cells"])
     assert [s for s in STALE if s in text] == []
 
 
