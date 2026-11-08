@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import os
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import date
 from typing import TYPE_CHECKING, Any, TypedDict, TypeAlias, overload
 
@@ -92,8 +93,8 @@ _WEEKDAY_NUMBERS = {
 
 def _parse_weekdays(weekdays: Sequence[object]) -> list[int]:
     """Weekday numbers (Monday = 0) from full or 3-letter English names, any case, without duplicates."""
-    if isinstance(weekdays, str):
-        raise ValueError(f"weekdays must be a list of weekday names, not the string {weekdays!r}")
+    if isinstance(weekdays, str) or not isinstance(weekdays, Iterable):
+        raise ValueError(f"weekdays must be a list of weekday names, not {weekdays!r}")
     out = []
     for item in weekdays:
         key = item.lower() if isinstance(item, str) else None
@@ -248,8 +249,10 @@ class Calendar:
     Raises
     ------
     ValueError
-        For an invalid weekday name, ``startdate`` after ``enddate``, or a
-        calendar without business days in its whole range.
+        For an invalid weekday name, ``startdate`` after ``enddate``, a
+        calendar without business days in its whole range, or an argument of
+        the wrong type (for example ``weekdays`` not a list, ``name`` not a
+        string, ``financial`` not a bool).
     """
 
     _weekdays: tuple[str, str, str, str, str, str, str] = (
@@ -271,7 +274,11 @@ class Calendar:
         name: str = "",
         financial: bool = True,
     ) -> None:
-        self.financial: bool = financial
+        if not isinstance(name, str):
+            raise ValueError(f"name must be a string, not {name!r}")
+        if not isinstance(financial, (bool, np.bool_)):
+            raise ValueError(f"financial must be True or False, not {financial!r}")
+        self.financial: bool = bool(financial)
         self.name: str = name
         self._holidays: DateArray = _constructor_holidays(holidays)
         if weekdays is None and len(self._holidays):
@@ -893,7 +900,7 @@ class Calendar:
         Parameters
         ----------
 
-        expr : str, list of str
+        expr : str, or a 1-D sequence of str
             String specifying the date to be returned, such as ``"first bizday"``,
             ``"next wed"``, ``"last day"`` or ``"1st bizday before 2nd fri"``.
             With a year or month ref it is the n-th day, business day or weekday
@@ -903,7 +910,7 @@ class Calendar:
             the date; ``last`` (or ``previous <weekday>``) is the one strictly
             before. Composite expressions need a year or month ref.
 
-        ref : int, str, datetime.date, datetime.datetime, numpy.datetime64
+        ref : int, float with a whole value, str, datetime.date, datetime.datetime, pandas.Timestamp, numpy.datetime64, or a 1-D sequence of them
             Reference used to resolve the expression. All refs in one call must
             be of one kind, otherwise ``ValueError``.
 
@@ -1104,7 +1111,8 @@ class Calendar:
         Raises
         ------
         ValueError
-            Both or neither of ``name`` and ``filename``; an unknown packaged
+            Both or neither of ``name`` and ``filename``; ``name`` not a
+            string or ``filename`` not a string or path; an unknown packaged
             or provider calendar; a v1 ``.cal`` file; invalid JSON content,
             including a value other than the default for ``adjust.from``
             (``"following"``) or ``adjust.to`` (``"preceding"``).
@@ -1117,6 +1125,10 @@ class Calendar:
         """
         if (name is None) == (filename is None):
             raise ValueError("Provide exactly one of 'name' or 'filename'")
+        if name is not None and not isinstance(name, str):
+            raise ValueError(f"name must be a string, not {name!r}")
+        if filename is not None and not isinstance(filename, (str, os.PathLike)):
+            raise ValueError(f"filename must be a string or a path, not {filename!r}")
 
         if filename is not None:
             definition = load_calendar_definition(filename)

@@ -394,8 +394,8 @@ Adjust maturities first
 
 An end date that is not a business day moves to the preceding business day,
 and a start date that is not a business day moves to the following one. So
-2024-06-15, a Saturday, counts like Friday 2024-06-14. An NTN-B coupon of
-2024-06-15 is paid on Monday 2024-06-17, so adjust maturities with
+2024-06-15, a Saturday, counts like Friday 2024-06-14. A payment due on
+2024-06-15 is made on Monday 2024-06-17, so adjust maturities with
 ``following`` first:
 
 .. code-block:: pycon
