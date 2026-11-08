@@ -1,6 +1,6 @@
 ### version 2.0.0 (2026-11-07)
 
-bizdays 2.0.0 is a major release with breaking changes, compared with 1.0.19 (1.0.20 has the same API and only adds B3 data).
+bizdays 2.0.0 is a major release with breaking changes, compared with 1.0.20, the last 1.x release (1.0.19 has the same API; 1.0.20 only added B3 data).
 Read the [migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html) before you upgrade.
 
 #### Upgrade
@@ -54,7 +54,7 @@ See the [API reference](https://wilsonfreitas.github.io/python-bizdays/api.html)
 
 #### Bug fixes
 
-* `getdate("1st bizday before 2nd fri", ...)` works ([#31](https://github.com/wilsonfreitas/python-bizdays/issues/31)). In 1.0.19 it raised `ValueError`. In v2, `getdate("1st bizday before 2nd fri", "2024-01")` gives 2024-01-11 on ANBIMA.
+* `getdate("1st bizday before 2nd fri", ...)` works ([#31](https://github.com/wilsonfreitas/python-bizdays/issues/31)). In 1.x it raised `ValueError`. In v2, `getdate("1st bizday before 2nd fri", "2024-01")` gives 2024-01-11 on ANBIMA.
 * `offset` no longer wraps around past the calendar ends: on ANBIMA, `offset("2000-01-03", -3)` gave 2099-12-22, and now it raises `DateOutOfRange` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-calendar-range)).
 * `getdate("first bizday before first day", 2024)` gives 2023-12-29, not 2024-01-02 ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-getdate-year-ref)).
 * `getbizdays(2099)` on ANBIMA no longer returns a partial count (245); it raises `DateOutOfRange` ([migration guide](https://wilsonfreitas.github.io/python-bizdays/migration.html#migrate-getbizdays)).
@@ -84,9 +84,9 @@ See the [API reference](https://wilsonfreitas.github.io/python-bizdays/api.html)
 * Wilson Freitas (@wilsonfreitas)
 * @RichardDale, for reporting [#31](https://github.com/wilsonfreitas/python-bizdays/issues/31)
 
-### version 1.0.20 (unreleased, 1.x branch)
+### version 1.0.20 (2026-11-08)
 
-* B3 calendar: projected holidays for 2027 to 2099 (ANBIMA holidays + December 24 + the last weekday of the year). Official B3 data ends in 2026.
+* B3 calendar extended to 2099-12-31. Holidays up to 2026 are B3's official ones. From 2027 they are projected: ANBIMA holidays, plus December 24, plus the last weekday of the year. Projected years will be replaced when B3 publishes its official calendar (WIL-228).
 
 ### version 1.0.19 (2026-01-04)
 

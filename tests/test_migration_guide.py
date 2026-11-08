@@ -71,7 +71,7 @@ def test_migration_guide_covers_inventory():
 @pytest.mark.parametrize("slug", REQUIRED)
 def test_migration_guide_entry_format(slug):
     entry = _entry(GUIDE.read_text(encoding="utf-8"), slug)
-    for field in ("**v1:**", "**v2:**", "**Why:**", "Before (1.0.19):", "After (2.0):"):
+    for field in ("**v1:**", "**v2:**", "**Why:**", "Before (1.0.20):", "After (2.0):"):
         assert field in entry
     match = re.search(r"\*\*Migration:\*\* (.+)", entry)
     assert match is not None
