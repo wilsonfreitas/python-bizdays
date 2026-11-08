@@ -2,16 +2,16 @@ Migration guide
 ===============
 
 This page lists every change you may need to handle when you move from
-bizdays 1.0.19 (the last 1.x release on PyPI) to bizdays 2.0.
+bizdays 1.0.20 (the last 1.x release on PyPI) to bizdays 2.0.
 
-If you use 1.0.20, read it as 1.0.19: it has the same API and only adds
-projected B3 holidays.
+If you use 1.0.19, the guide applies too: 1.0.19 has the same API as
+1.0.20. The only difference is the B3 data, see :ref:`migrate-calendar-data`.
 
 Each entry has the same parts:
 
-- **v1** says what 1.0.19 did, and **v2** what 2.0 does.
+- **v1** says what 1.0.20 did, and **v2** what 2.0 does.
 - **Why** gives the reason for the change.
-- **Before (1.0.19)** shows old code. **After (2.0)** shows the new code and
+- **Before (1.0.20)** shows old code. **After (2.0)** shows the new code and
   its output. The "After" examples are tested with every release.
 - **Migration** says how much work the change needs:
 
@@ -111,7 +111,7 @@ Inventory
    * - ``getbizdays`` returns floats and checks its range
      - manual
      - :ref:`migrate-getbizdays`
-   * - B3 covers more years; Actual has a wider range
+   * - Actual has a wider range (B3 already covered 2099 in 1.0.20)
      - nothing to change
      - :ref:`migrate-calendar-data`
 
@@ -123,7 +123,7 @@ Install and packaging
 Python and dependency versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**v1:** 1.0.19 needs Python 3.9 or newer, ``pandas>=2,<3`` and
+**v1:** 1.0.20 needs Python 3.9 or newer, ``pandas>=2,<3`` and
 ``pandas-market-calendars>=4,<5``. NumPy comes in through pandas.
 
 **v2:** 2.0 needs Python 3.10 or newer (tested on 3.10 to 3.14),
@@ -134,11 +134,11 @@ Python and dependency versions
 **Why:** Python 3.9 is no longer supported upstream, and users asked for
 pandas 3. bizdays uses NumPy directly, so it names it.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: shell
 
-   pip install "bizdays==1.0.19"   # Python 3.9+, pandas 2 only
+   pip install "bizdays==1.0.20"   # Python 3.9+, pandas 2 only
 
 After (2.0):
 
@@ -168,7 +168,7 @@ missing-provider error; a bad ``PMC/`` name raised the provider's own
 **Why:** most users only need the packaged calendars. Big optional packages
 should not be installed for everyone.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -210,7 +210,7 @@ any release.
 **Why:** a small public surface can be kept stable. The helpers were
 internal tools, not part of a designed API.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -252,7 +252,7 @@ as ``'2015-12-28'``.
 **Why:** a global switch made the same call return different types in
 different parts of a program.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -300,7 +300,7 @@ index. Where you need ISO strings, use ``np.datetime_as_string(result)`` or
 
 **Why:** two ways to make the same call were not needed.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -331,7 +331,7 @@ at the top level.
 **Why:** a date outside the calendar range is a bad input value, so
 ``ValueError`` is the expected base class.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -340,7 +340,7 @@ Before (1.0.19):
    try:
        cal.bizdays("1999-01-01", "2024-01-02")
    except ValueError:
-       ...                     # not reached in 1.0.19
+       ...                     # not reached in 1.0.20
    except DateOutOfRange:
        ...                     # reached
 
@@ -399,7 +399,7 @@ Building and loading calendars
 **Why:** these setups were mistakes that gave wrong counts later, far from
 the cause. Failing early shows the cause.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -480,7 +480,7 @@ given; both, or neither, raise ``ValueError``.
 **Why:** keywords make the call clear, and each call names exactly one
 source, so no argument is silently ignored.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -522,7 +522,7 @@ this page.
 **Why:** one file format, the same as R bizdays, is easier to keep correct.
 JSON can also hold the name, the range and the ``financial`` flag.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -616,7 +616,7 @@ Load errors
 
 **Why:** specific error types can be caught on their own.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -668,7 +668,7 @@ accepted as a month ref in ``getdate``.
 **Why:** a loose parser can read a wrong value as a valid date without any
 error.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -716,7 +716,7 @@ raises ``ValueError``.
 **Why:** sets and dicts have no fixed order, and a generator can be read
 only once, so results could not be matched to inputs.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -763,7 +763,7 @@ raise ``ValueError``. Whole floats such as ``3.0`` now work.
 **Why:** a ``bool`` count is almost always a bug, and whole floats are
 common when counts come from pandas.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -812,7 +812,7 @@ for counts, ``bool`` for flags, and lists for vectors.
 **Why:** NumPy values make vector calls fast, and the same call returns the
 same type for one value and for many.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -872,7 +872,7 @@ raised ``TypeError``.
 **Why:** ``None`` inside a list forces Python objects; ``NaN``, ``NaT`` and
 masks keep NumPy arrays fast and typed.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -935,7 +935,7 @@ length 1.
 
 **Why:** silent recycling hid bugs where two columns were not aligned.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -977,7 +977,7 @@ every bad element. For ``getdate`` and ``getbizdays`` the whole period
 
 **Why:** a wrapped date is a wrong answer that looks right.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -1032,7 +1032,7 @@ a ``"YYYY-MM-DD"`` string is a date ref, even on the first day of a month.
 get the last business day of a month from dates, convert them to months
 with ``.astype("datetime64[M]")``.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -1092,11 +1092,11 @@ month.
 - expressions with ``before`` or ``after`` need a year or month ref;
 - all refs in one call must be of one kind (year, month or date).
 - weekday words must be full or 3-letter English names (``tues`` raises
-  ``ValueError``, as in 1.0.19).
+  ``ValueError``, as in 1.0.20).
 
 **Why:** the grammar now follows R bizdays, the reference implementation.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -1153,7 +1153,7 @@ year before.
 
 **Why:** the old result was wrong.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -1167,7 +1167,7 @@ After (2.0):
    2023-12-29
 
 **Migration:** nothing to change. The call still runs, but check results
-that you stored with 1.0.19.
+that you stored with 1.0.20.
 
 getbizdays
 ----------
@@ -1193,7 +1193,7 @@ whole year.
 
 **Why:** a partial count looks like a full one, and ``0`` is not a month.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
@@ -1232,25 +1232,28 @@ Calendar data
 Calendar data
 ~~~~~~~~~~~~~
 
-**v1:** the B3 calendar ended on 2026-12-31, so
+**v1:** in 1.0.20 the B3 calendar runs to 2099-12-31: official up to 2026,
+projected from 2027. In 1.0.19 it ended on 2026-12-31, so
 ``Calendar.load("B3").bizdays("2026-12-01", "2027-01-10")`` raised
 ``DateOutOfRange``. The Actual calendar covered 1970-01-01..2071-01-01.
 
-**v2:** B3 is official for 2000-2026. Years 2027-2099 are projected: ANBIMA
-holidays, plus December 24, plus the last weekday of the year. Actual
+**v2:** B3 has the same data as in 1.0.20: official for 2000-2026, and
+projected for 2027-2099 (ANBIMA holidays, plus December 24, plus the last
+weekday of the year). Actual
 covers 1900-01-01..2199-12-31. The range of ``Calendar()`` without holidays
 or dates does not change (1970-01-01..2071-01-01). See :doc:`calendar-data`
 for every range and the update policy.
 
-**Why:** a B3 calendar that ends next year breaks long-dated contracts.
+**Why:** a calendar that ends soon breaks long-dated contracts.
 
-Before (1.0.19):
+Before (1.0.20):
 
 .. code-block:: python
 
    b3 = Calendar.load("B3")
-   b3.enddate                                  # datetime.date(2026, 12, 31)
-   b3.bizdays("2026-12-01", "2027-01-10")      # DateOutOfRange
+   b3.enddate                                  # datetime.date(2099, 12, 31); 2026-12-31 in 1.0.19
+   b3.bizdays("2026-12-01", "2027-01-10")      # 24; DateOutOfRange in 1.0.19
+   Calendar.load("Actual").enddate             # datetime.date(2071, 1, 1)
 
 After (2.0):
 
@@ -1267,9 +1270,9 @@ After (2.0):
    >>> print(Calendar().startdate, Calendar().enddate)
    1970-01-01 2071-01-01
 
-**Migration:** nothing to change. Calls that raised ``DateOutOfRange`` now
-work. Projected B3 years can change when B3 publishes its official
-calendar.
+**Migration:** nothing to change. Calls that raised ``DateOutOfRange`` in
+1.0.19, or on the Actual calendar after 2071, now work. Projected B3
+years can change when B3 publishes its official calendar.
 
 New in 2.0
 ----------
@@ -1281,12 +1284,12 @@ These are new features, not breaking changes. See :doc:`api` for details.
   calendar range.
 - :class:`bizdays.DateOutOfRange` has a ``positions`` attribute.
 - ``numpy.datetime64`` values and pandas ``Timestamp``, ``Series`` and
-  ``DatetimeIndex`` inputs work everywhere (1.0.19 rejected
+  ``DatetimeIndex`` inputs work everywhere (1.0.20 rejected
   ``numpy.datetime64`` with a ``ValueError``).
 - ``XCAL/<name>`` and ``WORK/<code>`` calendar providers.
 - ``getdate`` date refs and vectors of expressions and refs.
 - ``getdate`` ``previous <weekday>`` with a date ref.
-- Empty inputs give empty results (1.0.19 raised ``ZeroDivisionError``).
+- Empty inputs give empty results (1.0.20 raised ``ZeroDivisionError``).
 
 What did not change
 -------------------
@@ -1305,7 +1308,8 @@ What did not change
 - ``seq`` with a vector raises ``ValueError``.
 - ``getdate`` with an unknown weekday word, such as ``tues``, ``wedn`` or
   ``monkey``, raises ``ValueError``.
-- ANBIMA and B3 holidays up to 2026 are the same.
+- ANBIMA and B3 holidays are the same as in 1.0.20 (and, up to 2026, the
+  same as in 1.0.19).
 
 .. code-block:: pycon
 
