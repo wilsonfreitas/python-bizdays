@@ -131,7 +131,8 @@ class DateIndex(object):
         # where the first choice lies outside the range, it leaves the month for certain only
         # when the whole month side toward that end is inside the range
         if n > 0:
-            edge_known = (month + 1).astype("datetime64[D]") - 1 <= self.enddate
+            month_end = (month + np.timedelta64(1, "M")).astype("datetime64[D]") - np.timedelta64(1, "D")
+            edge_known = month_end <= self.enddate
         else:
             edge_known = month.astype("datetime64[D]") >= self.startdate
         leaves = np.where(ok_first, first.astype("datetime64[M]") != month, edge_known)
@@ -168,10 +169,12 @@ class DateIndex(object):
         if ref.kind == "month":
             assert ref.month is not None
             first = np.datetime64((ref.year - 1970) * 12 + ref.month - 1, "M")
+            after = first + np.timedelta64(1, "M")
         else:
             first = np.datetime64(ref.year - 1970, "Y")
+            after = first + np.timedelta64(1, "Y")
         lo = int((first.astype("datetime64[D]") - self.startdate).astype(np.int64))
-        hi = int(((first + 1).astype("datetime64[D]") - self.startdate).astype(np.int64))
+        hi = int((after.astype("datetime64[D]") - self.startdate).astype(np.int64))
         return lo, hi
 
     def ref_inrange(self, ref: NormalizedRef) -> bool:

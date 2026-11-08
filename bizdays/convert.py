@@ -120,7 +120,7 @@ def date_scalar(value: object, name: str) -> np.datetime64:
 def to_dates(x: object, name: str) -> tuple[DateArray, bool]:
     """Convert a date argument to 1-D ``datetime64[D]``, NaT where missing."""
     values, missing, is_vector = to_1d(x, name)
-    out = np.full(values.shape, np.datetime64("NaT"), dtype="datetime64[D]")
+    out = np.full(values.shape, np.datetime64("NaT", "D"), dtype="datetime64[D]")
     valid = ~missing
     v = values[valid]
     if len(v) == 0:

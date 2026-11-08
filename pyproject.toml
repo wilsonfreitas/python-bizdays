@@ -81,3 +81,7 @@ warn_unused_configs = true
 show_error_codes = true
 pretty = true
 warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning:bizdays"]
