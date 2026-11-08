@@ -284,3 +284,14 @@ def test_to_dates_mixed_lengths_and_date_objects():
     aware = datetime(2024, 1, 5, 23, 30, tzinfo=timezone(timedelta(hours=-3)))
     x = [date(2024, 1, 2), aware, pd.Timestamp("2024-01-05 23:30", tz="America/Sao_Paulo")]
     assert _dates(x)[0].astype(str).tolist() == ["2024-01-02", "2024-01-05", "2024-01-05"]
+
+
+def test_to_dates_rejects_structured_array():
+    with pytest.raises(ValueError):
+        to_dates(np.zeros(2, dtype=[("a", "i4")]), "dates")
+
+
+@pytest.mark.parametrize("value", ["٢٠٢٤-01-01T00:00", "２０２４-01-01T00:00"])
+def test_to_dates_rejects_non_ascii_digits_in_long_strings(value):
+    with pytest.raises(ValueError, match="invalid date string"):
+        to_dates(value, "dates")

@@ -271,9 +271,11 @@ class Calendar:
         weekdays: Sequence[str] | None = None,
         startdate: DateScalar | None = None,
         enddate: DateScalar | None = None,
-        name: str = "",
+        name: str | None = "",
         financial: bool = True,
     ) -> None:
+        if name is None:  # the 1.0.19 default
+            name = ""
         if not isinstance(name, str):
             raise ValueError(f"name must be a string, not {name!r}")
         if not isinstance(financial, (bool, np.bool_)):
@@ -287,7 +289,7 @@ class Calendar:
                 UserWarning,
                 stacklevel=2,
             )
-        self._nonwork_weekdays: list[int] = _parse_weekdays(weekdays or [])
+        self._nonwork_weekdays: list[int] = _parse_weekdays([] if weekdays is None else weekdays)
         self._startdate: Date
         self._enddate: Date
         if len(self._holidays):

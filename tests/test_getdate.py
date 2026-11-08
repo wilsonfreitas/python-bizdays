@@ -508,3 +508,9 @@ def test_getdate_ref_kind_checked_before_range(anbima):
     with pytest.raises(ValueError, match="one kind") as e:
         anbima.getdate("first day", ["1900-01", "2021-02-10"])
     assert not isinstance(e.value, DateOutOfRange)
+
+
+@pytest.mark.parametrize("ref", [10**19, 2**64, 1e20, 1e300])
+def test_getdate_huge_year_ref_raises_value_error(ref):
+    with pytest.raises(ValueError, match="Invalid getdate ref"):
+        Calendar.load(name="ANBIMA").getdate("first bizday", ref)

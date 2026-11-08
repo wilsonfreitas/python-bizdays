@@ -5,6 +5,7 @@ into it (NaT for dates, NaN for counts) and a flag that says whether the
 input was a vector.
 """
 
+import re
 from datetime import date, datetime
 from typing import Any
 
@@ -64,6 +65,8 @@ def to_1d(x: object, name: str) -> tuple[npt.NDArray[Any], BoolArray, bool]:
             f"{name}: {type(x).__name__} is not a supported sequence; "
             "use a list, tuple, NumPy array or pandas Series/Index"
         )
+    if values.dtype.kind == "V":
+        raise ValueError(f"{name}: NumPy dtype {values.dtype} is not supported")
     missing = np.asarray(mask | pd.isna(values), dtype=np.bool_)
     if values.dtype == object and type(np.ma.masked) in set(map(type, values)):
         missing |= np.fromiter((v is np.ma.masked for v in values), dtype=np.bool_, count=len(values))
@@ -85,7 +88,7 @@ def _days_from_strings(values: npt.NDArray[Any], name: str) -> DateArray:
     ok = ((digits >= 0) & (digits <= 9)).all(axis=1) & (codes[:, 4] == 45) & (codes[:, 7] == 45)
     plain = np.char.str_len(strings) == 10
     if not plain.all():
-        ok[~plain] = pd.Series(strings[~plain], dtype=object).str.fullmatch(_DATE_STRING).to_numpy(dtype=bool)
+        ok[~plain] = pd.Series(strings[~plain], dtype=object).str.fullmatch(_DATE_STRING, flags=re.ASCII).to_numpy(dtype=bool)
     year = digits[:, 0] * 1000 + digits[:, 1] * 100 + digits[:, 2] * 10 + digits[:, 3]
     month = digits[:, 4] * 10 + digits[:, 5]
     day = digits[:, 6] * 10 + digits[:, 7]

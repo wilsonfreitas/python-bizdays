@@ -157,10 +157,11 @@ def _parse_expression(expr: str) -> GetDateExpression:
 def normalize_ref(ref: object) -> NormalizedRef:
     if isinstance(ref, bool):
         raise ValueError(f"Invalid getdate ref: {ref!r}")
-    if isinstance(ref, (int, np.integer)):
+    # years beyond 2**53 overflow the int64 datetime math, as for getbizdays counts
+    if isinstance(ref, (int, np.integer)) and abs(int(ref)) <= 2**53:
         return NormalizedRef("year", year=int(ref))
     if isinstance(ref, (float, np.floating)):
-        if np.isfinite(ref) and float(ref).is_integer():
+        if np.isfinite(ref) and float(ref).is_integer() and abs(ref) <= 2**53:
             return NormalizedRef("year", year=int(ref))
         raise ValueError(f"Invalid getdate ref: {ref!r}")
     if isinstance(ref, str):
