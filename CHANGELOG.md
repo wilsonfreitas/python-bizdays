@@ -1,4 +1,4 @@
-### version 1.0.20 (YYYY-MM-DD)
+### version 1.0.20 (2026-11-08)
 
 * B3 calendar extended to 2099-12-31. Holidays up to 2026 are B3's official ones. From 2027 they are projected: ANBIMA holidays, plus December 24, plus the last weekday of the year. Projected years will be replaced when B3 publishes its official calendar (WIL-228).
 
