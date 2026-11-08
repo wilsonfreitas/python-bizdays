@@ -125,7 +125,7 @@ def run_checks(extras: frozenset[str]) -> dict[str, str]:
 def providers_absent() -> list[str]:
     """Problems if a provider is importable, listed as available or loadable in a core install."""
     problems = []
-    listed = list_calendars()
+    listed: dict[str, Any] = dict(list_calendars())
     for extra, (module, name, _expected) in PROVIDERS.items():
         if importlib.util.find_spec(module) is not None:
             problems.append(f"core: {module} is installed")
