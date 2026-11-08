@@ -5,14 +5,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to bizdays’s documentation! &#8212; bizdays 1.0.0 documentation</title>
+    <title>bizdays documentation &#8212; bizdays 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=f6a572b4" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quickstart" href="quick.html" />
@@ -32,7 +34,7 @@
 
 
 
-<p class="blurb">Business Days Calculations and Utilities</p>
+<p class="blurb">Business day calculations with a NumPy-backed Calendar API</p>
 
 
 
@@ -58,10 +60,12 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="calendars.html">Calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendars.html">Creating and loading calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendar-data.html">Calendar data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
 </ul>
 
 <div class="relations">
@@ -88,60 +92,98 @@
 
           <div class="body" role="main">
             
-  <section id="welcome-to-bizdays-s-documentation">
-<h1>Welcome to bizdays’s documentation!<a class="headerlink" href="#welcome-to-bizdays-s-documentation" title="Link to this heading">¶</a></h1>
-<p>In several countries and markets, the accountability of the price of a financial
-instrument, mainly bonds and derivatives, involves the use of different rules to
-compute the way the days go by.
-In Brazil, several financial instruments pay interest according to the business
-days along their life cycle.
-So, having a way to compute the number of business days between 2 dates is
-fairly useful to price financial instruments.
-<strong>bizdays</strong> was created to make it easier.</p>
-<p><strong>bizdays</strong> computes business days between two dates based on the definition of
-nonworking days (usually holidays and weekends).
-It also computes other collateral effects like adjust dates for the next or
-previous business day, check whether a date is a business day, create sequences
-of business days, and much more.</p>
-<p>Several financial libraries compute the holidays, giving no option to users set
-it by their own.
-Furtherly, the financial calendar is usually a small feature of a huge library,
-as quantlib, for example, and some users, including myself, don’t want to put a
-hand in such a huge library only to use the financial calendar.</p>
-<p><strong>bizdays</strong> is a pure Python module without strong dependencies,
-what makes it appropriated for small projects.</p>
+  <section id="bizdays-documentation">
+<h1>bizdays documentation<a class="headerlink" href="#bizdays-documentation" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">bizdays</span></code> provides business-day calculations around a NumPy-backed
+<code class="docutils literal notranslate"><span class="pre">Calendar</span></code> API. The top-level <code class="docutils literal notranslate"><span class="pre">bizdays.Calendar</span></code> accepts scalar dates,
+Python sequences, NumPy arrays, and pandas date-like inputs, while returning
+NumPy scalars or arrays for consistent vectorized behavior.</p>
+<p>This site documents bizdays 2.0:</p>
+<ul class="simple">
+<li><p>build calendars directly with <a class="reference internal" href="api.html#bizdays.Calendar" title="bizdays.Calendar"><code class="xref py py-class docutils literal notranslate"><span class="pre">bizdays.Calendar</span></code></a></p></li>
+<li><p>load packaged calendars with <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=...)</span></code></p></li>
+<li><p>load custom JSON calendar files with <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=...)</span></code></p></li>
+<li><p>work with Python, NumPy, and pandas date-like inputs using the same API</p></li>
+</ul>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading">¶</a></h2>
-<p><strong>bizdays</strong> is avalilable at PyPI, so it is pip instalable:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>bizdays
 </pre></div>
 </div>
-<p>Check out the <a class="reference internal" href="quick.html"><span class="doc">Quickstart</span></a> section for further information.</p>
+<p>bizdays 2.0 runs on Python 3.10 to 3.14. Each optional calendar provider is an
+extra:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bizdays[pmc]"</span><span class="w">    </span><span class="c1"># pandas_market_calendars, names with the PMC/ prefix</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bizdays[xcal]"</span><span class="w">   </span><span class="c1"># exchange_calendars, names with the XCAL/ prefix</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bizdays[work]"</span><span class="w">   </span><span class="c1"># workalendar, names with the WORK/ prefix</span>
+</pre></div>
+</div>
+<p>The notebooks under <code class="docutils literal notranslate"><span class="pre">docs/source/</span></code> are the canonical documentation examples
+and are executed during the Sphinx build.</p>
+</section>
+<section id="documentation-map">
+<h2>Documentation map<a class="headerlink" href="#documentation-map" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="quick.html"><span class="doc">Quickstart</span></a> introduces the core workflow.</p></li>
+<li><p><a class="reference internal" href="calendars.html"><span class="doc">Creating and loading calendars</span></a> shows packaged calendars, constructor-based calendars, and
+JSON calendar files.</p></li>
+<li><p><a class="reference internal" href="calendar-data.html"><span class="doc">Calendar data</span></a> lists every calendar source, its range and how the data is updated.</p></li>
+<li><p><a class="reference internal" href="pandas.html"><span class="doc">pandas examples</span></a> focuses on pandas inputs and NumPy-backed outputs.</p></li>
+<li><p><a class="reference internal" href="getdate.html"><span class="doc">getdate</span></a> documents date-expression lookups.</p></li>
+<li><p><a class="reference internal" href="api.html"><span class="doc">API reference</span></a> is the method-by-method reference.</p></li>
+<li><p><a class="reference internal" href="migration.html"><span class="doc">Migration guide</span></a> is the only page that discusses older documentation patterns.</p></li>
+<li><p>Release notes:
+<a class="reference external" href="https://github.com/wilsonfreitas/python-bizdays/blob/master/CHANGELOG.md">CHANGELOG.md</a>.</p></li>
+</ul>
 </section>
 <section id="contents">
 <h2>Contents<a class="headerlink" href="#contents" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas Integration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pandas.html#Example:-series-of-payments">Example: series of payments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendars.html">Creating and loading calendars</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="calendars.html#Calendars-that-come-with-the-package">Calendars that come with the package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calendars.html#Creating-a-calendar-from-scratch-with-Calendar(...)">Creating a calendar from scratch with <code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="calendars.html#JSON-calendar-layout">JSON calendar layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calendars.html#Optional-calendar-provider-integrations">Optional calendar provider integrations</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="calendars.html">Calendars</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="calendars.html#Calendars-from-file">Calendars from file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="calendars.html#Predefined-Calendars">Predefined Calendars</a></li>
-<li class="toctree-l2"><a class="reference internal" href="calendars.html#Calendars-from-pandas_market_calendars">Calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="calendars.html#Create-your-own-Calendars">Create your own Calendars</a></li>
-<li class="toctree-l2"><a class="reference internal" href="calendars.html#Financial-Calendars">Financial Calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendar-data.html">Calendar data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="calendar-data.html#ranges">Ranges</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calendar-data.html#providers">Providers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calendar-data.html#updating-the-data">Updating the data</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="getdate.html#Using-date-postions-as-a-reference">Using date postions as a reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#inventory">Inventory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#install-and-packaging">Install and packaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#public-names">Public names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#building-and-loading-calendars">Building and loading calendars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#inputs">Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#outputs-and-missing-values">Outputs and missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#vectors-and-calendar-range">Vectors and calendar range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#getdate">getdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#getbizdays">getbizdays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#calendar-data">Calendar data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#new-in-2-0">New in 2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#what-did-not-change">What did not change</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#calendar"><code class="xref py py-class docutils literal notranslate"><span class="pre">Calendar</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#options">options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#public-api">Public API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#output-types">Output types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#missing-values">Missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#vector-arguments">Vector arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#errors">Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#calendar-discovery">Calendar discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#calendar-construction">Calendar construction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#calendar-range">Calendar range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#loading-calendars">Loading calendars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#core-business-day-calculations">Core business-day calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#date-adjustment-methods">Date adjustment methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#date-expression-lookup">Date expression lookup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#business-days-in-a-period">Business days in a period</a></li>
 </ul>
 </li>
 </ul>
@@ -167,7 +209,7 @@ what makes it appropriated for small projects.</p>
       &#169;2026, Wilson Freitas.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

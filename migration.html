@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Migration guide &#8212; bizdays 2.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=f6a572b4" />
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API reference" href="api.html" />
+    <link rel="prev" title="getdate" href="getdate.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">bizdays</a></h1>
+
+
+
+<p class="blurb">Business day calculations with a NumPy-backed Calendar API</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=wilsonfreitas&repo=python-bizdays&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendars.html">Creating and loading calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendar-data.html">Calendar data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Migration guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#inventory">Inventory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-and-packaging">Install and packaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#public-names">Public names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-and-loading-calendars">Building and loading calendars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inputs">Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#outputs-and-missing-values">Outputs and missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vectors-and-calendar-range">Vectors and calendar range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getdate">getdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getbizdays">getbizdays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calendar-data">Calendar data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#new-in-2-0">New in 2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-did-not-change">What did not change</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="getdate.html" title="previous chapter">getdate</a></li>
+      <li>Next: <a href="api.html" title="next chapter">API reference</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="migration-guide">
+<h1>Migration guide<a class="headerlink" href="#migration-guide" title="Link to this heading">¶</a></h1>
+<p>This page lists every change you may need to handle when you move from
+bizdays 1.0.20 (the last 1.x release on PyPI) to bizdays 2.0.</p>
+<p>If you use 1.0.19, the guide applies too: 1.0.19 has the same API as
+1.0.20. The only difference is the B3 data, see <a class="reference internal" href="#migrate-calendar-data"><span class="std std-ref">Calendar data</span></a>.</p>
+<p>Each entry has the same parts:</p>
+<ul class="simple">
+<li><p><strong>v1</strong> says what 1.0.20 did, and <strong>v2</strong> what 2.0 does.</p></li>
+<li><p><strong>Why</strong> gives the reason for the change.</p></li>
+<li><p><strong>Before (1.0.20)</strong> shows old code. <strong>After (2.0)</strong> shows the new code and
+its output. The “After” examples are tested with every release.</p></li>
+<li><p><strong>Migration</strong> says how much work the change needs:</p>
+<ul>
+<li><p><em>mechanical</em>: a search and replace, or a small fixed edit;</p></li>
+<li><p><em>manual</em>: you must read the code around the call and decide;</p></li>
+<li><p><em>no direct replacement</em>: the feature is gone; the entry says what to do
+instead;</p></li>
+<li><p><em>nothing to change</em>: your code still runs, but some results are
+different, so check stored results.</p></li>
+</ul>
+</li>
+</ul>
+<p>The “After” examples use these imports and this calendar:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Calendar</span><span class="p">,</span> <span class="n">DateOutOfRange</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"ANBIMA"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+</pre></div>
+</div>
+<section id="inventory">
+<h2>Inventory<a class="headerlink" href="#inventory" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Change</p></th>
+<th class="head"><p>Migration</p></th>
+<th class="head"><p>Entry</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Python 3.10 or newer; pandas 3 is supported</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-python-and-dependencies"><span class="std std-ref">Python and dependency versions</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code> and other providers are optional extras</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-optional-providers"><span class="std std-ref">Optional calendar providers</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Only <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>, <code class="docutils literal notranslate"><span class="pre">list_calendars</span></code> and <code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> are public</p></td>
+<td><p>no direct replacement</p></td>
+<td><p><a class="reference internal" href="#migrate-removed-top-level-names"><span class="std std-ref">Removed top-level names</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">get_option</span></code>, <code class="docutils literal notranslate"><span class="pre">set_option</span></code> and the pandas and ISO modes are gone</p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-options-and-modes"><span class="std std-ref">Options and modes</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cal.vec</span></code> is gone; every method takes vectors</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-vec-removed"><span class="std std-ref">cal.vec is gone</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> is a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-date-out-of-range"><span class="std std-ref">DateOutOfRange is a ValueError</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code> has new defaults and checks its arguments</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-constructor"><span class="std std-ref">Calendar(...) defaults and checks</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Calendar.load</span></code> takes keyword arguments only</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-load-keyword-only"><span class="std std-ref">Calendar.load takes keywords only</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Text <code class="docutils literal notranslate"><span class="pre">.cal</span></code> files are no longer read</p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-cal-files"><span class="std std-ref">Text .cal files</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Load errors have specific types</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-load-errors"><span class="std std-ref">Load errors</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Date strings must be <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code></p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-strict-date-strings"><span class="std std-ref">Strict date strings</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Sets, generators, <code class="docutils literal notranslate"><span class="pre">range</span></code>, dicts and 2-D inputs are rejected</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-input-containers"><span class="std std-ref">Input containers</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Counts must be whole numbers</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-whole-counts"><span class="std std-ref">Whole-number counts</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Results are NumPy values, not Python values</p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-return-types"><span class="std std-ref">Return types</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Missing values are <code class="docutils literal notranslate"><span class="pre">NaN</span></code>, <code class="docutils literal notranslate"><span class="pre">NaT</span></code> or masked, not <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-missing-values"><span class="std std-ref">Missing values</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Vector lengths must match, or one must be 1</p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-vector-lengths"><span class="std std-ref">Vector lengths</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Dates outside the calendar range raise <code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code></p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-calendar-range"><span class="std std-ref">Calendar range</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">getdate(expr,</span> <span class="pre">year,</span> <span class="pre">month)</span></code> is now <code class="docutils literal notranslate"><span class="pre">getdate(expr,</span> <span class="pre">ref)</span></code></p></td>
+<td><p>mechanical</p></td>
+<td><p><a class="reference internal" href="#migrate-getdate-signature"><span class="std std-ref">getdate(expr, ref)</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">getdate</span></code> expressions follow R bizdays more closely</p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-getdate-grammar"><span class="std std-ref">getdate expressions</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">getdate</span></code> with a year ref gives a different date in one case</p></td>
+<td><p>nothing to change</p></td>
+<td><p><a class="reference internal" href="#migrate-getdate-year-ref"><span class="std std-ref">getdate with a year ref</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">getbizdays</span></code> returns floats and checks its range</p></td>
+<td><p>manual</p></td>
+<td><p><a class="reference internal" href="#migrate-getbizdays"><span class="std std-ref">getbizdays</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Actual has a wider range (B3 already covered 2099 in 1.0.20)</p></td>
+<td><p>nothing to change</p></td>
+<td><p><a class="reference internal" href="#migrate-calendar-data"><span class="std std-ref">Calendar data</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="install-and-packaging">
+<h2>Install and packaging<a class="headerlink" href="#install-and-packaging" title="Link to this heading">¶</a></h2>
+<section id="python-and-dependency-versions">
+<span id="migrate-python-and-dependencies"></span><h3>Python and dependency versions<a class="headerlink" href="#python-and-dependency-versions" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> 1.0.20 needs Python 3.9 or newer, <code class="docutils literal notranslate"><span class="pre">pandas&gt;=2,&lt;3</span></code> and
+<code class="docutils literal notranslate"><span class="pre">pandas-market-calendars&gt;=4,&lt;5</span></code>. NumPy comes in through pandas.</p>
+<p><strong>v2:</strong> 2.0 needs Python 3.10 or newer (tested on 3.10 to 3.14),
+<code class="docutils literal notranslate"><span class="pre">numpy&gt;=1.24</span></code> and <code class="docutils literal notranslate"><span class="pre">pandas&gt;=2</span></code> (pandas 2 and 3 both work).
+<code class="docutils literal notranslate"><span class="pre">pandas-market-calendars</span></code> is no longer required (see
+<a class="reference internal" href="#migrate-optional-providers"><span class="std std-ref">Optional calendar providers</span></a>).</p>
+<p><strong>Why:</strong> Python 3.9 is no longer supported upstream, and users asked for
+pandas 3. bizdays uses NumPy directly, so it names it.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bizdays==1.0.20"</span><span class="w">   </span><span class="c1"># Python 3.9+, pandas 2 only</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bizdays&gt;=2"</span><span class="w">        </span><span class="c1"># Python 3.10+, pandas 2 or 3</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Move to Python 3.10 or newer. If you pinned
+<code class="docutils literal notranslate"><span class="pre">pandas&lt;3</span></code> only for bizdays, you can drop the pin.</p>
+</section>
+<section id="optional-calendar-providers">
+<span id="migrate-optional-providers"></span><h3>Optional calendar providers<a class="headerlink" href="#optional-calendar-providers" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code> was a required dependency, so
+<code class="docutils literal notranslate"><span class="pre">Calendar.load(&quot;PMC/B3&quot;)</span></code> worked after a plain install. There was no
+missing-provider error; a bad <code class="docutils literal notranslate"><span class="pre">PMC/</span></code> name raised the provider’s own
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>.</p>
+<p><strong>v2:</strong> each external provider is an optional extra: <code class="docutils literal notranslate"><span class="pre">pmc</span></code> for
+<code class="docutils literal notranslate"><span class="pre">PMC/&lt;name&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code>), <code class="docutils literal notranslate"><span class="pre">xcal</span></code> for <code class="docutils literal notranslate"><span class="pre">XCAL/&lt;name&gt;</span></code>
+(<code class="docutils literal notranslate"><span class="pre">exchange_calendars</span></code>, new) and <code class="docutils literal notranslate"><span class="pre">work</span></code> for <code class="docutils literal notranslate"><span class="pre">WORK/&lt;code&gt;</span></code>
+(<code class="docutils literal notranslate"><span class="pre">workalendar</span></code>, new). Without the extra, loading such a calendar raises
+<code class="docutils literal notranslate"><span class="pre">ImportError</span></code>, and the message names the extra to install.</p>
+<p><strong>Why:</strong> most users only need the packaged calendars. Big optional packages
+should not be installed for everyone.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pip install bizdays</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Calendar</span>
+
+<span class="n">cal</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"PMC/B3"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pip install "bizdays[pmc]"   (or bizdays[xcal], bizdays[work])</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Calendar</span>
+
+<span class="n">cal</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"PMC/B3"</span><span class="p">)</span>
+<span class="c1"># Without the extra: ImportError ... pip install "bizdays[pmc]"</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Add the extra to your requirements, for example
+<code class="docutils literal notranslate"><span class="pre">bizdays[pmc]</span></code>.</p>
+</section>
+</section>
+<section id="public-names">
+<h2>Public names<a class="headerlink" href="#public-names" title="Link to this heading">¶</a></h2>
+<section id="removed-top-level-names">
+<span id="migrate-removed-top-level-names"></span><h3>Removed top-level names<a class="headerlink" href="#removed-top-level-names" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">bizdays</span></code> exported many helpers at the top level, such as
+<code class="docutils literal notranslate"><span class="pre">load_holidays</span></code>, <code class="docutils literal notranslate"><span class="pre">Date</span></code>, <code class="docutils literal notranslate"><span class="pre">DateIndex</span></code>, <code class="docutils literal notranslate"><span class="pre">VectorizedOps</span></code>, <code class="docutils literal notranslate"><span class="pre">isseq</span></code>,
+<code class="docutils literal notranslate"><span class="pre">isstr</span></code> and <code class="docutils literal notranslate"><span class="pre">options</span></code>.</p>
+<p><strong>v2:</strong> the public names are only <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>, <code class="docutils literal notranslate"><span class="pre">list_calendars</span></code> and
+<code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> (the <code class="docutils literal notranslate"><span class="pre">__all__</span></code> list). Submodules such as
+<code class="docutils literal notranslate"><span class="pre">bizdays.utils</span></code> or <code class="docutils literal notranslate"><span class="pre">bizdays.dateindex</span></code> are internal: they can change in
+any release.</p>
+<p><strong>Why:</strong> a small public surface can be kept stable. The helpers were
+internal tools, not part of a designed API.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span><span class="p">,</span> <span class="n">load_holidays</span>
+
+<span class="n">holidays</span> <span class="o">=</span> <span class="n">load_holidays</span><span class="p">(</span><span class="s2">"ANBIMA.cal"</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">Date</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">bizdays</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">bizdays</span><span class="o">.</span><span class="n">__all__</span><span class="p">)</span>
+<span class="go">['Calendar', 'list_calendars', 'DateOutOfRange']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ImportError</span>: <span class="n">cannot import name 'Date' from 'bizdays'</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> no direct replacement. Pass dates as strings, Python dates,
+NumPy or pandas values. To read a holiday list from a file, see
+<a class="reference internal" href="#migrate-cal-files"><span class="std std-ref">Text .cal files</span></a>.</p>
+</section>
+<section id="options-and-modes">
+<span id="migrate-options-and-modes"></span><h3>Options and modes<a class="headerlink" href="#options-and-modes" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">get_option</span></code> and <code class="docutils literal notranslate"><span class="pre">set_option</span></code> changed the results of every
+calendar. <code class="docutils literal notranslate"><span class="pre">set_option(&quot;mode&quot;,</span> <span class="pre">&quot;pandas&quot;)</span></code> made <code class="docutils literal notranslate"><span class="pre">seq</span></code> return a pandas
+<code class="docutils literal notranslate"><span class="pre">DatetimeIndex</span></code> and made counts object arrays with <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>.
+<code class="docutils literal notranslate"><span class="pre">set_option(&quot;mode.datetype&quot;,</span> <span class="pre">&quot;iso&quot;)</span></code> made dates come back as strings such
+as <code class="docutils literal notranslate"><span class="pre">'2015-12-28'</span></code>.</p>
+<p><strong>v2:</strong> both functions are gone. Results are always NumPy values (see
+<a class="reference internal" href="#migrate-return-types"><span class="std std-ref">Return types</span></a>). pandas inputs are still accepted.</p>
+<p><strong>Why:</strong> a global switch made the same call return different types in
+different parts of a program.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_option</span>
+
+<span class="n">set_option</span><span class="p">(</span><span class="s2">"mode"</span><span class="p">,</span> <span class="s2">"pandas"</span><span class="p">)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="s2">"2014-01-02"</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">)</span>      <span class="c1"># DatetimeIndex</span>
+<span class="n">set_option</span><span class="p">(</span><span class="s2">"mode.datetype"</span><span class="p">,</span> <span class="s2">"iso"</span><span class="p">)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">)</span>              <span class="c1"># '2015-12-28'</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_option</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ImportError</span>: <span class="n">cannot import name 'set_option' from 'bizdays'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-03-01"</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">"2024-06-14"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+<span class="go">{'a': 113.0, 'b': 72.0}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime_as_string</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">)))</span>
+<span class="go">2015-12-28</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">([</span><span class="s2">"2015-12-25"</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+<span class="go">['2015-12-28']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="s2">"2014-01-02"</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">idx</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">)))</span>
+<span class="go">['2014-01-02', '2014-01-03', '2014-01-06', '2014-01-07']</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Remove the <code class="docutils literal notranslate"><span class="pre">set_option</span></code> calls. Where you need
+pandas objects, wrap the result yourself and pass <code class="docutils literal notranslate"><span class="pre">index=</span></code> to keep your
+index. Where you need ISO strings, use <code class="docutils literal notranslate"><span class="pre">np.datetime_as_string(result)</span></code> or
+<code class="docutils literal notranslate"><span class="pre">result.astype(str)</span></code>.</p>
+</section>
+<section id="cal-vec-is-gone">
+<span id="migrate-vec-removed"></span><h3><code class="docutils literal notranslate"><span class="pre">cal.vec</span></code> is gone<a class="headerlink" href="#cal-vec-is-gone" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> vector calls went through <code class="docutils literal notranslate"><span class="pre">cal.vec</span></code>, for example
+<code class="docutils literal notranslate"><span class="pre">cal.vec.adjust_next(dates)</span></code>.</p>
+<p><strong>v2:</strong> <code class="docutils literal notranslate"><span class="pre">cal.vec</span></code> is gone. Every method takes a single value or a vector.</p>
+<p><strong>Why:</strong> two ways to make the same call were not needed.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">list</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">vec</span><span class="o">.</span><span class="n">adjust_next</span><span class="p">([</span><span class="s2">"2015-12-25"</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">([</span><span class="s2">"2015-12-25"</span><span class="p">]))</span>
+<span class="go">['2015-12-28']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">adjust_next</span><span class="p">([</span><span class="s2">"2015-12-25"</span><span class="p">]))</span>
+<span class="go">['2015-12-28']</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Replace <code class="docutils literal notranslate"><span class="pre">.vec.</span></code> with <code class="docutils literal notranslate"><span class="pre">.</span></code>.</p>
+</section>
+<section id="dateoutofrange-is-a-valueerror">
+<span id="migrate-date-out-of-range"></span><h3><code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> is a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code><a class="headerlink" href="#dateoutofrange-is-a-valueerror" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">bizdays</span> <span class="pre">import</span> <span class="pre">DateOutOfRange</span></code> worked, and the class was a
+direct subclass of <code class="docutils literal notranslate"><span class="pre">Exception</span></code>.</p>
+<p><strong>v2:</strong> the class is a subclass of <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, and it is still exported
+at the top level.</p>
+<p><strong>Why:</strong> a date outside the calendar range is a bad input value, so
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is the expected base class.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateOutOfRange</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"1999-01-01"</span><span class="p">,</span> <span class="s2">"2024-01-02"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="o">...</span>                     <span class="c1"># not reached in 1.0.20</span>
+<span class="k">except</span> <span class="n">DateOutOfRange</span><span class="p">:</span>
+    <span class="o">...</span>                     <span class="c1"># reached</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">DateOutOfRange</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"1999-01-01"</span><span class="p">,</span> <span class="s2">"2024-01-02"</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="n">DateOutOfRange</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">"out of range"</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">"bad input"</span><span class="p">)</span>
+<span class="go">out of range</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. If you catch both, put <code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">DateOutOfRange</span></code> before <code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">ValueError</span></code>; otherwise the
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> branch also catches range errors.</p>
+</section>
+</section>
+<section id="building-and-loading-calendars">
+<h2>Building and loading calendars<a class="headerlink" href="#building-and-loading-calendars" title="Link to this heading">¶</a></h2>
+<section id="calendar-defaults-and-checks">
+<span id="migrate-constructor"></span><h3><code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code> defaults and checks<a class="headerlink" href="#calendar-defaults-and-checks" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Calendar().name</span></code> was <code class="docutils literal notranslate"><span class="pre">None</span></code>, so <code class="docutils literal notranslate"><span class="pre">str(Calendar())</span></code> showed <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Calendar(holidays=[...])</span></code> without <code class="docutils literal notranslate"><span class="pre">weekdays</span></code> gave no warning.</p></li>
+<li><p>A calendar built from one holiday and no range worked, with the range
+2024-01-01..2024-01-01.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startdate</span></code> after <code class="docutils literal notranslate"><span class="pre">enddate</span></code> raised <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>.</p></li>
+<li><p>Unknown weekday names raised a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> about a list index; numbers
+such as <code class="docutils literal notranslate"><span class="pre">[5,</span> <span class="pre">6]</span></code> raised <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p></li>
+<li><p>A calendar with every weekday off was built, and its counts were 0.</p></li>
+<li><p>Duplicate weekdays were kept.</p></li>
+<li><p>Holidays outside an explicit <code class="docutils literal notranslate"><span class="pre">startdate..enddate</span></code> were kept.</p></li>
+</ul>
+<p><strong>v2:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Calendar().name</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>. Passing <code class="docutils literal notranslate"><span class="pre">name=None</span></code> still works and
+also gives <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Calendar(holidays=[...])</span></code> without <code class="docutils literal notranslate"><span class="pre">weekdays</span></code> emits a <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code>
+(as R bizdays does). Pass <code class="docutils literal notranslate"><span class="pre">weekdays=[]</span></code> for a calendar without weekend.</p></li>
+<li><p>A calendar without any business day in its range raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>,
+for example one holiday and no range, or every weekday off.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startdate</span></code> after <code class="docutils literal notranslate"><span class="pre">enddate</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p>Weekday names must be English, full (<code class="docutils literal notranslate"><span class="pre">&quot;Saturday&quot;</span></code>) or 3-letter
+(<code class="docutils literal notranslate"><span class="pre">&quot;sat&quot;</span></code>), in any case. Other words and numbers raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p>Duplicate weekdays are removed.</p></li>
+<li><p>Holidays outside an explicit <code class="docutils literal notranslate"><span class="pre">startdate..enddate</span></code> are dropped.</p></li>
+</ul>
+<p><strong>Why:</strong> these setups were mistakes that gave wrong counts later, far from
+the cause. Failing early shows the cause.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>                                   <span class="c1"># None</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">])</span>                 <span class="c1"># range 2024-01-01..2024-01-01</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">startdate</span><span class="o">=</span><span class="s2">"2024-01-10"</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">)</span>   <span class="c1"># KeyError</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Sabado"</span><span class="p">])</span>                     <span class="c1"># ValueError: ... not in list</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>                         <span class="c1"># TypeError</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Saturday"</span><span class="p">,</span> <span class="s2">"saturday"</span><span class="p">])</span><span class="o">.</span><span class="n">weekdays</span>     <span class="c1"># both kept</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">Calendar</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+<span class="go">''</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">two</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="s2">"2024-12-25"</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">caught</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">You provided holidays without set weekdays.</span>
+<span class="go">That setup leads to inconsistencies!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">two</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="s2">"2024-12-25"</span><span class="p">],</span> <span class="n">weekdays</span><span class="o">=</span><span class="p">[])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">caught</span><span class="p">)</span>
+<span class="go">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">],</span> <span class="n">weekdays</span><span class="o">=</span><span class="p">[])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">The calendar has no business days in 2024-01-01..2024-01-01</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="p">(</span><span class="n">startdate</span><span class="o">=</span><span class="s2">"2024-01-10"</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">startdate 2024-01-10 is after enddate 2024-01-01</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Sabado"</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid weekday 'Sabado'; use English names such as 'Saturday' or 'sat'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid weekday 5; use English names such as 'Saturday' or 'sat'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">week</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"mon"</span><span class="p">,</span> <span class="s2">"tue"</span><span class="p">,</span> <span class="s2">"wed"</span><span class="p">,</span> <span class="s2">"thu"</span><span class="p">,</span> <span class="s2">"fri"</span><span class="p">,</span> <span class="s2">"sat"</span><span class="p">,</span> <span class="s2">"sun"</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="n">week</span><span class="p">,</span> <span class="n">startdate</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="s2">"2024-01-10"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">The calendar has no business days in 2024-01-01..2024-01-10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Calendar</span><span class="p">(</span><span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Saturday"</span><span class="p">,</span> <span class="s2">"saturday"</span><span class="p">])</span><span class="o">.</span><span class="n">weekdays</span><span class="p">)</span>
+<span class="go">('Saturday',)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inside</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2023-01-01"</span><span class="p">,</span> <span class="s2">"2024-01-01"</span><span class="p">],</span> <span class="n">weekdays</span><span class="o">=</span><span class="p">[],</span>
+<span class="gp">... </span>    <span class="n">startdate</span><span class="o">=</span><span class="s2">"2023-06-01"</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="s2">"2024-12-31"</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">inside</span><span class="o">.</span><span class="n">holidays</span><span class="p">)</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Use English weekday names, pass <code class="docutils literal notranslate"><span class="pre">weekdays=[]</span></code>
+when you mean “no weekend”, and check that <code class="docutils literal notranslate"><span class="pre">startdate</span></code> comes before
+<code class="docutils literal notranslate"><span class="pre">enddate</span></code>. Code that tests <code class="docutils literal notranslate"><span class="pre">cal.name</span> <span class="pre">is</span> <span class="pre">None</span></code> should test
+<code class="docutils literal notranslate"><span class="pre">not</span> <span class="pre">cal.name</span></code>.</p>
+</section>
+<section id="calendar-load-takes-keywords-only">
+<span id="migrate-load-keyword-only"></span><h3><code class="docutils literal notranslate"><span class="pre">Calendar.load</span></code> takes keywords only<a class="headerlink" href="#calendar-load-takes-keywords-only" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">Calendar.load(&quot;ANBIMA&quot;)</span></code> worked by position, because the first
+parameter was <code class="docutils literal notranslate"><span class="pre">name</span></code>. A file needed <code class="docutils literal notranslate"><span class="pre">filename=</span></code>: a file path passed by
+position raised <code class="docutils literal notranslate"><span class="pre">Exception:</span> <span class="pre">Invalid</span> <span class="pre">calendar</span></code>. If both <code class="docutils literal notranslate"><span class="pre">name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">filename</span></code> were given, <code class="docutils literal notranslate"><span class="pre">filename</span></code> won.</p>
+<p><strong>v2:</strong> use <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=...)</span></code> for packaged and provider calendars,
+and <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=...)</span></code> for your own JSON files. A positional
+argument raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>. Exactly one of the two keywords must be
+given; both, or neither, raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p><strong>Why:</strong> keywords make the call clear, and each call names exactly one
+source, so no argument is silently ignored.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"ANBIMA"</span><span class="p">)</span>
+<span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s2">"custom-calendar.json"</span><span class="p">)</span>
+<span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"B3"</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">"x.json"</span><span class="p">)</span>   <span class="c1"># loads x.json</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"ANBIMA"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="go">ANBIMA</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"ANBIMA"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>: <span class="n">Calendar.load() takes 1 positional argument but 2 were given</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"B3"</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">"x.json"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Provide exactly one of 'name' or 'filename'</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Write <code class="docutils literal notranslate"><span class="pre">name=</span></code> before a calendar name and
+<code class="docutils literal notranslate"><span class="pre">filename=</span></code> before a file path.</p>
+</section>
+<section id="text-cal-files">
+<span id="migrate-cal-files"></span><h3>Text <code class="docutils literal notranslate"><span class="pre">.cal</span></code> files<a class="headerlink" href="#text-cal-files" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=&quot;my.cal&quot;)</span></code> read a text file with one
+holiday (<code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>) or one English weekday name per line. Blank lines
+were skipped.</p>
+<p><strong>v2:</strong> only JSON calendar files are read. A <code class="docutils literal notranslate"><span class="pre">.cal</span></code> file raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> with the text “a JSON calendar is expected” and a link to
+this page.</p>
+<p><strong>Why:</strong> one file format, the same as R bizdays, is easier to keep correct.
+JSON can also hold the name, the range and the <code class="docutils literal notranslate"><span class="pre">financial</span></code> flag.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my.cal:</span>
+<span class="c1">#   2001-01-01</span>
+<span class="c1">#   2001-02-26</span>
+<span class="c1">#   Saturday</span>
+<span class="c1">#   Sunday</span>
+<span class="n">cal</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s2">"my.cal"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After (2.0): a <code class="docutils literal notranslate"><span class="pre">.cal</span></code> file raises an error.</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"old.cal"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">_</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"2001-01-01</span><span class="se">\n</span><span class="s2">Saturday</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid calendar file ...: a JSON calendar is expected. ...</span>
+</pre></div>
+</div>
+<p>Read the <code class="docutils literal notranslate"><span class="pre">.cal</span></code> lines yourself: lines that start with a letter are
+weekdays, the other lines are holidays.</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lines</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="s2">"2001-01-01</span><span class="se">\n</span><span class="s2">2001-02-26</span><span class="se">\n</span><span class="s2">Saturday</span><span class="se">\n</span><span class="s2">Sunday</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">old_weekdays</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">old_holidays</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">old</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="n">old_holidays</span><span class="p">,</span> <span class="n">weekdays</span><span class="o">=</span><span class="n">old_weekdays</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"old"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">weekdays</span><span class="p">)</span>
+<span class="go">('Saturday', 'Sunday')</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">holidays</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<p>To keep a file, write the same lists to a JSON file once, and load it with
+<code class="docutils literal notranslate"><span class="pre">filename=</span></code>:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"old"</span><span class="p">,</span> <span class="s2">"weekdays"</span><span class="p">:</span> <span class="n">old_weekdays</span><span class="p">,</span> <span class="s2">"holidays"</span><span class="p">:</span> <span class="n">old_holidays</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"old.json"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">json_path</span><span class="p">)</span><span class="o">.</span><span class="n">weekdays</span><span class="p">)</span>
+<span class="go">('Saturday', 'Sunday')</span>
+</pre></div>
+</div>
+<p>JSON calendar files use these top-level fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: string</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">weekdays</span></code>: list of English weekday names</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">holidays</span></code>: list of <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code> strings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">financial</span></code>: boolean (default <code class="docutils literal notranslate"><span class="pre">true</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start.date</span></code> and <code class="docutils literal notranslate"><span class="pre">end.date</span></code>: optional <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code> strings for the
+range</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adjust.from</span></code> and <code class="docutils literal notranslate"><span class="pre">adjust.to</span></code>: optional, accepted for compatibility
+with R bizdays (see <a class="reference internal" href="#migrate-load-errors"><span class="std std-ref">Load errors</span></a>)</p></li>
+</ul>
+<p>Minimal example:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Custom"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"weekdays"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"saturday"</span><span class="p">,</span><span class="w"> </span><span class="s2">"sunday"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"holidays"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2024-12-25"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"financial"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Convert each <code class="docutils literal notranslate"><span class="pre">.cal</span></code> file to JSON once, with the
+recipe above, or build the calendar in Python from your own data.</p>
+</section>
+<section id="load-errors">
+<span id="migrate-load-errors"></span><h3>Load errors<a class="headerlink" href="#load-errors" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> an unknown calendar name and a missing file both raised a plain
+<code class="docutils literal notranslate"><span class="pre">Exception:</span> <span class="pre">Invalid</span> <span class="pre">calendar:</span> <span class="pre">...</span></code>.</p>
+<p><strong>v2:</strong></p>
+<ul class="simple">
+<li><p>an unknown name raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, and the message lists the packaged
+calendars;</p></li>
+<li><p>a missing file raises <code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code>;</p></li>
+<li><p>a JSON file with <code class="docutils literal notranslate"><span class="pre">adjust.from</span></code> other than <code class="docutils literal notranslate"><span class="pre">&quot;following&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">adjust.to</span></code> other than <code class="docutils literal notranslate"><span class="pre">&quot;preceding&quot;</span></code>, raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, because
+bizdays always uses these two rules.</p></li>
+</ul>
+<p><strong>Why:</strong> specific error types can be caught on their own.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"B1"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"B1"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Unknown calendar: 'B1'; packaged calendars are ANBIMA, B3, Actual</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"missing.json"</span><span class="p">))</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">FileNotFoundError</span>: <span class="n">Calendar file not found: ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">adjust_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"adjust.json"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">adjust_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"X"</span><span class="p">,</span> <span class="s2">"weekdays"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"holidays"</span><span class="p">:</span> <span class="p">[],</span>
+<span class="gp">... </span>               <span class="s2">"adjust.to"</span><span class="p">:</span> <span class="s2">"following"</span><span class="p">},</span> <span class="n">f</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">adjust_path</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid calendar JSON: 'adjust.to' must be 'preceding', got 'following'</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Catch <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> or <code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code>
+instead of <code class="docutils literal notranslate"><span class="pre">Exception</span></code>.</p>
+</section>
+</section>
+<section id="inputs">
+<h2>Inputs<a class="headerlink" href="#inputs" title="Link to this heading">¶</a></h2>
+<section id="strict-date-strings">
+<span id="migrate-strict-date-strings"></span><h3>Strict date strings<a class="headerlink" href="#strict-date-strings" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> date strings without zero padding, such as <code class="docutils literal notranslate"><span class="pre">&quot;2024-1-2&quot;</span></code>, worked.</p>
+<p><strong>v2:</strong> a date string must be <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>. Other strings raise
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, including <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;NaT&quot;</span></code>. A <code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> with
+unit <code class="docutils literal notranslate"><span class="pre">Y</span></code>, <code class="docutils literal notranslate"><span class="pre">M</span></code> or <code class="docutils literal notranslate"><span class="pre">W</span></code> is not a date and raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. A
+string such as <code class="docutils literal notranslate"><span class="pre">&quot;2024-01&quot;</span></code> was already an error for dates; now it is only
+accepted as a month ref in <code class="docutils literal notranslate"><span class="pre">getdate</span></code>.</p>
+<p><strong>Why:</strong> a loose parser can read a wrong value as a valid date without any
+error.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">"2024-1-2"</span><span class="p">)</span>   <span class="c1"># True</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">"2024-1-2"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt: invalid date string np.str_('2024-1-2'); expected YYYY-MM-DD</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt: invalid date string np.str_(''); expected YYYY-MM-DD</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s2">"2024-01"</span><span class="p">))</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt: numpy.datetime64 with unit 'M' is not a date; use unit 'D' or finer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"2024-1-2"</span><span class="p">,</span> <span class="s2">"2024-1-6"</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">values</span><span class="p">)))</span>
+<span class="go">[True False]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">)))</span>
+<span class="go">[True False]</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Find where your date strings come from. Parse loose
+strings with <code class="docutils literal notranslate"><span class="pre">pd.to_datetime</span></code> and pass the result directly, or format them
+with <code class="docutils literal notranslate"><span class="pre">.strftime(&quot;%Y-%m-%d&quot;)</span></code>.</p>
+</section>
+<section id="input-containers">
+<span id="migrate-input-containers"></span><h3>Input containers<a class="headerlink" href="#input-containers" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> any iterable worked as a vector: <code class="docutils literal notranslate"><span class="pre">cal.isbizday({&quot;2024-01-02&quot;})</span></code>
+gave <code class="docutils literal notranslate"><span class="pre">[True]</span></code>, and generators worked too.</p>
+<p><strong>v2:</strong> vectors are lists, tuples, NumPy arrays and pandas <code class="docutils literal notranslate"><span class="pre">Series</span></code> or
+<code class="docutils literal notranslate"><span class="pre">Index</span></code> objects. Sets, generators, <code class="docutils literal notranslate"><span class="pre">range</span></code> and dicts raise
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. 2-D input, such as a <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> or a list of lists, also
+raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p><strong>Why:</strong> sets and dicts have no fixed order, and a generator can be read
+only once, so results could not be matched to inputs.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">({</span><span class="s2">"2024-01-02"</span><span class="p">})</span>                <span class="c1"># [True]</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"2024-01-02"</span><span class="p">])</span>     <span class="c1"># [True]</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">({</span><span class="s2">"2024-01-02"</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt: set is not a supported sequence; use a list, tuple, NumPy array or pandas Series/Index</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"2024-01-02"</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt: generator is not a supported sequence; ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"day"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-01-06"</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">dt must be 1-D, got a DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"2024-01-02"</span><span class="p">])))</span>
+<span class="go">[True]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"day"</span><span class="p">]))</span>
+<span class="go">[True False]</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Wrap the input in <code class="docutils literal notranslate"><span class="pre">list(...)</span></code>, or pass one
+column (<code class="docutils literal notranslate"><span class="pre">df[&quot;col&quot;]</span></code>) instead of a <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code>.</p>
+</section>
+<section id="whole-number-counts">
+<span id="migrate-whole-counts"></span><h3>Whole-number counts<a class="headerlink" href="#whole-number-counts" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">cal.offset(&quot;2013-01-02&quot;,</span> <span class="pre">True)</span></code> was read as <code class="docutils literal notranslate"><span class="pre">offset(...,</span> <span class="pre">1)</span></code>
+and gave 2013-01-03. <code class="docutils literal notranslate"><span class="pre">cal.offset(&quot;2013-01-02&quot;,</span> <span class="pre">1.5)</span></code> raised
+<code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
+<p><strong>v2:</strong> the count must be a whole number. <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">False</span></code> and <code class="docutils literal notranslate"><span class="pre">1.5</span></code>
+raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Whole floats such as <code class="docutils literal notranslate"><span class="pre">3.0</span></code> now work.</p>
+<p><strong>Why:</strong> a <code class="docutils literal notranslate"><span class="pre">bool</span></code> count is almost always a bug, and whole floats are
+common when counts come from pandas.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2013-01-02"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>   <span class="c1"># datetime.date(2013, 1, 3)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2013-01-02"</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>    <span class="c1"># TypeError</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2013-01-02"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">n must be whole numbers or missing (got True)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2013-01-02"</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">n must be whole numbers or missing (got 1.5)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2013-01-02"</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="go">2013-01-07</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Pass <code class="docutils literal notranslate"><span class="pre">int(n)</span></code>.</p>
+</section>
+</section>
+<section id="outputs-and-missing-values">
+<h2>Outputs and missing values<a class="headerlink" href="#outputs-and-missing-values" title="Link to this heading">¶</a></h2>
+<section id="return-types">
+<span id="migrate-return-types"></span><h3>Return types<a class="headerlink" href="#return-types" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> results were Python values: <code class="docutils literal notranslate"><span class="pre">datetime.date</span></code> for dates, <code class="docutils literal notranslate"><span class="pre">int</span></code>
+for counts, <code class="docutils literal notranslate"><span class="pre">bool</span></code> for flags, and lists for vectors.</p>
+<p><strong>v2:</strong> results are NumPy values:</p>
+<ul class="simple">
+<li><p>dates are <code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> (unit <code class="docutils literal notranslate"><span class="pre">D</span></code>);</p></li>
+<li><p>counts are <code class="docutils literal notranslate"><span class="pre">numpy.float64</span></code>, even when the value is whole;</p></li>
+<li><p>flags are <code class="docutils literal notranslate"><span class="pre">numpy.bool_</span></code>, so <code class="docutils literal notranslate"><span class="pre">cal.isbizday(d)</span> <span class="pre">is</span> <span class="pre">True</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>;</p></li>
+<li><p>vectors are <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (and masked arrays for <code class="docutils literal notranslate"><span class="pre">isbizday</span></code>, see
+<a class="reference internal" href="#migrate-missing-values"><span class="std std-ref">Missing values</span></a>);</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> is not found in a <code class="docutils literal notranslate"><span class="pre">set</span></code> or <code class="docutils literal notranslate"><span class="pre">dict</span></code> of
+<code class="docutils literal notranslate"><span class="pre">datetime.date</span></code> values;</p></li>
+<li><p>a pandas <code class="docutils literal notranslate"><span class="pre">Series</span></code> input does not keep its index in the result.</p></li>
+</ul>
+<p><strong>Why:</strong> NumPy values make vector calls fast, and the same call returns the
+same type for one value and for many.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">)</span>                 <span class="c1"># datetime.date(2015, 12, 28)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-06-14"</span><span class="p">)</span>     <span class="c1"># 113</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>          <span class="c1"># True</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="s2">"2014-01-02"</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">)</span>         <span class="c1"># list of datetime.date</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">))</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="go">'datetime64'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-06-14"</span><span class="p">))</span>
+<span class="go">113.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">)</span> <span class="ow">in</span> <span class="p">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2015</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">28</span><span class="p">)}</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2015-12-25"</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="go">datetime.date(2015, 12, 28)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="s2">"2014-01-02"</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="go">[datetime.date(2014, 1, 2), datetime.date(2014, 1, 3), datetime.date(2014, 1, 6), datetime.date(2014, 1, 7)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"day"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-03-01"</span><span class="p">]},</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"day"</span><span class="p">],</span> <span class="s2">"2024-06-14"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+<span class="go">{10: 113.0, 20: 72.0}</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Use <code class="docutils literal notranslate"><span class="pre">bool(...)</span></code> or <code class="docutils literal notranslate"><span class="pre">==</span></code> instead of <code class="docutils literal notranslate"><span class="pre">is</span> <span class="pre">True</span></code>.
+Use <code class="docutils literal notranslate"><span class="pre">.item()</span></code> for one Python value and <code class="docutils literal notranslate"><span class="pre">.tolist()</span></code> for a list. Use
+<code class="docutils literal notranslate"><span class="pre">int(...)</span></code> or <code class="docutils literal notranslate"><span class="pre">.astype(int)</span></code> where you need integers (drop <code class="docutils literal notranslate"><span class="pre">NaN</span></code>
+first). Assign results to a <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> column, or build a <code class="docutils literal notranslate"><span class="pre">Series</span></code> with
+<code class="docutils literal notranslate"><span class="pre">index=</span></code>; never <code class="docutils literal notranslate"><span class="pre">pd.Series(result)</span></code> alone, which gets a new index.</p>
+</section>
+<section id="missing-values">
+<span id="migrate-missing-values"></span><h3>Missing values<a class="headerlink" href="#missing-values" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> a missing input (<code class="docutils literal notranslate"><span class="pre">None</span></code>) gave <code class="docutils literal notranslate"><span class="pre">None</span></code> inside the result list,
+for example <code class="docutils literal notranslate"><span class="pre">cal.bizdays([&quot;2024-01-02&quot;,</span> <span class="pre">None],</span> <span class="pre">&quot;2024-06-14&quot;)</span></code> gave
+<code class="docutils literal notranslate"><span class="pre">[113,</span> <span class="pre">None]</span></code>. In pandas mode it gave <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>. <code class="docutils literal notranslate"><span class="pre">cal.seq(None,</span> <span class="pre">...)</span></code>
+raised <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
+<p><strong>v2:</strong></p>
+<ul class="simple">
+<li><p>counts use <code class="docutils literal notranslate"><span class="pre">NaN</span></code>;</p></li>
+<li><p>dates use <code class="docutils literal notranslate"><span class="pre">NaT</span></code> (not a time);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">isbizday</span></code> with a vector always returns a <code class="docutils literal notranslate"><span class="pre">numpy.ma.MaskedArray</span></code>,
+with missing entries masked; a missing scalar gives <code class="docutils literal notranslate"><span class="pre">numpy.ma.masked</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">diff</span></code> gives <code class="docutils literal notranslate"><span class="pre">NaN</span></code> for each step that touches a missing date;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seq</span></code> with a missing end raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+</ul>
+<p><strong>Why:</strong> <code class="docutils literal notranslate"><span class="pre">None</span></code> inside a list forces Python objects; <code class="docutils literal notranslate"><span class="pre">NaN</span></code>, <code class="docutils literal notranslate"><span class="pre">NaT</span></code> and
+masks keep NumPy arrays fast and typed.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">"2024-06-14"</span><span class="p">)</span>   <span class="c1"># [113, None]</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span>                <span class="c1"># [True, None]</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">)</span>                       <span class="c1"># TypeError</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">"2024-06-14"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+<span class="go">[113.  nan]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">counts</span><span class="p">))</span>
+<span class="go">[False  True]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">counts</span><span class="p">)]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+<span class="go">[113]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">flags</span> <span class="o">=</span> <span class="n">cal</span><span class="o">.</span><span class="n">isbizday</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+<span class="go">[True --]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="go">'MaskedArray'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">flags</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+<span class="go">[False  True]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">flags</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+<span class="go">[ True False]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnat</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">([</span><span class="s2">"2015-12-25"</span><span class="p">,</span> <span class="kc">None</span><span class="p">])))</span>
+<span class="go">[False  True]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">diff</span><span class="p">([</span><span class="s2">"2014-01-02"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"2014-01-10"</span><span class="p">]))</span>
+<span class="go">[nan nan]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"2014-01-07"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">seq endpoints cannot be missing</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Replace <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">is</span> <span class="pre">None</span></code> checks with <code class="docutils literal notranslate"><span class="pre">np.isnan</span></code> for
+counts, <code class="docutils literal notranslate"><span class="pre">np.isnat</span></code> for dates and <code class="docutils literal notranslate"><span class="pre">.mask</span></code> for flags. Use
+<code class="docutils literal notranslate"><span class="pre">.filled(False)</span></code> to turn a masked flag array into a plain <code class="docutils literal notranslate"><span class="pre">bool</span></code> array.
+Drop <code class="docutils literal notranslate"><span class="pre">NaN</span></code> before <code class="docutils literal notranslate"><span class="pre">.astype(int)</span></code>.</p>
+</section>
+</section>
+<section id="vectors-and-calendar-range">
+<h2>Vectors and calendar range<a class="headerlink" href="#vectors-and-calendar-range" title="Link to this heading">¶</a></h2>
+<section id="vector-lengths">
+<span id="migrate-vector-lengths"></span><h3>Vector lengths<a class="headerlink" href="#vector-lengths" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">bizdays</span></code> recycled a shorter vector when its length divided the
+longer one (lengths 2 and 4 gave 4 results), and raised a plain
+<code class="docutils literal notranslate"><span class="pre">Exception</span></code> otherwise (lengths 2 and 3). <code class="docutils literal notranslate"><span class="pre">offset</span></code>, <code class="docutils literal notranslate"><span class="pre">getdate</span></code> and
+<code class="docutils literal notranslate"><span class="pre">getbizdays</span></code> recycled any lengths silently (lengths 3 and 2 gave 3
+results). An empty vector raised <code class="docutils literal notranslate"><span class="pre">ZeroDivisionError</span></code>.</p>
+<p><strong>v2:</strong> two vector arguments must have equal lengths, or one of them must
+have length 1. Any other combination raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. An empty
+argument gives an empty array when the other argument is empty or has
+length 1.</p>
+<p><strong>Why:</strong> silent recycling hid bugs where two columns were not aligned.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-01-03"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"2024-02-01"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># [22, 21, 22, 21]</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-01-03"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"2024-02-01"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># Exception</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([],</span> <span class="s2">"2024-01-02"</span><span class="p">)</span>                                   <span class="c1"># ZeroDivisionError</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-01-03"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"2024-02-01"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">date_from has length 2 and date_to has length 4; ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-01-03"</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span> <span class="p">[</span><span class="s2">"2024-02-01"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">[22. 21. 22. 21.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">([],</span> <span class="s2">"2024-01-02"</span><span class="p">))</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Pass equal lengths, or repeat the shorter input
+with <code class="docutils literal notranslate"><span class="pre">np.tile</span></code> or <code class="docutils literal notranslate"><span class="pre">np.repeat</span></code>.</p>
+</section>
+<section id="calendar-range">
+<span id="migrate-calendar-range"></span><h3>Calendar range<a class="headerlink" href="#calendar-range" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> some calls past the calendar ends wrapped around. On ANBIMA (range
+2000-01-01..2099-12-25), <code class="docutils literal notranslate"><span class="pre">offset(&quot;2000-01-03&quot;,</span> <span class="pre">-3)</span></code> returned 2099-12-22.</p>
+<p><strong>v2:</strong> any input or result outside <code class="docutils literal notranslate"><span class="pre">startdate..enddate</span></code> raises
+<a class="reference internal" href="api.html#bizdays.DateOutOfRange" title="bizdays.DateOutOfRange"><code class="xref py py-class docutils literal notranslate"><span class="pre">bizdays.DateOutOfRange</span></code></a>. There are no partial results: one bad
+element fails the whole call, and the error’s <code class="docutils literal notranslate"><span class="pre">positions</span></code> attribute lists
+every bad element. For <code class="docutils literal notranslate"><span class="pre">getdate</span></code> and <code class="docutils literal notranslate"><span class="pre">getbizdays</span></code> the whole period
+(month or year) must be inside the range, so
+<code class="docutils literal notranslate"><span class="pre">getdate(&quot;last</span> <span class="pre">bizday&quot;,</span> <span class="pre">&quot;2099-12&quot;)</span></code> on ANBIMA raises. Use
+<a class="reference internal" href="api.html#bizdays.Calendar.inrange" title="bizdays.Calendar.inrange"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bizdays.Calendar.inrange()</span></code></a> to check input dates before a call.</p>
+<p><strong>Why:</strong> a wrapped date is a wrong answer that looks right.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2000-01-03"</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>   <span class="c1"># datetime.date(2099, 12, 22)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="s2">"2000-01-03"</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">DateOutOfRange</span>: <span class="n">1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">cal</span><span class="o">.</span><span class="n">offset</span><span class="p">([</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2099-12-24"</span><span class="p">],</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="n">DateOutOfRange</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+<span class="go">[1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">inrange</span><span class="p">([</span><span class="s2">"1999-01-01"</span><span class="p">,</span> <span class="s2">"2024-01-02"</span><span class="p">]))</span>
+<span class="go">[False True]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="s2">"2099-12"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">DateOutOfRange</span>: <span class="n">1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Filter inputs with <code class="docutils literal notranslate"><span class="pre">inrange</span></code> before the call, or
+catch <code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> and use <code class="docutils literal notranslate"><span class="pre">positions</span></code>. Code that needs partial
+results has no direct replacement yet; <code class="docutils literal notranslate"><span class="pre">errors=&quot;coerce&quot;</span></code> is planned for
+2.1.</p>
+</section>
+</section>
+<section id="getdate">
+<h2>getdate<a class="headerlink" href="#getdate" title="Link to this heading">¶</a></h2>
+<section id="getdate-expr-ref">
+<span id="migrate-getdate-signature"></span><h3><code class="docutils literal notranslate"><span class="pre">getdate(expr,</span> <span class="pre">ref)</span></code><a class="headerlink" href="#getdate-expr-ref" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">getdate(expr,</span> <span class="pre">year,</span> <span class="pre">month=None)</span></code>, for example
+<code class="docutils literal notranslate"><span class="pre">cal.getdate(&quot;last</span> <span class="pre">bizday&quot;,</span> <span class="pre">2024,</span> <span class="pre">2)</span></code> gave 2024-02-29.</p>
+<p><strong>v2:</strong> <code class="docutils literal notranslate"><span class="pre">getdate(expr,</span> <span class="pre">ref)</span></code>. The ref is a year (<code class="docutils literal notranslate"><span class="pre">2024</span></code>), a month
+(<code class="docutils literal notranslate"><span class="pre">&quot;2024-02&quot;</span></code> or a <code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> with unit <code class="docutils literal notranslate"><span class="pre">M</span></code>) or a date. The
+old call with three arguments raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
+<p><strong>Why:</strong> one ref argument, as in R bizdays, also allows date refs and
+vectors of refs.</p>
+<p><strong>Day refs are not month refs.</strong> A <code class="docutils literal notranslate"><span class="pre">pd.Timestamp</span></code>, a <code class="docutils literal notranslate"><span class="pre">datetime.date</span></code> or
+a <code class="docutils literal notranslate"><span class="pre">&quot;YYYY-MM-DD&quot;</span></code> string is a date ref, even on the first day of a month.
+<code class="docutils literal notranslate"><span class="pre">&quot;last</span> <span class="pre">bizday&quot;</span></code> with a date ref is the business day before that date. To
+get the last business day of a month from dates, convert them to months
+with <code class="docutils literal notranslate"><span class="pre">.astype(&quot;datetime64[M]&quot;)</span></code>.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>    <span class="c1"># datetime.date(2024, 2, 29)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">year</span><span class="p">,</span> <span class="n">month</span> <span class="o">=</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">month</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+<span class="go">2024-02-29</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>: <span class="n">Calendar.getdate() takes 3 positional arguments but 4 were given</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s2">"2024-02-01"</span><span class="p">)))</span>
+<span class="go">2024-01-31</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s2">"2024-02"</span><span class="p">)))</span>
+<span class="go">2024-02-29</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">days</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">([</span><span class="s2">"2024-02-01"</span><span class="p">,</span> <span class="s2">"2024-03-15"</span><span class="p">])</span><span class="o">.</span><span class="n">values</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"last bizday"</span><span class="p">,</span> <span class="n">days</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"datetime64[M]"</span><span class="p">)))</span>
+<span class="go">['2024-02-29' '2024-03-28']</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> mechanical. Replace <code class="docutils literal notranslate"><span class="pre">year,</span> <span class="pre">month</span></code> with
+<code class="docutils literal notranslate"><span class="pre">f&quot;{year}-{month:02d}&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">year</span></code> alone with <code class="docutils literal notranslate"><span class="pre">year</span></code>. If your refs are
+dates, convert them with <code class="docutils literal notranslate"><span class="pre">.astype(&quot;datetime64[M]&quot;)</span></code> when you mean the
+month.</p>
+</section>
+<section id="getdate-expressions">
+<span id="migrate-getdate-grammar"></span><h3><code class="docutils literal notranslate"><span class="pre">getdate</span></code> expressions<a class="headerlink" href="#getdate-expressions" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong></p>
+<ul class="simple">
+<li><p>ordinals with a wrong suffix worked: <code class="docutils literal notranslate"><span class="pre">&quot;2st</span> <span class="pre">bizday&quot;</span></code> was the 2nd
+business day;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">previous</span></code> was not supported: every <code class="docutils literal notranslate"><span class="pre">previous</span> <span class="pre">...</span></code> expression raised
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">next</span> <span class="pre">&lt;weekday&gt;</span></code> with a year or month ref raised <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>;</p></li>
+<li><p>only year and month refs existed;</p></li>
+<li><p>all refs in one vector call could mix any kind.</p></li>
+</ul>
+<p><strong>v2:</strong></p>
+<ul class="simple">
+<li><p>ordinals need the right English suffix: <code class="docutils literal notranslate"><span class="pre">1st</span></code>, <code class="docutils literal notranslate"><span class="pre">2nd</span></code>, <code class="docutils literal notranslate"><span class="pre">3rd</span></code>,
+<code class="docutils literal notranslate"><span class="pre">4th</span></code>, <code class="docutils literal notranslate"><span class="pre">11th</span></code>, <code class="docutils literal notranslate"><span class="pre">21st</span></code>; <code class="docutils literal notranslate"><span class="pre">2st</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">previous</span> <span class="pre">&lt;weekday&gt;</span></code> is new and needs a date ref; <code class="docutils literal notranslate"><span class="pre">previous</span> <span class="pre">bizday</span></code>
+and <code class="docutils literal notranslate"><span class="pre">previous</span> <span class="pre">day</span></code> still raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">next</span> <span class="pre">&lt;weekday&gt;</span></code> (and <code class="docutils literal notranslate"><span class="pre">next</span> <span class="pre">day</span></code>, <code class="docutils literal notranslate"><span class="pre">next</span> <span class="pre">bizday</span></code>) with a year or
+month ref is the first one in the period;</p></li>
+<li><p>date refs accept the forms of R bizdays: <code class="docutils literal notranslate"><span class="pre">&lt;n&gt;</span> <span class="pre">day</span></code> is the date plus
+<code class="docutils literal notranslate"><span class="pre">n</span></code> days, <code class="docutils literal notranslate"><span class="pre">last</span> <span class="pre">day</span></code> the day before, <code class="docutils literal notranslate"><span class="pre">&lt;n&gt;</span> <span class="pre">bizday</span></code> is
+<code class="docutils literal notranslate"><span class="pre">offset(date,</span> <span class="pre">n)</span></code>, <code class="docutils literal notranslate"><span class="pre">last</span> <span class="pre">bizday</span></code> is <code class="docutils literal notranslate"><span class="pre">offset(date,</span> <span class="pre">-1)</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">next</span></code>/<code class="docutils literal notranslate"><span class="pre">last</span> <span class="pre">&lt;weekday&gt;</span></code> the next or previous one;</p></li>
+<li><p>expressions with <code class="docutils literal notranslate"><span class="pre">before</span></code> or <code class="docutils literal notranslate"><span class="pre">after</span></code> need a year or month ref;</p></li>
+<li><p>all refs in one call must be of one kind (year, month or date).</p></li>
+<li><p>weekday words must be full or 3-letter English names (<code class="docutils literal notranslate"><span class="pre">tues</span></code> raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, as in 1.0.20).</p></li>
+</ul>
+<p><strong>Why:</strong> the grammar now follows R bizdays, the reference implementation.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"2st bizday"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># datetime.date(2024, 1, 3)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"next wed"</span><span class="p">,</span> <span class="mi">2002</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>      <span class="c1"># ValueError</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"2st bizday"</span><span class="p">,</span> <span class="s2">"2024-01"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid ordinal in getdate expression: 2st (use 2nd)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"2nd bizday"</span><span class="p">,</span> <span class="s2">"2024-01"</span><span class="p">))</span>
+<span class="go">2024-01-03</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"first tues"</span><span class="p">,</span> <span class="s2">"2024-01"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Invalid day token in getdate expression: tues</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"previous bizday"</span><span class="p">,</span> <span class="s2">"2024-01"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">previous expressions require a weekday target</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"next wed"</span><span class="p">,</span> <span class="s2">"2002-01"</span><span class="p">))</span>
+<span class="go">2002-01-02</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"next bizday"</span><span class="p">,</span> <span class="s2">"2022-06-18"</span><span class="p">))</span>
+<span class="go">2022-06-20</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"first bizday before first day"</span><span class="p">,</span> <span class="s2">"2024-01-10"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Composite getdate expressions need a year or month ref, ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">([</span><span class="s2">"first day"</span><span class="p">,</span> <span class="s2">"next wed"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"2002-01"</span><span class="p">,</span> <span class="s2">"2021-02-10"</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">getdate refs must all be of one kind (year, month or date); found: date, month</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">([</span><span class="s2">"first bizday"</span><span class="p">,</span> <span class="s2">"last bizday"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"2024-01"</span><span class="p">,</span> <span class="s2">"2024-02"</span><span class="p">]))</span>
+<span class="go">['2024-01-02' '2024-02-29']</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Fix ordinal suffixes and split calls that mix ref
+kinds.</p>
+</section>
+<section id="getdate-with-a-year-ref">
+<span id="migrate-getdate-year-ref"></span><h3><code class="docutils literal notranslate"><span class="pre">getdate</span></code> with a year ref<a class="headerlink" href="#getdate-with-a-year-ref" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">cal.getdate(&quot;first</span> <span class="pre">bizday</span> <span class="pre">before</span> <span class="pre">first</span> <span class="pre">day&quot;,</span> <span class="pre">2024)</span></code> gave
+2024-01-02. This was a bug: the business day before 1 January is in the
+year before.</p>
+<p><strong>v2:</strong> the same call gives 2023-12-29, the business day before
+1 January.</p>
+<p><strong>Why:</strong> the old result was wrong.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"first bizday before first day"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">)</span>   <span class="c1"># datetime.date(2024, 1, 2)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getdate</span><span class="p">(</span><span class="s2">"first bizday before first day"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">))</span>
+<span class="go">2023-12-29</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> nothing to change. The call still runs, but check results
+that you stored with 1.0.20.</p>
+</section>
+</section>
+<section id="getbizdays">
+<h2>getbizdays<a class="headerlink" href="#getbizdays" title="Link to this heading">¶</a></h2>
+<section id="migrate-getbizdays">
+<span id="id1"></span><h3><code class="docutils literal notranslate"><span class="pre">getbizdays</span></code><a class="headerlink" href="#migrate-getbizdays" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> <code class="docutils literal notranslate"><span class="pre">getbizdays(year,</span> <span class="pre">month=None)</span></code> returned an <code class="docutils literal notranslate"><span class="pre">int</span></code> (or a list of
+<code class="docutils literal notranslate"><span class="pre">int</span></code>). A period that went past the calendar end gave a partial count: on
+ANBIMA, <code class="docutils literal notranslate"><span class="pre">getbizdays(2099)</span></code> gave 245. <code class="docutils literal notranslate"><span class="pre">getbizdays(year,</span> <span class="pre">0)</span></code> meant the
+whole year.</p>
+<p><strong>v2:</strong></p>
+<ul class="simple">
+<li><p>results are <code class="docutils literal notranslate"><span class="pre">float64</span></code> (<code class="docutils literal notranslate"><span class="pre">NaN</span></code> where <code class="docutils literal notranslate"><span class="pre">year</span></code> or <code class="docutils literal notranslate"><span class="pre">month</span></code> is missing);</p></li>
+<li><p>the whole period must lie inside the calendar range, or
+<code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> is raised;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">month</span></code> must be between 1 and 12; <code class="docutils literal notranslate"><span class="pre">0</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> (leave
+<code class="docutils literal notranslate"><span class="pre">month</span></code> out, or pass <code class="docutils literal notranslate"><span class="pre">month=None</span></code>, for the whole year);</p></li>
+<li><p>vectors follow the length rules of <a class="reference internal" href="#migrate-vector-lengths"><span class="std std-ref">Vector lengths</span></a>.</p></li>
+</ul>
+<p><strong>Why:</strong> a partial count looks like a full one, and <code class="docutils literal notranslate"><span class="pre">0</span></code> is not a month.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2024</span><span class="p">)</span>            <span class="c1"># 253</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2099</span><span class="p">)</span>            <span class="c1"># 245 (partial)</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>         <span class="c1"># 253</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">([</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">2024</span><span class="p">])</span>    <span class="c1"># [249, 253]</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2024</span><span class="p">))</span>
+<span class="go">253.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+<span class="go">21.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2099</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">DateOutOfRange</span>: <span class="n">1 of 1 elements out of calendar range 2000-01-01..2099-12-25; ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">month must be between 1 and 12 (got 0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">getbizdays</span><span class="p">([</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">2024</span><span class="p">]))</span>
+<span class="go">[249. 253.]</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> manual. Replace <code class="docutils literal notranslate"><span class="pre">month=0</span></code> with no month, use <code class="docutils literal notranslate"><span class="pre">int(...)</span></code>
+where you need integers, and check periods near the calendar ends.</p>
+</section>
+</section>
+<section id="calendar-data">
+<h2>Calendar data<a class="headerlink" href="#calendar-data" title="Link to this heading">¶</a></h2>
+<section id="migrate-calendar-data">
+<span id="id2"></span><h3>Calendar data<a class="headerlink" href="#migrate-calendar-data" title="Link to this heading">¶</a></h3>
+<p><strong>v1:</strong> in 1.0.20 the B3 calendar runs to 2099-12-31: official up to 2026,
+projected from 2027. In 1.0.19 it ended on 2026-12-31, so
+<code class="docutils literal notranslate"><span class="pre">Calendar.load(&quot;B3&quot;).bizdays(&quot;2026-12-01&quot;,</span> <span class="pre">&quot;2027-01-10&quot;)</span></code> raised
+<code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code>. The Actual calendar covered 1970-01-01..2071-01-01.</p>
+<p><strong>v2:</strong> B3 has the same data as in 1.0.20: official for 2000-2026, and
+projected for 2027-2099 (ANBIMA holidays, plus December 24, plus the last
+weekday of the year). Actual
+covers 1900-01-01..2199-12-31. The range of <code class="docutils literal notranslate"><span class="pre">Calendar()</span></code> without holidays
+or dates does not change (1970-01-01..2071-01-01). See <a class="reference internal" href="calendar-data.html"><span class="doc">Calendar data</span></a>
+for every range and the update policy.</p>
+<p><strong>Why:</strong> a calendar that ends soon breaks long-dated contracts.</p>
+<p>Before (1.0.20):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">b3</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"B3"</span><span class="p">)</span>
+<span class="n">b3</span><span class="o">.</span><span class="n">enddate</span>                                  <span class="c1"># datetime.date(2099, 12, 31); 2026-12-31 in 1.0.19</span>
+<span class="n">b3</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"2026-12-01"</span><span class="p">,</span> <span class="s2">"2027-01-10"</span><span class="p">)</span>      <span class="c1"># 24; DateOutOfRange in 1.0.19</span>
+<span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"Actual"</span><span class="p">)</span><span class="o">.</span><span class="n">enddate</span>             <span class="c1"># datetime.date(2071, 1, 1)</span>
+</pre></div>
+</div>
+<p>After (2.0):</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b3</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"B3"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b3</span><span class="o">.</span><span class="n">enddate</span><span class="p">)</span>
+<span class="go">2099-12-31</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b3</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"2026-12-01"</span><span class="p">,</span> <span class="s2">"2027-01-10"</span><span class="p">))</span>
+<span class="go">24.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">actual</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Actual"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">startdate</span><span class="p">,</span> <span class="n">actual</span><span class="o">.</span><span class="n">enddate</span><span class="p">)</span>
+<span class="go">1900-01-01 2199-12-31</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Calendar</span><span class="p">()</span><span class="o">.</span><span class="n">startdate</span><span class="p">,</span> <span class="n">Calendar</span><span class="p">()</span><span class="o">.</span><span class="n">enddate</span><span class="p">)</span>
+<span class="go">1970-01-01 2071-01-01</span>
+</pre></div>
+</div>
+<p><strong>Migration:</strong> nothing to change. Calls that raised <code class="docutils literal notranslate"><span class="pre">DateOutOfRange</span></code> in
+1.0.19, or on the Actual calendar after 2071, now work. Projected B3
+years can change when B3 publishes its official calendar.</p>
+</section>
+</section>
+<section id="new-in-2-0">
+<h2>New in 2.0<a class="headerlink" href="#new-in-2-0" title="Link to this heading">¶</a></h2>
+<p>These are new features, not breaking changes. See <a class="reference internal" href="api.html"><span class="doc">API reference</span></a> for details.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api.html#bizdays.list_calendars" title="bizdays.list_calendars"><code class="xref py py-func docutils literal notranslate"><span class="pre">bizdays.list_calendars()</span></code></a> lists the packaged and provider calendars.</p></li>
+<li><p><a class="reference internal" href="api.html#bizdays.Calendar.inrange" title="bizdays.Calendar.inrange"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bizdays.Calendar.inrange()</span></code></a> tells which dates are inside the
+calendar range.</p></li>
+<li><p><a class="reference internal" href="api.html#bizdays.DateOutOfRange" title="bizdays.DateOutOfRange"><code class="xref py py-class docutils literal notranslate"><span class="pre">bizdays.DateOutOfRange</span></code></a> has a <code class="docutils literal notranslate"><span class="pre">positions</span></code> attribute.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> values and pandas <code class="docutils literal notranslate"><span class="pre">Timestamp</span></code>, <code class="docutils literal notranslate"><span class="pre">Series</span></code> and
+<code class="docutils literal notranslate"><span class="pre">DatetimeIndex</span></code> inputs work everywhere (1.0.20 rejected
+<code class="docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> with a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">XCAL/&lt;name&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">WORK/&lt;code&gt;</span></code> calendar providers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">getdate</span></code> date refs and vectors of expressions and refs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">getdate</span></code> <code class="docutils literal notranslate"><span class="pre">previous</span> <span class="pre">&lt;weekday&gt;</span></code> with a date ref.</p></li>
+<li><p>Empty inputs give empty results (1.0.20 raised <code class="docutils literal notranslate"><span class="pre">ZeroDivisionError</span></code>).</p></li>
+</ul>
+</section>
+<section id="what-did-not-change">
+<h2>What did not change<a class="headerlink" href="#what-did-not-change" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Method names, and both alias pairs: <code class="docutils literal notranslate"><span class="pre">following</span></code> / <code class="docutils literal notranslate"><span class="pre">adjust_next</span></code> and
+<code class="docutils literal notranslate"><span class="pre">preceding</span></code> / <code class="docutils literal notranslate"><span class="pre">adjust_previous</span></code>.</p></li>
+<li><p>Property types: <code class="docutils literal notranslate"><span class="pre">holidays</span></code>, <code class="docutils literal notranslate"><span class="pre">startdate</span></code> and <code class="docutils literal notranslate"><span class="pre">enddate</span></code> are still
+Python <code class="docutils literal notranslate"><span class="pre">datetime.date</span></code> values.</p></li>
+<li><p>Counting rules, including ends that are not business days
+(<code class="docutils literal notranslate"><span class="pre">bizdays(a,</span> <span class="pre">b)</span> <span class="pre">==</span> <span class="pre">bizdays(following(a),</span> <span class="pre">preceding(b))</span></code>) and
+<code class="docutils literal notranslate"><span class="pre">financial=False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">offset(d,</span> <span class="pre">0)</span></code> returns <code class="docutils literal notranslate"><span class="pre">d</span></code> unchanged, even when <code class="docutils literal notranslate"><span class="pre">d</span></code> is a holiday.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seq</span></code> with the start after the end gives a descending sequence.</p></li>
+<li><p>Time-zone-aware values use the wall-clock date: 2024-01-06 23:00 at
+-03:00 is 2024-01-06.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seq</span></code> with a vector raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">getdate</span></code> with an unknown weekday word, such as <code class="docutils literal notranslate"><span class="pre">tues</span></code>, <code class="docutils literal notranslate"><span class="pre">wedn</span></code> or
+<code class="docutils literal notranslate"><span class="pre">monkey</span></code>, raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p>ANBIMA and B3 holidays are the same as in 1.0.20 (and, up to 2026, the
+same as in 1.0.19).</p></li>
+</ul>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">,</span> <span class="s2">"2024-06-15"</span><span class="p">),</span>
+<span class="gp">... </span>      <span class="n">cal</span><span class="o">.</span><span class="n">bizdays</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">following</span><span class="p">(</span><span class="s2">"2024-01-02"</span><span class="p">),</span> <span class="n">cal</span><span class="o">.</span><span class="n">preceding</span><span class="p">(</span><span class="s2">"2024-06-15"</span><span class="p">)))</span>
+<span class="go">113.0 113.0</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2026, Wilson Freitas.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/migration.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

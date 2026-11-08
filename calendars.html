@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Calendars &#8212; bizdays 1.0.0 documentation</title>
+    <title>Creating and loading calendars &#8212; bizdays 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=f6a572b4" />
     <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -18,8 +18,8 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="getdate" href="getdate.html" />
-    <link rel="prev" title="pandas Integration" href="pandas.html" />
+    <link rel="next" title="Calendar data" href="calendar-data.html" />
+    <link rel="prev" title="pandas examples" href="pandas.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -36,7 +36,7 @@
 
 
 
-<p class="blurb">Business Days Calculations and Utilities</p>
+<p class="blurb">Business day calculations with a NumPy-backed Calendar API</p>
 
 
 
@@ -62,25 +62,26 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas Integration</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Calendars</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#Calendars-from-file">Calendars from file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Predefined-Calendars">Predefined Calendars</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Calendars-from-pandas_market_calendars">Calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Create-your-own-Calendars">Create your own Calendars</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Financial-Calendars">Financial Calendars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">pandas examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Creating and loading calendars</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Calendars-that-come-with-the-package">Calendars that come with the package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Creating-a-calendar-from-scratch-with-Calendar(...)">Creating a calendar from scratch with <code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#JSON-calendar-layout">JSON calendar layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Optional-calendar-provider-integrations">Optional calendar provider integrations</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="calendar-data.html">Calendar data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getdate.html">getdate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="pandas.html" title="previous chapter">pandas Integration</a></li>
-      <li>Next: <a href="getdate.html" title="next chapter">getdate</a></li>
+      <li>Previous: <a href="pandas.html" title="previous chapter">pandas examples</a></li>
+      <li>Next: <a href="calendar-data.html" title="next chapter">Calendar data</a></li>
   </ul></li>
 </ul>
 </div>
@@ -100,46 +101,46 @@
 
           <div class="body" role="main">
             
-  <section id="Calendars">
-<h1>Calendars<a class="headerlink" href="#Calendars" title="Link to this heading">¶</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be built in three ways:</p>
+  <section id="Creating-and-loading-calendars">
+<h1>Creating and loading calendars<a class="headerlink" href="#Creating-and-loading-calendars" title="Link to this heading">¶</a></h1>
+<p>There are two main ways to work with calendars:</p>
+<ol class="arabic simple">
+<li><p>construct a <code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code> directly from holidays and nonworking weekdays</p></li>
+<li><p>load a calendar with <code class="docutils literal notranslate"><span class="pre">Calendar.load(...)</span></code></p></li>
+</ol>
+<p>Use the constructor when your application already owns the holiday data. Use <code class="docutils literal notranslate"><span class="pre">load</span></code> when you want packaged calendars or a JSON file.</p>
+<section id="Calendars-that-come-with-the-package">
+<h2>Calendars that come with the package<a class="headerlink" href="#Calendars-that-come-with-the-package" title="Link to this heading">¶</a></h2>
+<p>The package ships with these calendar names:</p>
 <ul class="simple">
-<li><p>using the constructor <code class="docutils literal notranslate"><span class="pre">Calendar</span></code> passing the arguments</p></li>
-<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;&lt;calendar</span> <span class="pre">name&gt;&quot;)</span></code> passing the name of a calendar delivered with the package (<code class="docutils literal notranslate"><span class="pre">B3</span></code>, <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>, <code class="docutils literal notranslate"><span class="pre">Actual</span></code>) or calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendar</span></code> package</p></li>
-<li><p>with the <code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=&quot;&lt;calendar</span> <span class="pre">filename&gt;&quot;)</span></code> passing a file that describes a valid calendar</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">B3</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Actual</span></code></p></li>
 </ul>
-<section id="Calendars-from-file">
-<h2>Calendars from file<a class="headerlink" href="#Calendars-from-file" title="Link to this heading">¶</a></h2>
-<p>The file describing the calendar is a text file with the weekdays and holidays that represents the nonworking days.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>! type Test.cal
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bizdays</span><span class="w"> </span><span class="kn">import</span> <span class="n">Calendar</span><span class="p">,</span> <span class="n">list_calendars</span>
+
+<span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"ANBIMA"</span><span class="p">,</span> <span class="s2">"B3"</span><span class="p">,</span> <span class="s2">"Actual"</span><span class="p">]}</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Saturday
-Sunday
-2001-01-01
-2002-01-01
-2012-12-25
-2013-01-01
+{&#39;ANBIMA&#39;: &#39;ANBIMA&#39;, &#39;B3&#39;: &#39;B3&#39;, &#39;Actual&#39;: &#39;Actual&#39;}
 </pre></div></div>
 </div>
-<p>Here Saturday and Sunday are nonworking week days and the other lines bring the holidays.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from bizdays import Calendar
-
-Calendar.load(filename=&#39;Test.cal&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">list_calendars</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -149,24 +150,583 @@ Calendar.load(filename=&#39;Test.cal&#39;)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Calendar: Test
-Start: 2001-01-01
-End: 2013-01-01
-Weekdays: Saturday, Sunday
-Holidays: 4
-Financial: True
+{&#39;packaged&#39;: [&#39;ANBIMA&#39;, &#39;B3&#39;, &#39;Actual&#39;],
+ &#39;pandas_market_calendars&#39;: {&#39;available&#39;: True,
+  &#39;prefix&#39;: &#39;PMC/&#39;,
+  &#39;calendars&#39;: [&#39;ASX&#39;,
+   &#39;BMF&#39;,
+   &#39;B3&#39;,
+   &#39;BSE&#39;,
+   &#39;NSE&#39;,
+   &#39;XNSE&#39;,
+   &#39;CFE&#39;,
+   &#39;CBOE_Futures&#39;,
+   &#39;CBOE_Equity_Options&#39;,
+   &#39;CBOE_Index_Options&#39;,
+   &#39;CME_Equity&#39;,
+   &#39;CBOT_Equity&#39;,
+   &#39;CME_Agriculture&#39;,
+   &#39;CBOT_Agriculture&#39;,
+   &#39;COMEX_Agriculture&#39;,
+   &#39;NYMEX_Agriculture&#39;,
+   &#39;CME_Rate&#39;,
+   &#39;CBOT_Rate&#39;,
+   &#39;CME_InterestRate&#39;,
+   &#39;CBOT_InterestRate&#39;,
+   &#39;CME_Bond&#39;,
+   &#39;CBOT_Bond&#39;,
+   &#39;CMEGlobex_Livestock&#39;,
+   &#39;CMEGlobex_Live_Cattle&#39;,
+   &#39;CMEGlobex_Feeder_Cattle&#39;,
+   &#39;CMEGlobex_Lean_Hog&#39;,
+   &#39;CMEGlobex_Port_Cutout&#39;,
+   &#39;CMEGlobex_Grains&#39;,
+   &#39;CMEGlobex_Oilseeds&#39;,
+   &#39;CME Globex Cryptocurrencies&#39;,
+   &#39;CME Globex Crypto&#39;,
+   &#39;CMEGlobex_EnergyAndMetals&#39;,
+   &#39;CMEGlobex_Energy&#39;,
+   &#39;CMEGlobex_CrudeAndRefined&#39;,
+   &#39;CMEGlobex_NYHarbor&#39;,
+   &#39;CMEGlobex_HO&#39;,
+   &#39;HO&#39;,
+   &#39;CMEGlobex_Crude&#39;,
+   &#39;CMEGlobex_CL&#39;,
+   &#39;CL&#39;,
+   &#39;CMEGlobex_Gas&#39;,
+   &#39;CMEGlobex_RB&#39;,
+   &#39;RB&#39;,
+   &#39;CMEGlobex_MicroCrude&#39;,
+   &#39;CMEGlobex_MCL&#39;,
+   &#39;MCL&#39;,
+   &#39;CMEGlobex_NatGas&#39;,
+   &#39;CMEGlobex_NG&#39;,
+   &#39;NG&#39;,
+   &#39;CMEGlobex_Dutch_NatGas&#39;,
+   &#39;CMEGlobex_TTF&#39;,
+   &#39;TTF&#39;,
+   &#39;CMEGlobex_LastDay_NatGas&#39;,
+   &#39;CMEGlobex_NN&#39;,
+   &#39;NN&#39;,
+   &#39;CMEGlobex_CarbonOffset&#39;,
+   &#39;CMEGlobex_CGO&#39;,
+   &#39;CGO&#39;,
+   &#39;C-GEO&#39;,
+   &#39;CMEGlobex_NGO&#39;,
+   &#39;NGO&#39;,
+   &#39;CMEGlobex_GEO&#39;,
+   &#39;GEO&#39;,
+   &#39;CMEGlobex_Metals&#39;,
+   &#39;CMEGlobex_PreciousMetals&#39;,
+   &#39;CMEGlobex_Gold&#39;,
+   &#39;CMEGlobex_GC&#39;,
+   &#39;GC&#39;,
+   &#39;CMEGlobex_Silver&#39;,
+   &#39;CMEGlobex_SI&#39;,
+   &#39;SI&#39;,
+   &#39;CMEGlobex_Platinum&#39;,
+   &#39;CMEGlobex_PL&#39;,
+   &#39;PL&#39;,
+   &#39;CMEGlobex_BaseMetals&#39;,
+   &#39;CMEGlobex_Copper&#39;,
+   &#39;CMEGlobex_HG&#39;,
+   &#39;HG&#39;,
+   &#39;CMEGlobex_Aluminum&#39;,
+   &#39;CMEGlobex_ALI&#39;,
+   &#39;ALI&#39;,
+   &#39;CMEGlobex_QC&#39;,
+   &#39;QC&#39;,
+   &#39;CMEGlobex_FerrousMetals&#39;,
+   &#39;CMEGlobex_HRC&#39;,
+   &#39;HRC&#39;,
+   &#39;CMEGlobex_BUS&#39;,
+   &#39;BUS&#39;,
+   &#39;CMEGlobex_TIO&#39;,
+   &#39;TIO&#39;,
+   &#39;CME Globex Equity&#39;,
+   &#39;CMEGlobex_FX&#39;,
+   &#39;CME_FX&#39;,
+   &#39;CME_Currency&#39;,
+   &#39;CME Globex Fixed Income&#39;,
+   &#39;CME Globex Interest Rate Products&#39;,
+   &#39;EUREX&#39;,
+   &#39;EUREX_Bond&#39;,
+   &#39;HKEX&#39;,
+   &#39;ICE&#39;,
+   &#39;ICEUS&#39;,
+   &#39;NYFE&#39;,
+   &#39;NYSE&#39;,
+   &#39;stock&#39;,
+   &#39;NASDAQ&#39;,
+   &#39;BATS&#39;,
+   &#39;DJIA&#39;,
+   &#39;DOW&#39;,
+   &#39;IEX&#39;,
+   &#39;Investors_Exchange&#39;,
+   &#39;JPX&#39;,
+   &#39;XJPX&#39;,
+   &#39;LSE&#39;,
+   &#39;OSE&#39;,
+   &#39;SIFMAUS&#39;,
+   &#39;SIFMA_US&#39;,
+   &#39;Capital_Markets_US&#39;,
+   &#39;Financial_Markets_US&#39;,
+   &#39;Bond_Markets_US&#39;,
+   &#39;SIFMAUK&#39;,
+   &#39;SIFMA_UK&#39;,
+   &#39;Capital_Markets_UK&#39;,
+   &#39;Financial_Markets_UK&#39;,
+   &#39;Bond_Markets_UK&#39;,
+   &#39;SIFMAJP&#39;,
+   &#39;SIFMA_JP&#39;,
+   &#39;Capital_Markets_JP&#39;,
+   &#39;Financial_Markets_JP&#39;,
+   &#39;Bond_Markets_JP&#39;,
+   &#39;SIX&#39;,
+   &#39;SSE&#39;,
+   &#39;TASE&#39;,
+   &#39;TSX&#39;,
+   &#39;TSXV&#39;,
+   &#39;AIXK&#39;,
+   &#39;ASEX&#39;,
+   &#39;BVMF&#39;,
+   &#39;XCYS&#39;,
+   &#39;CMES&#39;,
+   &#39;IEPA&#39;,
+   &#39;XAMS&#39;,
+   &#39;XASX&#39;,
+   &#39;XBEL&#39;,
+   &#39;XBDA&#39;,
+   &#39;XBKK&#39;,
+   &#39;XBOG&#39;,
+   &#39;XBOM&#39;,
+   &#39;XBRU&#39;,
+   &#39;XBSE&#39;,
+   &#39;XBUD&#39;,
+   &#39;XBUE&#39;,
+   &#39;XBRA&#39;,
+   &#39;XCBF&#39;,
+   &#39;XCSE&#39;,
+   &#39;XDUB&#39;,
+   &#39;XDUS&#39;,
+   &#39;XEEE&#39;,
+   &#39;XFRA&#39;,
+   &#39;XETR&#39;,
+   &#39;XHAM&#39;,
+   &#39;XHEL&#39;,
+   &#39;XHKG&#39;,
+   &#39;XICE&#39;,
+   &#39;XIDX&#39;,
+   &#39;XIST&#39;,
+   &#39;XJSE&#39;,
+   &#39;XKAR&#39;,
+   &#39;XKLS&#39;,
+   &#39;XKRX&#39;,
+   &#39;XLIM&#39;,
+   &#39;XLIS&#39;,
+   &#39;XLIT&#39;,
+   &#39;XLJU&#39;,
+   &#39;XLON&#39;,
+   &#39;XLUX&#39;,
+   &#39;XMAD&#39;,
+   &#39;XMEX&#39;,
+   &#39;XMIL&#39;,
+   &#39;XMOS&#39;,
+   &#39;XNYS&#39;,
+   &#39;XNZE&#39;,
+   &#39;XOSL&#39;,
+   &#39;XPAR&#39;,
+   &#39;XPHS&#39;,
+   &#39;XPRA&#39;,
+   &#39;XRIS&#39;,
+   &#39;XSAU&#39;,
+   &#39;XSES&#39;,
+   &#39;XSGO&#39;,
+   &#39;XSHG&#39;,
+   &#39;XSTO&#39;,
+   &#39;XSWX&#39;,
+   &#39;XTAE&#39;,
+   &#39;XTAI&#39;,
+   &#39;XTAL&#39;,
+   &#39;XTKS&#39;,
+   &#39;XTSE&#39;,
+   &#39;XWAR&#39;,
+   &#39;XWBO&#39;,
+   &#39;XZAG&#39;,
+   &#39;us_futures&#39;,
+   &#39;24/7&#39;,
+   &#39;24/5&#39;]},
+ &#39;exchange_calendars&#39;: {&#39;available&#39;: True,
+  &#39;prefix&#39;: &#39;XCAL/&#39;,
+  &#39;calendars&#39;: [&#39;24/5&#39;,
+   &#39;24/7&#39;,
+   &#39;AIXK&#39;,
+   &#39;ARCX&#39;,
+   &#39;ASEX&#39;,
+   &#39;ASX&#39;,
+   &#39;BATS&#39;,
+   &#39;BMF&#39;,
+   &#39;BSE&#39;,
+   &#39;BVB&#39;,
+   &#39;BVMF&#39;,
+   &#39;CBOT&#39;,
+   &#39;CFE&#39;,
+   &#39;CME&#39;,
+   &#39;CMES&#39;,
+   &#39;COMEX&#39;,
+   &#39;FWB&#39;,
+   &#39;HKEX&#39;,
+   &#39;ICE&#39;,
+   &#39;ICEUS&#39;,
+   &#39;IEPA&#39;,
+   &#39;JKT&#39;,
+   &#39;JPX&#39;,
+   &#39;LSE&#39;,
+   &#39;LUXSE&#39;,
+   &#39;NASDAQ&#39;,
+   &#39;NYFE&#39;,
+   &#39;NYMEX&#39;,
+   &#39;NYSE&#39;,
+   &#39;OOTC&#39;,
+   &#39;OSE&#39;,
+   &#39;SIX&#39;,
+   &#39;SSE&#39;,
+   &#39;TASE&#39;,
+   &#39;TSX&#39;,
+   &#39;XAMS&#39;,
+   &#39;XASE&#39;,
+   &#39;XASX&#39;,
+   &#39;XBDA&#39;,
+   &#39;XBEL&#39;,
+   &#39;XBKK&#39;,
+   &#39;XBOG&#39;,
+   &#39;XBOM&#39;,
+   &#39;XBRA&#39;,
+   &#39;XBRU&#39;,
+   &#39;XBSE&#39;,
+   &#39;XBUD&#39;,
+   &#39;XBUE&#39;,
+   &#39;XCBF&#39;,
+   &#39;XCSE&#39;,
+   &#39;XCYS&#39;,
+   &#39;XDUB&#39;,
+   &#39;XDUS&#39;,
+   &#39;XEEE&#39;,
+   &#39;XETR&#39;,
+   &#39;XFRA&#39;,
+   &#39;XHAM&#39;,
+   &#39;XHEL&#39;,
+   &#39;XHKG&#39;,
+   &#39;XICE&#39;,
+   &#39;XIDX&#39;,
+   &#39;XIST&#39;,
+   &#39;XJSE&#39;,
+   &#39;XKAR&#39;,
+   &#39;XKLS&#39;,
+   &#39;XKRX&#39;,
+   &#39;XLIM&#39;,
+   &#39;XLIS&#39;,
+   &#39;XLIT&#39;,
+   &#39;XLJU&#39;,
+   &#39;XLON&#39;,
+   &#39;XLUX&#39;,
+   &#39;XMAD&#39;,
+   &#39;XMEX&#39;,
+   &#39;XMIL&#39;,
+   &#39;XMOS&#39;,
+   &#39;XNAS&#39;,
+   &#39;XNYS&#39;,
+   &#39;XNZE&#39;,
+   &#39;XOSL&#39;,
+   &#39;XPAR&#39;,
+   &#39;XPHS&#39;,
+   &#39;XPRA&#39;,
+   &#39;XRIS&#39;,
+   &#39;XSAU&#39;,
+   &#39;XSES&#39;,
+   &#39;XSGO&#39;,
+   &#39;XSHG&#39;,
+   &#39;XSTO&#39;,
+   &#39;XSWX&#39;,
+   &#39;XTAE&#39;,
+   &#39;XTAI&#39;,
+   &#39;XTAL&#39;,
+   &#39;XTKS&#39;,
+   &#39;XTSE&#39;,
+   &#39;XTSX&#39;,
+   &#39;XWAR&#39;,
+   &#39;XWBO&#39;,
+   &#39;XZAG&#39;,
+   &#39;us_futures&#39;]},
+ &#39;workalendar&#39;: {&#39;available&#39;: True,
+  &#39;prefix&#39;: &#39;WORK/&#39;,
+  &#39;calendars&#39;: [&#39;AT&#39;,
+   &#39;BY&#39;,
+   &#39;BE&#39;,
+   &#39;BG&#39;,
+   &#39;KY&#39;,
+   &#39;HR&#39;,
+   &#39;CY&#39;,
+   &#39;CZ&#39;,
+   &#39;DK&#39;,
+   &#39;EE&#39;,
+   &#39;FI&#39;,
+   &#39;FR&#39;,
+   &#39;GE&#39;,
+   &#39;GR&#39;,
+   &#39;GG&#39;,
+   &#39;HU&#39;,
+   &#39;IS&#39;,
+   &#39;IE&#39;,
+   &#39;IT&#39;,
+   &#39;LV&#39;,
+   &#39;LT&#39;,
+   &#39;LU&#39;,
+   &#39;MT&#39;,
+   &#39;MC&#39;,
+   &#39;NL&#39;,
+   &#39;NO&#39;,
+   &#39;PL&#39;,
+   &#39;PT&#39;,
+   &#39;RO&#39;,
+   &#39;RU&#39;,
+   &#39;RS&#39;,
+   &#39;SK&#39;,
+   &#39;SI&#39;,
+   &#39;SE&#39;,
+   &#39;CH&#39;,
+   &#39;UA&#39;,
+   &#39;GB&#39;,
+   &#39;GB-NIR&#39;,
+   &#39;TR&#39;,
+   &#39;DE&#39;,
+   &#39;DE-BW&#39;,
+   &#39;DE-BY&#39;,
+   &#39;DE-BE&#39;,
+   &#39;DE-BB&#39;,
+   &#39;DE-HB&#39;,
+   &#39;DE-HH&#39;,
+   &#39;DE-HE&#39;,
+   &#39;DE-MV&#39;,
+   &#39;DE-NI&#39;,
+   &#39;DE-NW&#39;,
+   &#39;DE-RP&#39;,
+   &#39;DE-SL&#39;,
+   &#39;DE-SN&#39;,
+   &#39;DE-ST&#39;,
+   &#39;DE-SH&#39;,
+   &#39;DE-TH&#39;,
+   &#39;ES&#39;,
+   &#39;ES-AN&#39;,
+   &#39;ES-AR&#39;,
+   &#39;ES-CT&#39;,
+   &#39;ES-CL&#39;,
+   &#39;ES-CM&#39;,
+   &#39;ES-CN&#39;,
+   &#39;ES-EX&#39;,
+   &#39;ES-GA&#39;,
+   &#39;ES-IB&#39;,
+   &#39;ES-RI&#39;,
+   &#39;ES-MD&#39;,
+   &#39;ES-MC&#39;,
+   &#39;ES-NA&#39;,
+   &#39;ES-AS&#39;,
+   &#39;ES-PV&#39;,
+   &#39;ES-CB&#39;,
+   &#39;ES-VC&#39;,
+   &#39;CH-AG&#39;,
+   &#39;CH-AI&#39;,
+   &#39;CH-AR&#39;,
+   &#39;CH-BE&#39;,
+   &#39;CH-BL&#39;,
+   &#39;CH-BS&#39;,
+   &#39;CH-FR&#39;,
+   &#39;CH-GE&#39;,
+   &#39;CH-GL&#39;,
+   &#39;CH-GR&#39;,
+   &#39;CH-JU&#39;,
+   &#39;CH-LU&#39;,
+   &#39;CH-NE&#39;,
+   &#39;CH-NW&#39;,
+   &#39;CH-OW&#39;,
+   &#39;CH-SG&#39;,
+   &#39;CH-SH&#39;,
+   &#39;CH-SO&#39;,
+   &#39;CH-SZ&#39;,
+   &#39;CH-TG&#39;,
+   &#39;CH-TI&#39;,
+   &#39;CH-UR&#39;,
+   &#39;CH-VD&#39;,
+   &#39;CH-VS&#39;,
+   &#39;CH-ZG&#39;,
+   &#39;CH-ZH&#39;,
+   &#39;US&#39;,
+   &#39;US-AL&#39;,
+   &#39;US-AK&#39;,
+   &#39;US-AZ&#39;,
+   &#39;US-AR&#39;,
+   &#39;US-CA&#39;,
+   &#39;US-CO&#39;,
+   &#39;US-CT&#39;,
+   &#39;US-DE&#39;,
+   &#39;US-DC&#39;,
+   &#39;US-FL&#39;,
+   &#39;US-GA&#39;,
+   &#39;US-HI&#39;,
+   &#39;US-ID&#39;,
+   &#39;US-IL&#39;,
+   &#39;US-IN&#39;,
+   &#39;US-IA&#39;,
+   &#39;US-KS&#39;,
+   &#39;US-KY&#39;,
+   &#39;US-LA&#39;,
+   &#39;US-ME&#39;,
+   &#39;US-MD&#39;,
+   &#39;US-MA&#39;,
+   &#39;US-MI&#39;,
+   &#39;US-MN&#39;,
+   &#39;US-MS&#39;,
+   &#39;US-MO&#39;,
+   &#39;US-MT&#39;,
+   &#39;US-NE&#39;,
+   &#39;US-NV&#39;,
+   &#39;US-NH&#39;,
+   &#39;US-NJ&#39;,
+   &#39;US-NM&#39;,
+   &#39;US-NY&#39;,
+   &#39;US-NC&#39;,
+   &#39;US-ND&#39;,
+   &#39;US-OH&#39;,
+   &#39;US-OK&#39;,
+   &#39;US-OR&#39;,
+   &#39;US-PA&#39;,
+   &#39;US-RI&#39;,
+   &#39;US-SC&#39;,
+   &#39;US-SD&#39;,
+   &#39;US-TN&#39;,
+   &#39;US-TX&#39;,
+   &#39;US-UT&#39;,
+   &#39;US-VT&#39;,
+   &#39;US-VA&#39;,
+   &#39;US-WA&#39;,
+   &#39;US-WV&#39;,
+   &#39;US-WI&#39;,
+   &#39;US-WY&#39;,
+   &#39;US-AS&#39;,
+   &#39;US-GU&#39;,
+   &#39;BR&#39;,
+   &#39;BR-AC&#39;,
+   &#39;BR-AL&#39;,
+   &#39;BR-AP&#39;,
+   &#39;BR-AM&#39;,
+   &#39;BR-BA&#39;,
+   &#39;BR-CE&#39;,
+   &#39;BR-DF&#39;,
+   &#39;BR-ES&#39;,
+   &#39;BR-GO&#39;,
+   &#39;BR-MA&#39;,
+   &#39;BR-MG&#39;,
+   &#39;BR-MT&#39;,
+   &#39;BR-MS&#39;,
+   &#39;BR-PA&#39;,
+   &#39;BR-PB&#39;,
+   &#39;BR-PE&#39;,
+   &#39;BR-PI&#39;,
+   &#39;BR-PR&#39;,
+   &#39;BR-RJ&#39;,
+   &#39;BR-RN&#39;,
+   &#39;BR-RS&#39;,
+   &#39;BR-RO&#39;,
+   &#39;BR-RR&#39;,
+   &#39;BR-SC&#39;,
+   &#39;BR-SP&#39;,
+   &#39;BR-SE&#39;,
+   &#39;BR-TO&#39;,
+   &#39;CA&#39;,
+   &#39;CA-ON&#39;,
+   &#39;CA-QC&#39;,
+   &#39;CA-BC&#39;,
+   &#39;CA-AB&#39;,
+   &#39;CA-SK&#39;,
+   &#39;CA-MB&#39;,
+   &#39;CA-NB&#39;,
+   &#39;CA-NS&#39;,
+   &#39;CA-PE&#39;,
+   &#39;CA-NL&#39;,
+   &#39;CA-YT&#39;,
+   &#39;CA-NT&#39;,
+   &#39;CA-NU&#39;,
+   &#39;BB&#39;,
+   &#39;CL&#39;,
+   &#39;CO&#39;,
+   &#39;MX&#39;,
+   &#39;PA&#39;,
+   &#39;PY&#39;,
+   &#39;AR&#39;,
+   &#39;SV&#39;,
+   &#39;DZ&#39;,
+   &#39;BJ&#39;,
+   &#39;CI&#39;,
+   &#39;KE&#39;,
+   &#39;MG&#39;,
+   &#39;ST&#39;,
+   &#39;ZA&#39;,
+   &#39;AO&#39;,
+   &#39;MZ&#39;,
+   &#39;NG&#39;,
+   &#39;TN&#39;,
+   &#39;CN&#39;,
+   &#39;HK&#39;,
+   &#39;JP&#39;,
+   &#39;MY&#39;,
+   &#39;QA&#39;,
+   &#39;SG&#39;,
+   &#39;KR&#39;,
+   &#39;TW&#39;,
+   &#39;IL&#39;,
+   &#39;PH&#39;,
+   &#39;KZ&#39;,
+   &#39;AU&#39;,
+   &#39;AU-ACT&#39;,
+   &#39;AU-NSW&#39;,
+   &#39;AU-NT&#39;,
+   &#39;AU-QLD&#39;,
+   &#39;AU-SA&#39;,
+   &#39;AU-TAS&#39;,
+   &#39;AU-VIC&#39;,
+   &#39;AU-WA&#39;,
+   &#39;MH&#39;,
+   &#39;NZ&#39;]}}
 </pre></div></div>
 </div>
-</section>
-<section id="Predefined-Calendars">
-<h2>Predefined Calendars<a class="headerlink" href="#Predefined-Calendars" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">bizdays</span></code> comes with some predefined calendars: <code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code>, <code class="docutils literal notranslate"><span class="pre">B3</span></code>, <code class="docutils literal notranslate"><span class="pre">Actual</span></code>, that can be directly loaded by its names.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ANBIMA</span></code> is the standard calendar used in the brazilian fixed income markets.</p>
+<p><code class="docutils literal notranslate"><span class="pre">list_calendars()</span></code> is the programmatic discovery helper for calendar sources.</p>
+<p>It returns a dictionary with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">packaged</span></code>: the curated calendars shipped with <code class="docutils literal notranslate"><span class="pre">bizdays</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code>: metadata about the optional PMC integration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exchange_calendars</span></code>: metadata about the optional exchange calendar integration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">workalendar</span></code>: metadata about the optional workalendar integration</p></li>
+</ul>
+<p>Each integration entry contains:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">available</span></code>: whether the optional dependency is installed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prefix</span></code>: the prefix used with <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;&lt;prefix&gt;&lt;calendar&gt;&quot;)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">calendars</span></code>: the discovered calendar names when available, otherwise an empty list</p></li>
+</ul>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;ANBIMA&quot;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">info</span> <span class="o">=</span> <span class="n">list_calendars</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="s2">"packaged"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"packaged"</span><span class="p">],</span>
+    <span class="s2">"pmc_available"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"pandas_market_calendars"</span><span class="p">][</span><span class="s2">"available"</span><span class="p">],</span>
+    <span class="s2">"pmc_prefix"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"pandas_market_calendars"</span><span class="p">][</span><span class="s2">"prefix"</span><span class="p">],</span>
+    <span class="s2">"xcal_available"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"exchange_calendars"</span><span class="p">][</span><span class="s2">"available"</span><span class="p">],</span>
+    <span class="s2">"xcal_prefix"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"exchange_calendars"</span><span class="p">][</span><span class="s2">"prefix"</span><span class="p">],</span>
+    <span class="s2">"work_available"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"workalendar"</span><span class="p">][</span><span class="s2">"available"</span><span class="p">],</span>
+    <span class="s2">"work_prefix"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"workalendar"</span><span class="p">][</span><span class="s2">"prefix"</span><span class="p">],</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -176,20 +736,22 @@ Financial: True
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Calendar: ANBIMA
-Start: 2000-01-01
-End: 2078-12-25
-Weekdays: Saturday, Sunday
-Holidays: 948
-Financial: True
+{&#39;packaged&#39;: [&#39;ANBIMA&#39;, &#39;B3&#39;, &#39;Actual&#39;],
+ &#39;pmc_available&#39;: True,
+ &#39;pmc_prefix&#39;: &#39;PMC/&#39;,
+ &#39;xcal_available&#39;: True,
+ &#39;xcal_prefix&#39;: &#39;XCAL/&#39;,
+ &#39;work_available&#39;: True,
+ &#39;work_prefix&#39;: &#39;WORK/&#39;}
 </pre></div></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">Actual</span></code> is a calendar with no holiday and nonworking days.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Actual</span></code> is the simplest packaged calendar: it has no holidays and no nonworking weekdays, so every day is a business day.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;Actual&quot;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">actual</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Actual"</span><span class="p">)</span>
+<span class="n">actual</span><span class="o">.</span><span class="n">isbizday</span><span class="p">([</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="s2">"2024-01-06"</span><span class="p">,</span> <span class="s2">"2024-01-07"</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -199,334 +761,208 @@ Financial: True
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Calendar: Actual
-Start: 1970-01-01
-End: 2071-01-01
-Weekdays:
-Holidays: 0
-Financial: True
+masked_array(data=[True, True, True],
+             mask=[False, False, False],
+       fill_value=False)
 </pre></div></div>
 </div>
 </section>
-<section id="Calendars-from-pandas_market_calendars">
-<h2>Calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code><a class="headerlink" href="#Calendars-from-pandas_market_calendars" title="Link to this heading">¶</a></h2>
-<p>The package <code class="docutils literal notranslate"><span class="pre">`pandas_market_calendars</span></code> &lt;<a class="reference external" href="https://github.com/rsheftel/pandas_market_calendars">https://github.com/rsheftel/pandas_market_calendars</a>&gt;`__ comes with many predefined calendars.</p>
+<section id="Creating-a-calendar-from-scratch-with-Calendar(...)">
+<h2>Creating a calendar from scratch with <code class="docutils literal notranslate"><span class="pre">Calendar(...)</span></code><a class="headerlink" href="#Creating-a-calendar-from-scratch-with-Calendar(...)" title="Link to this heading">¶</a></h2>
+<p>The constructor accepts:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">holidays</span></code>: ISO date strings or date-like objects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">weekdays</span></code>: names of nonworking weekdays</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startdate</span></code> and <code class="docutils literal notranslate"><span class="pre">enddate</span></code>: optional calendar bounds</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: a display name</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">financial</span></code>: whether to use financial counting rules</p></li>
+</ul>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pandas_market_calendars as mcal
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">custom</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span>
+    <span class="n">holidays</span><span class="o">=</span><span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="s2">"2024-04-21"</span><span class="p">,</span> <span class="s2">"2024-12-25"</span><span class="p">],</span>
+    <span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Saturday"</span><span class="p">,</span> <span class="s2">"Sunday"</span><span class="p">],</span>
+    <span class="n">startdate</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">,</span>
+    <span class="n">enddate</span><span class="o">=</span><span class="s2">"2024-12-31"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Example"</span><span class="p">,</span>
+    <span class="n">financial</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">custom</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Calendar: Example
+Start: 2024-01-01
+End: 2024-12-31
+Weekdays: Saturday, Sunday
+Holidays: 3
+Financial: True
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">"name"</span><span class="p">:</span> <span class="n">custom</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+    <span class="s2">"weekdays"</span><span class="p">:</span> <span class="n">custom</span><span class="o">.</span><span class="n">weekdays</span><span class="p">,</span>
+    <span class="s2">"startdate"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">custom</span><span class="o">.</span><span class="n">startdate</span><span class="p">),</span>
+    <span class="s2">"enddate"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">custom</span><span class="o">.</span><span class="n">enddate</span><span class="p">),</span>
+    <span class="s2">"holidays"</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">day</span><span class="p">)</span> <span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="n">custom</span><span class="o">.</span><span class="n">holidays</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;name&#39;: &#39;Example&#39;,
+ &#39;weekdays&#39;: (&#39;Saturday&#39;, &#39;Sunday&#39;),
+ &#39;startdate&#39;: &#39;2024-01-01&#39;,
+ &#39;enddate&#39;: &#39;2024-12-31&#39;,
+ &#39;holidays&#39;: [&#39;2024-01-01&#39;, &#39;2024-04-21&#39;, &#39;2024-12-25&#39;]}
+</pre></div></div>
+</div>
+<p>If you omit <code class="docutils literal notranslate"><span class="pre">startdate</span></code> and <code class="docutils literal notranslate"><span class="pre">enddate</span></code>, they are inferred from the holiday range. If you construct a calendar without holidays, a broad default range is used.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">weekends_only</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span>
+    <span class="n">weekdays</span><span class="o">=</span><span class="p">[</span><span class="s2">"Saturday"</span><span class="p">,</span> <span class="s2">"Sunday"</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"WeekendsOnly"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="p">{</span>
+    <span class="s2">"startdate"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">weekends_only</span><span class="o">.</span><span class="n">startdate</span><span class="p">),</span>
+    <span class="s2">"enddate"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">weekends_only</span><span class="o">.</span><span class="n">enddate</span><span class="p">),</span>
+    <span class="s2">"isbizday"</span><span class="p">:</span> <span class="n">weekends_only</span><span class="o">.</span><span class="n">isbizday</span><span class="p">([</span><span class="s2">"2024-01-05"</span><span class="p">,</span> <span class="s2">"2024-01-06"</span><span class="p">,</span> <span class="s2">"2024-01-07"</span><span class="p">]),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;startdate&#39;: &#39;1970-01-01&#39;,
+ &#39;enddate&#39;: &#39;2071-01-01&#39;,
+ &#39;isbizday&#39;: masked_array(data=[True, False, False],
+              mask=[False, False, False],
+        fill_value=False)}
+</pre></div></div>
+</div>
+</section>
+<section id="JSON-calendar-layout">
+<h2>JSON calendar layout<a class="headerlink" href="#JSON-calendar-layout" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Calendar.load(filename=...)</span></code> expects a JSON object with this layout:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: string</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">weekdays</span></code>: list of strings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">holidays</span></code>: list of ISO date strings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">financial</span></code>: boolean</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start.date</span></code> and <code class="docutils literal notranslate"><span class="pre">end.date</span></code>: optional ISO date strings (<code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>) that set <code class="docutils literal notranslate"><span class="pre">startdate</span></code> and <code class="docutils literal notranslate"><span class="pre">enddate</span></code>; a bad value raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adjust.from</span></code> and <code class="docutils literal notranslate"><span class="pre">adjust.to</span></code>: optional; only the defaults <code class="docutils literal notranslate"><span class="pre">&quot;following&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;preceding&quot;</span></code> are accepted, and other values raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"CustomJson"</span><span class="p">,</span>
+    <span class="s2">"weekdays"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"saturday"</span><span class="p">,</span> <span class="s2">"sunday"</span><span class="p">],</span>
+    <span class="s2">"holidays"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="s2">"2024-04-21"</span><span class="p">,</span> <span class="s2">"2024-12-25"</span><span class="p">],</span>
+    <span class="s2">"financial"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">"adjust.from"</span><span class="p">:</span> <span class="s2">"following"</span><span class="p">,</span>
+    <span class="s2">"adjust.to"</span><span class="p">:</span> <span class="s2">"preceding"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">payload</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;name&#39;: &#39;CustomJson&#39;,
+ &#39;weekdays&#39;: [&#39;saturday&#39;, &#39;sunday&#39;],
+ &#39;holidays&#39;: [&#39;2024-01-01&#39;, &#39;2024-04-21&#39;, &#39;2024-12-25&#39;],
+ &#39;financial&#39;: True,
+ &#39;adjust.from&#39;: &#39;following&#39;,
+ &#39;adjust.to&#39;: &#39;preceding&#39;}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-mcal.get_calendar_names()
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"custom-calendar.json"</span>
+    <span class="n">filename</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">json_calendar</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+
+<span class="n">json_calendar</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;ASX&#39;,
- &#39;BMF&#39;,
- &#39;B3&#39;,
- &#39;BSE&#39;,
- &#39;NSE&#39;,
- &#39;CFE&#39;,
- &#39;CBOE_Futures&#39;,
- &#39;CBOE_Equity_Options&#39;,
- &#39;CBOE_Index_Options&#39;,
- &#39;CME_Equity&#39;,
- &#39;CBOT_Equity&#39;,
- &#39;CME_Agriculture&#39;,
- &#39;CBOT_Agriculture&#39;,
- &#39;COMEX_Agriculture&#39;,
- &#39;NYMEX_Agriculture&#39;,
- &#39;CME_Rate&#39;,
- &#39;CBOT_Rate&#39;,
- &#39;CME_InterestRate&#39;,
- &#39;CBOT_InterestRate&#39;,
- &#39;CME_Bond&#39;,
- &#39;CBOT_Bond&#39;,
- &#39;CMEGlobex_Livestock&#39;,
- &#39;CMEGlobex_Live_Cattle&#39;,
- &#39;CMEGlobex_Feeder_Cattle&#39;,
- &#39;CMEGlobex_Lean_Hog&#39;,
- &#39;CMEGlobex_Port_Cutout&#39;,
- &#39;CME Globex Cryptocurrencies&#39;,
- &#39;CME Globex Crypto&#39;,
- &#39;CMEGlobex_EnergyAndMetals&#39;,
- &#39;CMEGlobex_Energy&#39;,
- &#39;CMEGlobex_CrudeAndRefined&#39;,
- &#39;CMEGlobex_NYHarbor&#39;,
- &#39;CMEGlobex_HO&#39;,
- &#39;HO&#39;,
- &#39;CMEGlobex_Crude&#39;,
- &#39;CMEGlobex_CL&#39;,
- &#39;CL&#39;,
- &#39;CMEGlobex_Gas&#39;,
- &#39;CMEGlobex_RB&#39;,
- &#39;RB&#39;,
- &#39;CMEGlobex_MicroCrude&#39;,
- &#39;CMEGlobex_MCL&#39;,
- &#39;MCL&#39;,
- &#39;CMEGlobex_NatGas&#39;,
- &#39;CMEGlobex_NG&#39;,
- &#39;NG&#39;,
- &#39;CMEGlobex_Dutch_NatGas&#39;,
- &#39;CMEGlobex_TTF&#39;,
- &#39;TTF&#39;,
- &#39;CMEGlobex_LastDay_NatGas&#39;,
- &#39;CMEGlobex_NN&#39;,
- &#39;NN&#39;,
- &#39;CMEGlobex_CarbonOffset&#39;,
- &#39;CMEGlobex_CGO&#39;,
- &#39;CGO&#39;,
- &#39;C-GEO&#39;,
- &#39;CMEGlobex_NGO&#39;,
- &#39;NGO&#39;,
- &#39;CMEGlobex_GEO&#39;,
- &#39;GEO&#39;,
- &#39;CMEGlobex_Metals&#39;,
- &#39;CMEGlobex_PreciousMetals&#39;,
- &#39;CMEGlobex_Gold&#39;,
- &#39;CMEGlobex_GC&#39;,
- &#39;GC&#39;,
- &#39;CMEGlobex_SilverCMEGlobex_SI&#39;,
- &#39;SI&#39;,
- &#39;CMEGlobex_Platinum&#39;,
- &#39;CMEGlobex_PL&#39;,
- &#39;PL&#39;,
- &#39;CMEGlobex_BaseMetals&#39;,
- &#39;CMEGlobex_Copper&#39;,
- &#39;CMEGlobex_HG&#39;,
- &#39;HG&#39;,
- &#39;CMEGlobex_Aluminum&#39;,
- &#39;CMEGlobex_ALI&#39;,
- &#39;ALI&#39;,
- &#39;CMEGlobex_QC&#39;,
- &#39;QC&#39;,
- &#39;CMEGlobex_FerrousMetals&#39;,
- &#39;CMEGlobex_HRC&#39;,
- &#39;HRC&#39;,
- &#39;CMEGlobex_BUS&#39;,
- &#39;BUS&#39;,
- &#39;CMEGlobex_TIO&#39;,
- &#39;TIO&#39;,
- &#39;CME Globex Equity&#39;,
- &#39;CMEGlobex_FX&#39;,
- &#39;CME_FX&#39;,
- &#39;CME_Currency&#39;,
- &#39;CME Globex Fixed Income&#39;,
- &#39;CME Globex Interest Rate Products&#39;,
- &#39;EUREX&#39;,
- &#39;HKEX&#39;,
- &#39;ICE&#39;,
- &#39;ICEUS&#39;,
- &#39;NYFE&#39;,
- &#39;NYSE&#39;,
- &#39;stock&#39;,
- &#39;NASDAQ&#39;,
- &#39;BATS&#39;,
- &#39;DJIA&#39;,
- &#39;DOW&#39;,
- &#39;IEX&#39;,
- &#39;Investors_Exchange&#39;,
- &#39;JPX&#39;,
- &#39;LSE&#39;,
- &#39;OSE&#39;,
- &#39;SIFMAUS&#39;,
- &#39;SIFMA_US&#39;,
- &#39;Capital_Markets_US&#39;,
- &#39;Financial_Markets_US&#39;,
- &#39;Bond_Markets_US&#39;,
- &#39;SIFMAUK&#39;,
- &#39;SIFMA_UK&#39;,
- &#39;Capital_Markets_UK&#39;,
- &#39;Financial_Markets_UK&#39;,
- &#39;Bond_Markets_UK&#39;,
- &#39;SIFMAJP&#39;,
- &#39;SIFMA_JP&#39;,
- &#39;Capital_Markets_JP&#39;,
- &#39;Financial_Markets_JP&#39;,
- &#39;Bond_Markets_JP&#39;,
- &#39;SIX&#39;,
- &#39;SSE&#39;,
- &#39;TASE&#39;,
- &#39;TSX&#39;,
- &#39;TSXV&#39;,
- &#39;AIXK&#39;,
- &#39;ASEX&#39;,
- &#39;BVMF&#39;,
- &#39;CMES&#39;,
- &#39;IEPA&#39;,
- &#39;XAMS&#39;,
- &#39;XASX&#39;,
- &#39;XBKK&#39;,
- &#39;XBOG&#39;,
- &#39;XBOM&#39;,
- &#39;XBRU&#39;,
- &#39;XBSE&#39;,
- &#39;XBUD&#39;,
- &#39;XBUE&#39;,
- &#39;XCBF&#39;,
- &#39;XCSE&#39;,
- &#39;XDUB&#39;,
- &#39;XFRA&#39;,
- &#39;XETR&#39;,
- &#39;XHEL&#39;,
- &#39;XHKG&#39;,
- &#39;XICE&#39;,
- &#39;XIDX&#39;,
- &#39;XIST&#39;,
- &#39;XJSE&#39;,
- &#39;XKAR&#39;,
- &#39;XKLS&#39;,
- &#39;XKRX&#39;,
- &#39;XLIM&#39;,
- &#39;XLIS&#39;,
- &#39;XLON&#39;,
- &#39;XMAD&#39;,
- &#39;XMEX&#39;,
- &#39;XMIL&#39;,
- &#39;XMOS&#39;,
- &#39;XNYS&#39;,
- &#39;XNZE&#39;,
- &#39;XOSL&#39;,
- &#39;XPAR&#39;,
- &#39;XPHS&#39;,
- &#39;XPRA&#39;,
- &#39;XSAU&#39;,
- &#39;XSES&#39;,
- &#39;XSGO&#39;,
- &#39;XSHG&#39;,
- &#39;XSTO&#39;,
- &#39;XSWX&#39;,
- &#39;XTAE&#39;,
- &#39;XTAI&#39;,
- &#39;XTKS&#39;,
- &#39;XTSE&#39;,
- &#39;XWAR&#39;,
- &#39;XWBO&#39;,
- &#39;us_futures&#39;,
- &#39;24/7&#39;,
- &#39;24/5&#39;]
-</pre></div></div>
-</div>
-<p>These calendars can be loaded in bizdays with the prefix <code class="docutils literal notranslate"><span class="pre">PMC/</span></code> in its name. For example, use <code class="docutils literal notranslate"><span class="pre">PMC/NYSE</span></code> to load the NYSE calendar.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar.load(&quot;PMC/NYSE&quot;)
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Calendar: PMC/NYSE
-Start: 1885-01-01
-End: 2200-12-25
+Calendar: CustomJson
+Start: 2024-01-01
+End: 2024-12-25
 Weekdays: Saturday, Sunday
-Holidays: 3552
+Holidays: 3
 Financial: True
 </pre></div></div>
 </div>
 </section>
-<section id="Create-your-own-Calendars">
-<h2>Create your own Calendars<a class="headerlink" href="#Create-your-own-Calendars" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Calendar</span></code> can be called with no arguments and it returns a calendar without nonworking days.</p>
+<section id="Optional-calendar-provider-integrations">
+<h2>Optional calendar provider integrations<a class="headerlink" href="#Optional-calendar-provider-integrations" title="Link to this heading">¶</a></h2>
+<p>If you install the optional <code class="docutils literal notranslate"><span class="pre">bizdays[pmc]</span></code> extra, <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;PMC/&lt;calendar&gt;&quot;)</span></code> can load calendars from <code class="docutils literal notranslate"><span class="pre">pandas_market_calendars</span></code>.</p>
+<p>If you install the optional <code class="docutils literal notranslate"><span class="pre">bizdays[xcal]</span></code> extra, <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;XCAL/&lt;calendar&gt;&quot;)</span></code> can load calendars from <code class="docutils literal notranslate"><span class="pre">exchange_calendars</span></code>.</p>
+<p>If you install the optional <code class="docutils literal notranslate"><span class="pre">bizdays[work]</span></code> extra, <code class="docutils literal notranslate"><span class="pre">Calendar.load(name=&quot;WORK/&lt;code&gt;&quot;)</span></code> can load calendars from <code class="docutils literal notranslate"><span class="pre">workalendar</span></code>.</p>
+<p>These are not packaged calendars; they come from optional integrations.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">"pmc"</span><span class="p">:</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"PMC/B3"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+    <span class="s2">"xcal"</span><span class="p">:</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"XCAL/XNYS"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+    <span class="s2">"work"</span><span class="p">:</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"WORK/FR"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Calendar: None
-Start: 1970-01-01
-End: 2071-01-01
-Weekdays:
-Holidays: 0
-Financial: True
-</pre></div></div>
-</div>
-<p>Naming the calendar is a good idea.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Calendar(name=&#39;actual&#39;)
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Calendar: actual
-Start: 1970-01-01
-End: 2071-01-01
-Weekdays:
-Holidays: 0
-Financial: True
-</pre></div></div>
-</div>
-</section>
-<section id="Financial-Calendars">
-<h2>Financial Calendars<a class="headerlink" href="#Financial-Calendars" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">bizdays</span></code> was designed to be used with financial calculations, for this reason all calendars are financial by default.</p>
-<p>In finance, the amount of business days between two consecutive dates is 1, which indicates one day of compounding interest rates.</p>
-<p>For example.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>cal = Calendar()
-cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-1
-</pre></div></div>
-</div>
-<p>For this calendar both dates are business days, but the return is one business day.</p>
-<p>This behavior can changed by setting the attribute <code class="docutils literal notranslate"><span class="pre">financial</span></code> to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>cal.financial = False
-cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2
+{&#39;pmc&#39;: &#39;PMC/B3&#39;, &#39;xcal&#39;: &#39;XCAL/XNYS&#39;, &#39;work&#39;: &#39;WORK/FR&#39;}
 </pre></div></div>
 </div>
 </section>
@@ -543,7 +979,7 @@ cal.bizdays(&#39;2021-01-01&#39;, &#39;2021-01-02&#39;)
       &#169;2026, Wilson Freitas.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

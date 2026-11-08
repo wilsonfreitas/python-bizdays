@@ -4,545 +4,284 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# Calendars\n",
+    "# Creating and loading calendars\n",
     "\n",
-    "The `Calendar` can be built in three ways:\n",
+    "There are two main ways to work with calendars:\n",
     "\n",
-    "- using the constructor `Calendar` passing the arguments\n",
-    "- with the `Calendar.load(name=\"<calendar name>\")` passing the name of a calendar delivered with the package (`B3`, `ANBIMA`, `Actual`) or calendars from `pandas_market_calendar` package\n",
-    "- with the `Calendar.load(filename=\"<calendar filename>\")` passing a file that describes a valid calendar\n",
+    "1. construct a `Calendar(...)` directly from holidays and nonworking weekdays\n",
+    "2. load a calendar with `Calendar.load(...)`\n",
     "\n",
-    "## Calendars from file\n",
-    "\n",
-    "The file describing the calendar is a text file with the weekdays and holidays that represents the nonworking days."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 1,
-   "metadata": {},
-   "outputs": [
-    {
-     "name": "stdout",
-     "output_type": "stream",
-     "text": [
-      "Saturday\n",
-      "Sunday\n",
-      "2001-01-01\n",
-      "2002-01-01\n",
-      "2012-12-25\n",
-      "2013-01-01\n"
-     ]
-    }
+    "Use the constructor when your application already owns the holiday data. Use `load` when you want packaged calendars or a JSON file."
    ],
-   "source": [
-    "! type Test.cal"
-   ]
+   "id": "cell-01"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Here Saturday and Sunday are nonworking week days and the other lines bring the holidays."
-   ]
+    "## Calendars that come with the package\n",
+    "\n",
+    "The package ships with these calendar names:\n",
+    "\n",
+    "- `ANBIMA`\n",
+    "- `B3`\n",
+    "- `Actual`"
+   ],
+   "id": "cell-02"
   },
   {
    "cell_type": "code",
-   "execution_count": 2,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: Test\n",
-       "Start: 2001-01-01\n",
-       "End: 2013-01-01\n",
-       "Weekdays: Saturday, Sunday\n",
-       "Holidays: 4\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 2,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "from bizdays import Calendar\n",
+    "from bizdays import Calendar, list_calendars\n",
     "\n",
-    "Calendar.load(filename='Test.cal')"
-   ]
+    "{name: Calendar.load(name=name).name for name in [\"ANBIMA\", \"B3\", \"Actual\"]}"
+   ],
+   "id": "cell-03"
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "list_calendars()"
+   ],
+   "id": "cell-03b"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Predefined Calendars\n",
+    "`list_calendars()` is the programmatic discovery helper for calendar sources.\n",
     "\n",
-    "`bizdays` comes with some predefined calendars: `ANBIMA`, `B3`, `Actual`, that can be directly loaded by its names.\n",
+    "It returns a dictionary with:\n",
     "\n",
-    "`ANBIMA` is the standard calendar used in the brazilian fixed income markets."
-   ]
+    "- `packaged`: the curated calendars shipped with `bizdays`\n",
+    "- `pandas_market_calendars`: metadata about the optional PMC integration\n",
+    "- `exchange_calendars`: metadata about the optional exchange calendar integration\n",
+    "- `workalendar`: metadata about the optional workalendar integration\n",
+    "\n",
+    "Each integration entry contains:\n",
+    "\n",
+    "- `available`: whether the optional dependency is installed\n",
+    "- `prefix`: the prefix used with `Calendar.load(name=\"<prefix><calendar>\")`\n",
+    "- `calendars`: the discovered calendar names when available, otherwise an empty list"
+   ],
+   "id": "cell-03c"
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: ANBIMA\n",
-       "Start: 2000-01-01\n",
-       "End: 2078-12-25\n",
-       "Weekdays: Saturday, Sunday\n",
-       "Holidays: 948\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 3,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "Calendar.load(\"ANBIMA\")"
-   ]
+    "info = list_calendars()\n",
+    "{\n",
+    "    \"packaged\": info[\"packaged\"],\n",
+    "    \"pmc_available\": info[\"pandas_market_calendars\"][\"available\"],\n",
+    "    \"pmc_prefix\": info[\"pandas_market_calendars\"][\"prefix\"],\n",
+    "    \"xcal_available\": info[\"exchange_calendars\"][\"available\"],\n",
+    "    \"xcal_prefix\": info[\"exchange_calendars\"][\"prefix\"],\n",
+    "    \"work_available\": info[\"workalendar\"][\"available\"],\n",
+    "    \"work_prefix\": info[\"workalendar\"][\"prefix\"],\n",
+    "}"
+   ],
+   "id": "cell-03d"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "`Actual` is a calendar with no holiday and nonworking days."
-   ]
+    "`Actual` is the simplest packaged calendar: it has no holidays and no nonworking weekdays, so every day is a business day."
+   ],
+   "id": "cell-04"
   },
   {
    "cell_type": "code",
-   "execution_count": 4,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: Actual\n",
-       "Start: 1970-01-01\n",
-       "End: 2071-01-01\n",
-       "Weekdays: \n",
-       "Holidays: 0\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 4,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "Calendar.load(\"Actual\")"
-   ]
+    "actual = Calendar.load(name=\"Actual\")\n",
+    "actual.isbizday([\"2024-01-01\", \"2024-01-06\", \"2024-01-07\"])"
+   ],
+   "id": "cell-05"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Calendars from `pandas_market_calendars`\n",
+    "## Creating a calendar from scratch with `Calendar(...)`\n",
     "\n",
-    "The package [`pandas_market_calendars`](https://github.com/rsheftel/pandas_market_calendars) comes with many predefined calendars."
-   ]
+    "The constructor accepts:\n",
+    "\n",
+    "- `holidays`: ISO date strings or date-like objects\n",
+    "- `weekdays`: names of nonworking weekdays\n",
+    "- `startdate` and `enddate`: optional calendar bounds\n",
+    "- `name`: a display name\n",
+    "- `financial`: whether to use financial counting rules"
+   ],
+   "id": "cell-06"
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "['ASX',\n",
-       " 'BMF',\n",
-       " 'B3',\n",
-       " 'BSE',\n",
-       " 'NSE',\n",
-       " 'CFE',\n",
-       " 'CBOE_Futures',\n",
-       " 'CBOE_Equity_Options',\n",
-       " 'CBOE_Index_Options',\n",
-       " 'CME_Equity',\n",
-       " 'CBOT_Equity',\n",
-       " 'CME_Agriculture',\n",
-       " 'CBOT_Agriculture',\n",
-       " 'COMEX_Agriculture',\n",
-       " 'NYMEX_Agriculture',\n",
-       " 'CME_Rate',\n",
-       " 'CBOT_Rate',\n",
-       " 'CME_InterestRate',\n",
-       " 'CBOT_InterestRate',\n",
-       " 'CME_Bond',\n",
-       " 'CBOT_Bond',\n",
-       " 'CMEGlobex_Livestock',\n",
-       " 'CMEGlobex_Live_Cattle',\n",
-       " 'CMEGlobex_Feeder_Cattle',\n",
-       " 'CMEGlobex_Lean_Hog',\n",
-       " 'CMEGlobex_Port_Cutout',\n",
-       " 'CME Globex Cryptocurrencies',\n",
-       " 'CME Globex Crypto',\n",
-       " 'CMEGlobex_EnergyAndMetals',\n",
-       " 'CMEGlobex_Energy',\n",
-       " 'CMEGlobex_CrudeAndRefined',\n",
-       " 'CMEGlobex_NYHarbor',\n",
-       " 'CMEGlobex_HO',\n",
-       " 'HO',\n",
-       " 'CMEGlobex_Crude',\n",
-       " 'CMEGlobex_CL',\n",
-       " 'CL',\n",
-       " 'CMEGlobex_Gas',\n",
-       " 'CMEGlobex_RB',\n",
-       " 'RB',\n",
-       " 'CMEGlobex_MicroCrude',\n",
-       " 'CMEGlobex_MCL',\n",
-       " 'MCL',\n",
-       " 'CMEGlobex_NatGas',\n",
-       " 'CMEGlobex_NG',\n",
-       " 'NG',\n",
-       " 'CMEGlobex_Dutch_NatGas',\n",
-       " 'CMEGlobex_TTF',\n",
-       " 'TTF',\n",
-       " 'CMEGlobex_LastDay_NatGas',\n",
-       " 'CMEGlobex_NN',\n",
-       " 'NN',\n",
-       " 'CMEGlobex_CarbonOffset',\n",
-       " 'CMEGlobex_CGO',\n",
-       " 'CGO',\n",
-       " 'C-GEO',\n",
-       " 'CMEGlobex_NGO',\n",
-       " 'NGO',\n",
-       " 'CMEGlobex_GEO',\n",
-       " 'GEO',\n",
-       " 'CMEGlobex_Metals',\n",
-       " 'CMEGlobex_PreciousMetals',\n",
-       " 'CMEGlobex_Gold',\n",
-       " 'CMEGlobex_GC',\n",
-       " 'GC',\n",
-       " 'CMEGlobex_SilverCMEGlobex_SI',\n",
-       " 'SI',\n",
-       " 'CMEGlobex_Platinum',\n",
-       " 'CMEGlobex_PL',\n",
-       " 'PL',\n",
-       " 'CMEGlobex_BaseMetals',\n",
-       " 'CMEGlobex_Copper',\n",
-       " 'CMEGlobex_HG',\n",
-       " 'HG',\n",
-       " 'CMEGlobex_Aluminum',\n",
-       " 'CMEGlobex_ALI',\n",
-       " 'ALI',\n",
-       " 'CMEGlobex_QC',\n",
-       " 'QC',\n",
-       " 'CMEGlobex_FerrousMetals',\n",
-       " 'CMEGlobex_HRC',\n",
-       " 'HRC',\n",
-       " 'CMEGlobex_BUS',\n",
-       " 'BUS',\n",
-       " 'CMEGlobex_TIO',\n",
-       " 'TIO',\n",
-       " 'CME Globex Equity',\n",
-       " 'CMEGlobex_FX',\n",
-       " 'CME_FX',\n",
-       " 'CME_Currency',\n",
-       " 'CME Globex Fixed Income',\n",
-       " 'CME Globex Interest Rate Products',\n",
-       " 'EUREX',\n",
-       " 'HKEX',\n",
-       " 'ICE',\n",
-       " 'ICEUS',\n",
-       " 'NYFE',\n",
-       " 'NYSE',\n",
-       " 'stock',\n",
-       " 'NASDAQ',\n",
-       " 'BATS',\n",
-       " 'DJIA',\n",
-       " 'DOW',\n",
-       " 'IEX',\n",
-       " 'Investors_Exchange',\n",
-       " 'JPX',\n",
-       " 'LSE',\n",
-       " 'OSE',\n",
-       " 'SIFMAUS',\n",
-       " 'SIFMA_US',\n",
-       " 'Capital_Markets_US',\n",
-       " 'Financial_Markets_US',\n",
-       " 'Bond_Markets_US',\n",
-       " 'SIFMAUK',\n",
-       " 'SIFMA_UK',\n",
-       " 'Capital_Markets_UK',\n",
-       " 'Financial_Markets_UK',\n",
-       " 'Bond_Markets_UK',\n",
-       " 'SIFMAJP',\n",
-       " 'SIFMA_JP',\n",
-       " 'Capital_Markets_JP',\n",
-       " 'Financial_Markets_JP',\n",
-       " 'Bond_Markets_JP',\n",
-       " 'SIX',\n",
-       " 'SSE',\n",
-       " 'TASE',\n",
-       " 'TSX',\n",
-       " 'TSXV',\n",
-       " 'AIXK',\n",
-       " 'ASEX',\n",
-       " 'BVMF',\n",
-       " 'CMES',\n",
-       " 'IEPA',\n",
-       " 'XAMS',\n",
-       " 'XASX',\n",
-       " 'XBKK',\n",
-       " 'XBOG',\n",
-       " 'XBOM',\n",
-       " 'XBRU',\n",
-       " 'XBSE',\n",
-       " 'XBUD',\n",
-       " 'XBUE',\n",
-       " 'XCBF',\n",
-       " 'XCSE',\n",
-       " 'XDUB',\n",
-       " 'XFRA',\n",
-       " 'XETR',\n",
-       " 'XHEL',\n",
-       " 'XHKG',\n",
-       " 'XICE',\n",
-       " 'XIDX',\n",
-       " 'XIST',\n",
-       " 'XJSE',\n",
-       " 'XKAR',\n",
-       " 'XKLS',\n",
-       " 'XKRX',\n",
-       " 'XLIM',\n",
-       " 'XLIS',\n",
-       " 'XLON',\n",
-       " 'XMAD',\n",
-       " 'XMEX',\n",
-       " 'XMIL',\n",
-       " 'XMOS',\n",
-       " 'XNYS',\n",
-       " 'XNZE',\n",
-       " 'XOSL',\n",
-       " 'XPAR',\n",
-       " 'XPHS',\n",
-       " 'XPRA',\n",
-       " 'XSAU',\n",
-       " 'XSES',\n",
-       " 'XSGO',\n",
-       " 'XSHG',\n",
-       " 'XSTO',\n",
-       " 'XSWX',\n",
-       " 'XTAE',\n",
-       " 'XTAI',\n",
-       " 'XTKS',\n",
-       " 'XTSE',\n",
-       " 'XWAR',\n",
-       " 'XWBO',\n",
-       " 'us_futures',\n",
-       " '24/7',\n",
-       " '24/5']"
-      ]
-     },
-     "execution_count": 5,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "import pandas_market_calendars as mcal\n",
-    "\n",
-    "mcal.get_calendar_names()"
-   ]
+    "custom = Calendar(\n",
+    "    holidays=[\"2024-01-01\", \"2024-04-21\", \"2024-12-25\"],\n",
+    "    weekdays=[\"Saturday\", \"Sunday\"],\n",
+    "    startdate=\"2024-01-01\",\n",
+    "    enddate=\"2024-12-31\",\n",
+    "    name=\"Example\",\n",
+    "    financial=True,\n",
+    ")\n",
+    "custom"
+   ],
+   "id": "cell-07"
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "{\n",
+    "    \"name\": custom.name,\n",
+    "    \"weekdays\": custom.weekdays,\n",
+    "    \"startdate\": str(custom.startdate),\n",
+    "    \"enddate\": str(custom.enddate),\n",
+    "    \"holidays\": [str(day) for day in custom.holidays],\n",
+    "}"
+   ],
+   "id": "cell-08"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "These calendars can be loaded in bizdays with the prefix `PMC/` in its name.\n",
-    "For example, use `PMC/NYSE` to load the NYSE calendar."
-   ]
+    "If you omit `startdate` and `enddate`, they are inferred from the holiday range. If you construct a calendar without holidays, a broad default range is used."
+   ],
+   "id": "cell-09"
   },
   {
    "cell_type": "code",
-   "execution_count": 6,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: PMC/NYSE\n",
-       "Start: 1885-01-01\n",
-       "End: 2200-12-25\n",
-       "Weekdays: Saturday, Sunday\n",
-       "Holidays: 3552\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 6,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "Calendar.load(\"PMC/NYSE\")"
-   ]
+    "weekends_only = Calendar(\n",
+    "    weekdays=[\"Saturday\", \"Sunday\"],\n",
+    "    name=\"WeekendsOnly\",\n",
+    ")\n",
+    "{\n",
+    "    \"startdate\": str(weekends_only.startdate),\n",
+    "    \"enddate\": str(weekends_only.enddate),\n",
+    "    \"isbizday\": weekends_only.isbizday([\"2024-01-05\", \"2024-01-06\", \"2024-01-07\"]),\n",
+    "}"
+   ],
+   "id": "cell-10"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Create your own Calendars\n",
+    "## JSON calendar layout\n",
     "\n",
-    "`Calendar` can be called with no arguments and it returns a calendar without nonworking days."
-   ]
+    "`Calendar.load(filename=...)` expects a JSON object with this layout:\n",
+    "\n",
+    "- `name`: string\n",
+    "- `weekdays`: list of strings\n",
+    "- `holidays`: list of ISO date strings\n",
+    "- `financial`: boolean\n",
+    "- `start.date` and `end.date`: optional ISO date strings (`YYYY-MM-DD`) that set `startdate` and `enddate`; a bad value raises `ValueError`\n",
+    "- `adjust.from` and `adjust.to`: optional; only the defaults `\"following\"` and `\"preceding\"` are accepted, and other values raise `ValueError`"
+   ],
+   "id": "cell-11"
   },
   {
    "cell_type": "code",
-   "execution_count": 4,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: None\n",
-       "Start: 1970-01-01\n",
-       "End: 2071-01-01\n",
-       "Weekdays: \n",
-       "Holidays: 0\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 4,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
+   "outputs": [],
    "source": [
-    "Calendar()"
-   ]
+    "payload = {\n",
+    "    \"name\": \"CustomJson\",\n",
+    "    \"weekdays\": [\"saturday\", \"sunday\"],\n",
+    "    \"holidays\": [\"2024-01-01\", \"2024-04-21\", \"2024-12-25\"],\n",
+    "    \"financial\": True,\n",
+    "    \"adjust.from\": \"following\",\n",
+    "    \"adjust.to\": \"preceding\",\n",
+    "}\n",
+    "payload"
+   ],
+   "id": "cell-12"
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import json\n",
+    "import tempfile\n",
+    "from pathlib import Path\n",
+    "\n",
+    "with tempfile.TemporaryDirectory() as tmpdir:\n",
+    "    filename = Path(tmpdir) / \"custom-calendar.json\"\n",
+    "    filename.write_text(json.dumps(payload), encoding=\"utf-8\")\n",
+    "    json_calendar = Calendar.load(filename=str(filename))\n",
+    "\n",
+    "json_calendar"
+   ],
+   "id": "cell-13"
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Naming the calendar is a good idea."
-   ]
+    "## Optional calendar provider integrations\n",
+    "\n",
+    "If you install the optional `bizdays[pmc]` extra, `Calendar.load(name=\"PMC/<calendar>\")` can load calendars from `pandas_market_calendars`.\n",
+    "\n",
+    "If you install the optional `bizdays[xcal]` extra, `Calendar.load(name=\"XCAL/<calendar>\")` can load calendars from `exchange_calendars`.\n",
+    "\n",
+    "If you install the optional `bizdays[work]` extra, `Calendar.load(name=\"WORK/<code>\")` can load calendars from `workalendar`.\n",
+    "\n",
+    "These are not packaged calendars; they come from optional integrations."
+   ],
+   "id": "cell-14"
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": null,
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Calendar: actual\n",
-       "Start: 1970-01-01\n",
-       "End: 2071-01-01\n",
-       "Weekdays: \n",
-       "Holidays: 0\n",
-       "Financial: True"
-      ]
-     },
-     "execution_count": 5,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
+   "outputs": [],
+   "source": [
+    "{\n",
+    "    \"pmc\": Calendar.load(name=\"PMC/B3\").name,\n",
+    "    \"xcal\": Calendar.load(name=\"XCAL/XNYS\").name,\n",
+    "    \"work\": Calendar.load(name=\"WORK/FR\").name,\n",
+    "}"
    ],
-   "source": [
-    "Calendar(name='actual')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## Financial Calendars\n",
-    "\n",
-    "`bizdays` was designed to be used with financial calculations, for this reason all calendars are financial by default.\n",
-    "\n",
-    "In finance, the amount of business days between two consecutive dates is 1, which indicates one day of compounding interest rates.\n",
-    "\n",
-    "For example."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 6,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "1"
-      ]
-     },
-     "execution_count": 6,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
-   "source": [
-    "cal = Calendar()\n",
-    "cal.bizdays('2021-01-01', '2021-01-02')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "For this calendar both dates are business days, but the return is one business day.\n",
-    "\n",
-    "This behavior can changed by setting the attribute `financial` to `False`."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 7,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "2"
-      ]
-     },
-     "execution_count": 7,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
-   "source": [
-    "cal.financial = False\n",
-    "cal.bizdays('2021-01-01', '2021-01-02')"
-   ]
+   "id": "cell-15"
   }
  ],
  "metadata": {
   "kernelspec": {
-   "display_name": "Python 3.7.11 ('venv': venv)",
+   "display_name": "Python 3",
    "language": "python",
    "name": "python3"
   },
   "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
    "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.10.11"
-  },
-  "vscode": {
-   "interpreter": {
-    "hash": "804a4a06e7ed5f90e0da5c1a0173147605cc28b78a3676d1fdeb0cd38c97fa0e"
-   }
+   "pygments_lexer": "ipython3"
   }
  },
  "nbformat": 4,
- "nbformat_minor": 2
+ "nbformat_minor": 5
 }
