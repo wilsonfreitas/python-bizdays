@@ -63,7 +63,7 @@ Inventory
    * - ``cal.vec`` is gone; every method takes vectors
      - mechanical
      - :ref:`migrate-vec-removed`
-   * - ``DateOutOfRange`` is exported and is a ``ValueError``
+   * - ``DateOutOfRange`` is a ``ValueError``
      - mechanical
      - :ref:`migrate-date-out-of-range`
    * - ``Calendar(...)`` has new defaults and checks its arguments
@@ -320,11 +320,11 @@ After (2.0):
 ``DateOutOfRange`` is a ``ValueError``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**v1:** ``DateOutOfRange`` was a subclass of ``Exception`` and was not
-exported at the top level.
+**v1:** ``from bizdays import DateOutOfRange`` worked, and the class was a
+direct subclass of ``Exception``.
 
-**v2:** ``from bizdays import DateOutOfRange`` works, and the class is a
-subclass of ``ValueError``.
+**v2:** the class is a subclass of ``ValueError``, and it is still exported
+at the top level.
 
 **Why:** a date outside the calendar range is a bad input value, so
 ``ValueError`` is the expected base class.
@@ -333,14 +333,14 @@ Before (1.0.19):
 
 .. code-block:: python
 
-   from bizdays.utils import DateOutOfRange
+   from bizdays import DateOutOfRange
 
    try:
-       cal.offset("2099-12-20", 10)
+       cal.bizdays("1999-01-01", "2024-01-02")
    except ValueError:
-       ...                     # never reached in 1.0.19
+       ...                     # not reached in 1.0.19
    except DateOutOfRange:
-       ...
+       ...                     # reached
 
 After (2.0):
 
@@ -349,15 +349,14 @@ After (2.0):
    >>> issubclass(DateOutOfRange, ValueError)
    True
    >>> try:
-   ...     cal.offset("2099-12-20", 10)
+   ...     cal.bizdays("1999-01-01", "2024-01-02")
    ... except DateOutOfRange:
    ...     print("out of range")
    ... except ValueError:
    ...     print("bad input")
    out of range
 
-**Migration:** mechanical. Import it from ``bizdays``. If you catch both,
-put ``except DateOutOfRange`` before ``except ValueError``; otherwise the
+**Migration:** mechanical. If you catch both, put ``except DateOutOfRange`` before ``except ValueError``; otherwise the
 ``ValueError`` branch also catches range errors.
 
 Building and loading calendars
@@ -375,7 +374,7 @@ Building and loading calendars
 - A calendar built from one holiday and no range worked, with the range
   2024-01-01..2024-01-01.
 - ``startdate`` after ``enddate`` raised ``KeyError``.
-- Unknown weekday names raised ``ValueError: 'sab' is not in list``; numbers
+- Unknown weekday names raised a ``ValueError`` about a list index; numbers
   such as ``[5, 6]`` raised ``TypeError``.
 - A calendar with every weekday off was built, and its counts were 0.
 - Duplicate weekdays were kept.
@@ -404,7 +403,7 @@ Before (1.0.19):
    Calendar().name                                   # None
    Calendar(holidays=["2024-01-01"])                 # range 2024-01-01..2024-01-01
    Calendar(startdate="2024-01-10", enddate="2024-01-01")   # KeyError
-   Calendar(weekdays=["Sabado"])                     # ValueError: 'sab' is not in list
+   Calendar(weekdays=["Sabado"])                     # ValueError: ... not in list
    Calendar(weekdays=[5, 6])                         # TypeError
    Calendar(weekdays=["Saturday", "saturday"]).weekdays     # both kept
 
@@ -1291,7 +1290,7 @@ What did not change
 - Counting rules, including ends that are not business days
   (``bizdays(a, b) == bizdays(following(a), preceding(b))``) and
   ``financial=False``.
-- ``offset(d, 0)`` returns ``d`` adjusted to a business day.
+- ``offset(d, 0)`` returns ``d`` unchanged, even when ``d`` is a holiday.
 - ``seq`` with the start after the end gives a descending sequence.
 - Time-zone-aware values use the wall-clock date: 2024-01-06 23:00 at
   -03:00 is 2024-01-06.
