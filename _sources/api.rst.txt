@@ -352,7 +352,7 @@ Packaged calendars shipped with the project:
 
 - ``ANBIMA``: 2000-01-01 to 2099-12-25. Official ANBIMA holidays up to 2079;
   later years are projected with the national holiday rule.
-- ``B3``: official B3 holidays for 2000-2026. Years 2027-2099 are projected:
+- ``B3``: official B3 holidays for 2000-2027. Years 2028-2099 are projected:
   ANBIMA holidays, plus December 24, plus the last weekday of the year.
   Projected years are replaced when B3 publishes them.
 - ``Actual``: no holidays, every day is a business day; 1900-01-01 to 2199-12-31.
