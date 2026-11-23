@@ -17,7 +17,7 @@ from bizdays.utils import DateOutOfRange
 # When B3 publishes year Y: replace Y's entries in B3.json with the official
 # list, set B3_OFFICIAL_LAST_YEAR = Y and update the count, last date and hash
 # in test_b3_official_years_unchanged.
-B3_OFFICIAL_LAST_YEAR = 2026
+B3_OFFICIAL_LAST_YEAR = 2027
 PROJECTED_LAST_YEAR = 2099
 
 ANBIMA_HOLIDAYS = load_packaged_calendar_definition("ANBIMA").holidays
@@ -61,14 +61,14 @@ def test_b3_holidays_sorted_and_unique() -> None:
 
 def test_b3_official_years_unchanged() -> None:
     official = [h for h in B3_HOLIDAYS if h <= f"{B3_OFFICIAL_LAST_YEAR}-12-31"]
-    assert len(official) == 427
+    assert len(official) == 442
     assert official[0] == "2000-01-01"
-    assert official[-1] == "2026-12-31"
+    assert official[-1] == "2027-12-31"
     digest = hashlib.sha256("\n".join(official).encode()).hexdigest()
-    assert digest == "473098bdc3c1d096d6eefd454505ef7eb3bbaed96cb628a9c86e243c038c54b9"
+    assert digest == "9a3cee2423a26fb58898e56c0d818b856fb2227e977093e745ee47288123f802"
 
 
-@pytest.mark.parametrize("year", range(2022, 2027))
+@pytest.mark.parametrize("year", range(2022, B3_OFFICIAL_LAST_YEAR + 1))
 def test_b3_rule_matches_official_business_days(b3: Calendar, year: int) -> None:
     start, end = f"{year}-01-01", f"{year}-12-31"
     rule = Calendar(sorted(b3_rule(year)), ["saturday", "sunday"], startdate=start, enddate=end)
